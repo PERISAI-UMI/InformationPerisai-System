@@ -456,6 +456,7 @@ model MAnggota {
   akun         MAkun?
   kepengurusan TKepengurusan[]
   prestasi     TPrestasi[]
+  prestasiTim  TPrestasiAnggota[]
   prokerPj     TProker[]       @relation("ProkerPenanggungJawab")
   beritaDitulis TBerita[]      @relation("BeritaPenulis")
   keuanganDicatat TKeuangan[]  @relation("KeuanganDicatatOleh")
@@ -637,24 +638,38 @@ model TKompetisi {
 }
 
 model TPrestasi {
-  idPrestasi      Int       @id @default(autoincrement()) @map("id_prestasi")
-  idPerisai       String    @map("id_perisai")
-  namaKompetisi   String    @map("nama_kompetisi")
-  judulKarya      String?   @map("judul_karya")
+  idPrestasi      Int                @id @default(autoincrement()) @map("id_prestasi")
+  idPerisai       String             @map("id_perisai")
+  namaKompetisi   String             @map("nama_kompetisi")
+  judulKarya      String?            @map("judul_karya")
   kategori        String?
-  tingkat         String    @default("Nasional")
+  tingkat         String             @default("Nasional")
   peringkat       String
   tahun           Int
   penyelenggara   String?
-  anggotaTim      String?   @map("anggota_tim")
-  fotoDokumentasi String?   @map("foto_dokumentasi")
-  linkSertifikat  String?   @map("link_sertifikat")
-  createdAt       Int       @default(dbgenerated("(unixepoch())")) @map("created_at")
-  updatedAt       Int       @default(dbgenerated("(unixepoch())")) @map("updated_at")
+  fotoDokumentasi String?            @map("foto_dokumentasi")
+  linkSertifikat  String?            @map("link_sertifikat")
+  createdAt       Int                @default(dbgenerated("(unixepoch())")) @map("created_at")
+  updatedAt       Int                @default(dbgenerated("(unixepoch())")) @map("updated_at")
 
-  anggota         MAnggota  @relation(fields: [idPerisai], references: [idPerisai], onDelete: Cascade)
+  anggota         MAnggota           @relation(fields: [idPerisai], references: [idPerisai], onDelete: Cascade)
+  tim             TPrestasiAnggota[]
 
   @@map("T_Prestasi")
+}
+
+model TPrestasiAnggota {
+  idPrestasiAnggota Int        @id @default(autoincrement()) @map("id_prestasi_anggota")
+  idPrestasi        Int        @map("id_prestasi")
+  idPerisai         String?    @map("id_perisai")
+  namaAnggota       String     @map("nama_anggota")
+  peran             String     @default("Anggota")
+  createdAt         Int        @default(dbgenerated("(unixepoch())")) @map("created_at")
+
+  prestasi          TPrestasi  @relation(fields: [idPrestasi], references: [idPrestasi], onDelete: Cascade)
+  anggota           MAnggota?  @relation(fields: [idPerisai], references: [idPerisai], onDelete: SetNull)
+
+  @@map("T_Prestasi_Anggota")
 }
 
 model TKeuangan {

@@ -32,6 +32,7 @@ Skema database UKM PERISAI UMI dirancang dengan normalisasi relasional tinggi, m
 | `T_Berita_Foto` | Galeri multi-foto pendukung artikel berita | `id_foto` (PK), `id_berita` (FK), `foto_url`, `caption`, `urutan` |
 | `T_Kompetisi` | Direktori peluang lomba, riset, dan hibah | `id_kompetisi` (PK), `id_departemen` (FK), `nama_kompetisi`, `slug`, `kategori`, `tingkat`, `tipe`, `deadline_pendaftaran` |
 | `T_Prestasi` | Portofolio rekam jejak juara & medali | `id_prestasi` (PK), `id_perisai` (FK), `nama_kompetisi`, `judul_karya`, `peringkat`, `tahun` |
+| `T_Prestasi_Anggota` | Detail anggota tim prestasi (Normalisasi 1NF & 2NF) | `id_prestasi_anggota` (PK), `id_prestasi` (FK), `id_perisai` (FK/Null), `nama_anggota`, `peran` |
 | `T_Keuangan` | Pembukuan kas masuk & kas keluar organisasi | `id_transaksi` (PK), `id_periode` (FK), `jenis_transaksi`, `kategori`, `nominal`, `tanggal_transaksi`, `dicatat_oleh` (FK) |
 | `T_Galeri` | Dokumentasi visual kegiatan resmi | `id_galeri` (PK), `judul`, `kategori`, `foto_url`, `tanggal_kegiatan`, `is_featured`, `is_active` |
 | `T_Pesan_Masuk` | Kotak masuk formulir kontak publik | `id_pesan` (PK), `nama_pengirim`, `email`, `no_wa`, `subjek`, `isi_pesan`, `is_read` |
@@ -39,6 +40,12 @@ Skema database UKM PERISAI UMI dirancang dengan normalisasi relasional tinggi, m
 | `T_Pengaturan` | Pengaturan konfigurasi sistem (*key-value*) | `kunci` (PK), `nilai`, `tipe`, `diperbarui_oleh` |
 | `T_Audit_Log` | Jejak rekam aktivitas dan perubahan data | `id_log` (PK), `id_akun` (FK), `aksi`, `entitas`, `id_entitas`, `ip_address` |
 | `T_Media` | Indeks berkas fisik dan media penyimpanan | `id_media` (PK), `nama_berkas`, `kunci_penyimpanan`, `url`, `tipe_mime`, `ukuran_byte` |
+
+### 3. Normalisasi Relasional Penuh (1NF, 2NF, 3NF) & Zero-Storage Views
+- **1NF (First Normal Form)**: Seluruh atribut bernilai atomik. Atribut multi-nilai seperti multi-foto (`T_Berita_Foto`, `T_Proker_Dokumentasi`) dan anggota tim prestasi (`T_Prestasi_Anggota`) telah dipisahkan ke tabel relasional terdedikasi.
+- **2NF (Second Normal Form)**: Tidak ada ketergantungan parsial pada candidate key komposit. Seluruh atribut non-kunci bergantung penuh pada primary key masing-masing entitas.
+- **3NF (Third Normal Form)**: Tidak ada ketergantungan transitif. Sebagai contoh, referensi fakultas pada `M_Anggota` diturunkan secara hierarkis melalui `M_Jurusan` -> `M_Fakultas`. Kredensial login dipisahkan ke `M_Akun`.
+- **Zero-Storage Compatibility Views**: Modul web dan sistem lama membaca data secara *real-time* melalui 21 Virtual SQL Views (`users`, `departments`, `web_members`, `web_posts`, dll.) tanpa menciptakan duplikasi fisik tabel.
 
 ---
 

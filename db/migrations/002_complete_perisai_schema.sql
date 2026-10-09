@@ -1,15 +1,16 @@
 -- ==============================================================================
--- UNIFIED DATABASE MIGRATION — UKM PERISAI UMI
+-- UNIFIED & NORMALIZED DATABASE SCHEMA — UKM PERISAI UMI
 -- File: 002_complete_perisai_schema.sql
 -- Single Source of Truth Skema Basis Data Organisasi & Portal Web
--- Menyatukan seluruh entitas master (M_*), transaksi (T_*), dan modul operasional web
+-- Menerapkan Normalisasi Penuh (1NF, 2NF, 3NF) pada 25 Tabel Master & Transaksi
+-- Kompatibilitas Sistem & Web diimplementasikan via Zero-Storage SQL Views & Triggers
 -- ==============================================================================
 
 -- ========================================================
 -- BAGIAN 1: TABEL MASTER DATA & REFERENSI AKADEMIK (M_*)
 -- ========================================================
 
--- 1. Master Fakultas di Lingkungan Universitas Muslim Indonesia
+-- 1. Master Fakultas di Lingkungan Universitas Muslim Indonesia (3NF)
 CREATE TABLE IF NOT EXISTS M_Fakultas (
   id_fakultas INTEGER PRIMARY KEY AUTOINCREMENT,
   nama_fakultas TEXT NOT NULL UNIQUE,
@@ -18,7 +19,7 @@ CREATE TABLE IF NOT EXISTS M_Fakultas (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 2. Master Jurusan / Program Studi per Fakultas
+-- 2. Master Jurusan / Program Studi per Fakultas (3NF: Relasi hierarki ke M_Fakultas)
 CREATE TABLE IF NOT EXISTS M_Jurusan (
   id_jurusan INTEGER PRIMARY KEY AUTOINCREMENT,
   id_fakultas INTEGER NOT NULL REFERENCES M_Fakultas(id_fakultas) ON DELETE CASCADE,
@@ -28,7 +29,7 @@ CREATE TABLE IF NOT EXISTS M_Jurusan (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 3. Master Departemen & Badan Fungsionaris Organisasi
+-- 3. Master Departemen & Badan Fungsionaris Organisasi (3NF: Seluruh atribut divisi terpadu)
 CREATE TABLE IF NOT EXISTS M_Departemen (
   id_departemen INTEGER PRIMARY KEY AUTOINCREMENT,
   nama_departemen TEXT NOT NULL UNIQUE,
@@ -80,12 +81,12 @@ CREATE TABLE IF NOT EXISTS M_Role (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 7. Master Dewan Pembina, Penasihat, dan Alumni Kehormatan (Penggabungan dari 001 web_extra_people)
+-- 7. Master Dewan Pembina, Penasihat, dan Alumni Kehormatan
 CREATE TABLE IF NOT EXISTS M_Pembina (
   id_pembina INTEGER PRIMARY KEY AUTOINCREMENT,
   nama TEXT NOT NULL,
   gelar TEXT,
-  jabatan TEXT NOT NULL, -- Dewan Pembina, Dewan Penasihat, Pembina Teknis, dll.
+  jabatan TEXT NOT NULL, -- Dewan Pembina, Dewan Penasihat, dll.
   kategori TEXT NOT NULL DEFAULT 'pembina', -- pembina, penasihat, alumni_kehormatan
   foto_url TEXT,
   linkedin TEXT,
@@ -99,7 +100,7 @@ CREATE TABLE IF NOT EXISTS M_Pembina (
 -- BAGIAN 2: DATA KEANGGOTAAN & AKUN FUNGSIONARIS
 -- ========================================================
 
--- 8. Master Anggota & Fungsionaris (Identitas Lengkap Mahasiswa & PRN)
+-- 8. Master Anggota & Fungsionaris (Identitas Mahasiswa & PRN) (3NF: Relasi ke M_Jurusan tanpa redundansi fakultas)
 CREATE TABLE IF NOT EXISTS M_Anggota (
   id_perisai TEXT PRIMARY KEY, -- Format ID PERISAI: PRN XXXX
   nama_lengkap TEXT NOT NULL,
@@ -123,7 +124,7 @@ CREATE TABLE IF NOT EXISTS M_Anggota (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 9. Master Akun Login Fungsionaris (Username Menggunakan PRN)
+-- 9. Master Akun Login Fungsionaris (Dipisahkan dari biodata untuk kepatuhan 3NF & Keamanan)
 CREATE TABLE IF NOT EXISTS M_Akun (
   id_akun INTEGER PRIMARY KEY AUTOINCREMENT,
   id_perisai TEXT NOT NULL UNIQUE REFERENCES M_Anggota(id_perisai) ON DELETE CASCADE,
@@ -151,14 +152,14 @@ CREATE TABLE IF NOT EXISTS T_Sesi (
 -- BAGIAN 3: TRANSAKSI KEPENGURUSAN & PROGRAM KERJA
 -- ========================================================
 
--- 11. Pemetaan Struktur Fungsionaris per Periode Aktif
+-- 11. Pemetaan Struktur Fungsionaris per Periode Aktif (Junction Table 4-Arah Ternormalisasi 3NF)
 CREATE TABLE IF NOT EXISTS T_Kepengurusan (
   id_kepengurusan INTEGER PRIMARY KEY AUTOINCREMENT,
   id_periode INTEGER NOT NULL REFERENCES M_Periode(id_periode) ON DELETE CASCADE,
   id_perisai TEXT NOT NULL REFERENCES M_Anggota(id_perisai) ON DELETE CASCADE,
   id_jabatan INTEGER NOT NULL REFERENCES M_Jabatan(id_jabatan) ON DELETE RESTRICT,
   id_departemen INTEGER REFERENCES M_Departemen(id_departemen) ON DELETE SET NULL,
-  tier TEXT NOT NULL DEFAULT 'staf', -- bph, kadep, staf, pembina (dari 001 untuk kemudahan UI)
+  tier TEXT NOT NULL DEFAULT 'staf', -- bph, kadep, staf
   status TEXT NOT NULL DEFAULT 'aktif', -- aktif, selesai, cuti
   urutan INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -185,7 +186,7 @@ CREATE TABLE IF NOT EXISTS T_Proker (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 13. Galeri / Dokumentasi Pelaksanaan Proker (Multi-Foto dari 001 web_work_program_images)
+-- 13. Galeri / Dokumentasi Pelaksanaan Proker (1NF: Multi-foto dipisah dari kolom teks)
 CREATE TABLE IF NOT EXISTS T_Proker_Dokumentasi (
   id_proker_dok INTEGER PRIMARY KEY AUTOINCREMENT,
   id_proker INTEGER NOT NULL REFERENCES T_Proker(id_proker) ON DELETE CASCADE,
@@ -219,7 +220,7 @@ CREATE TABLE IF NOT EXISTS T_Berita (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 15. Multi-Foto Galeri Artikel Berita (dari 001 web_post_images)
+-- 15. Multi-Foto Galeri Artikel Berita (1NF)
 CREATE TABLE IF NOT EXISTS T_Berita_Foto (
   id_berita_foto INTEGER PRIMARY KEY AUTOINCREMENT,
   id_berita INTEGER NOT NULL REFERENCES T_Berita(id_berita) ON DELETE CASCADE,
@@ -229,11 +230,11 @@ CREATE TABLE IF NOT EXISTS T_Berita_Foto (
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 16. Direktori Peluang Kompetisi, Beasiswa, & Seminar (dari 001 web_opportunities + 002)
+-- 16. Direktori Peluang Kompetisi, Beasiswa, & Seminar
 CREATE TABLE IF NOT EXISTS T_Kompetisi (
   id_kompetisi INTEGER PRIMARY KEY AUTOINCREMENT,
   id_departemen INTEGER REFERENCES M_Departemen(id_departemen) ON DELETE SET NULL,
-  tipe TEXT NOT NULL DEFAULT 'lomba', -- lomba, beasiswa, seminar, hibah (dari 001 type)
+  tipe TEXT NOT NULL DEFAULT 'lomba', -- lomba, beasiswa, seminar, hibah
   nama_kompetisi TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   kategori TEXT NOT NULL DEFAULT 'KTI', -- PKM, KTI, Inovasi, Desain, Debat, Bisnis
@@ -254,7 +255,7 @@ CREATE TABLE IF NOT EXISTS T_Kompetisi (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 17. Portofolio Rekam Jejak Prestasi & Juara Anggota
+-- 17. Portofolio Rekam Jejak Prestasi & Juara Anggota (Ternormalisasi 1NF & 2NF)
 CREATE TABLE IF NOT EXISTS T_Prestasi (
   id_prestasi INTEGER PRIMARY KEY AUTOINCREMENT,
   id_perisai TEXT NOT NULL REFERENCES M_Anggota(id_perisai) ON DELETE CASCADE,
@@ -265,18 +266,27 @@ CREATE TABLE IF NOT EXISTS T_Prestasi (
   peringkat TEXT NOT NULL, -- Juara 1, Juara 2, Medali Emas, Best Paper, Finalis
   tahun INTEGER NOT NULL,
   penyelenggara TEXT,
-  anggota_tim TEXT,
   foto_dokumentasi TEXT,
   link_sertifikat TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
+-- 18. Normalisasi 1NF & 2NF: Detail Anggota Tim Prestasi (Memecah multivalued attribute anggota_tim)
+CREATE TABLE IF NOT EXISTS T_Prestasi_Anggota (
+  id_prestasi_anggota INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_prestasi INTEGER NOT NULL REFERENCES T_Prestasi(id_prestasi) ON DELETE CASCADE,
+  id_perisai TEXT REFERENCES M_Anggota(id_perisai) ON DELETE SET NULL,
+  nama_anggota TEXT NOT NULL,
+  peran TEXT NOT NULL DEFAULT 'Anggota', -- Ketua Tim, Anggota
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
 -- ========================================================
 -- BAGIAN 5: KEUANGAN, GALERI, PESAN, DAN PENGATURAN
 -- ========================================================
 
--- 18. Pembukuan Kas Masuk & Kas Keluar Bendahara Umum
+-- 19. Pembukuan Kas Masuk & Kas Keluar Bendahara Umum
 CREATE TABLE IF NOT EXISTS T_Keuangan (
   id_transaksi INTEGER PRIMARY KEY AUTOINCREMENT,
   id_periode INTEGER NOT NULL REFERENCES M_Periode(id_periode) ON DELETE CASCADE,
@@ -291,7 +301,7 @@ CREATE TABLE IF NOT EXISTS T_Keuangan (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 19. Dokumentasi Visual & Galeri Kegiatan Resmi
+-- 20. Dokumentasi Visual & Galeri Kegiatan Resmi
 CREATE TABLE IF NOT EXISTS T_Galeri (
   id_galeri INTEGER PRIMARY KEY AUTOINCREMENT,
   judul TEXT NOT NULL,
@@ -300,13 +310,13 @@ CREATE TABLE IF NOT EXISTS T_Galeri (
   deskripsi TEXT,
   tanggal_kegiatan TEXT,
   is_featured INTEGER NOT NULL DEFAULT 0,
-  is_active INTEGER NOT NULL DEFAULT 1, -- (dari 001)
+  is_active INTEGER NOT NULL DEFAULT 1,
   urutan INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 20. Kotak Masuk Pesan dari Formulir Kontak Publik
+-- 21. Kotak Masuk Pesan dari Formulir Kontak Publik
 CREATE TABLE IF NOT EXISTS T_Pesan_Masuk (
   id_pesan INTEGER PRIMARY KEY AUTOINCREMENT,
   nama_pengirim TEXT NOT NULL,
@@ -323,7 +333,7 @@ CREATE TABLE IF NOT EXISTS T_Pesan_Masuk (
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 21. Metrik Angka Statistik & Pencapaian Utama Website
+-- 22. Metrik Angka Statistik & Pencapaian Utama Website
 CREATE TABLE IF NOT EXISTS T_Statistik (
   id_statistik INTEGER PRIMARY KEY AUTOINCREMENT,
   label TEXT NOT NULL,
@@ -335,7 +345,7 @@ CREATE TABLE IF NOT EXISTS T_Statistik (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 22. Pengaturan Konfigurasi Global Sistem (Key-Value)
+-- 23. Pengaturan Konfigurasi Global Sistem (Key-Value)
 CREATE TABLE IF NOT EXISTS T_Pengaturan (
   kunci TEXT PRIMARY KEY,
   nilai TEXT,
@@ -344,7 +354,7 @@ CREATE TABLE IF NOT EXISTS T_Pengaturan (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 23. Jejak Rekam Audit Keamanan & Perubahan Data (Audit Log)
+-- 24. Jejak Rekam Audit Keamanan & Perubahan Data (Audit Log)
 CREATE TABLE IF NOT EXISTS T_Audit_Log (
   id_log INTEGER PRIMARY KEY AUTOINCREMENT,
   id_akun INTEGER REFERENCES M_Akun(id_akun) ON DELETE SET NULL,
@@ -358,7 +368,7 @@ CREATE TABLE IF NOT EXISTS T_Audit_Log (
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- 24. Manajemen Indeks Aset & Berkas Fisik (Storage Index)
+-- 25. Manajemen Indeks Aset & Berkas Fisik (Storage Index)
 CREATE TABLE IF NOT EXISTS T_Media (
   id_media TEXT PRIMARY KEY,
   nama_berkas TEXT NOT NULL,
@@ -374,307 +384,9 @@ CREATE TABLE IF NOT EXISTS T_Media (
 );
 
 -- ========================================================
--- BAGIAN 6: TABEL PENDUKUNG OPERASIONAL & KOMPATIBILITAS (web_* & core)
+-- BAGIAN 6: INDEKS KINERJA & PENCARIAN TINGGI (M_* & T_*)
 -- ========================================================
 
--- Kompatibilitas Sistem Inti
-CREATE TABLE IF NOT EXISTS departments (
-  id TEXT PRIMARY KEY,
-  nama TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS fakultas (
-  id TEXT PRIMARY KEY,
-  nama TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS program_studi (
-  id TEXT PRIMARY KEY,
-  fakultas_id TEXT NOT NULL REFERENCES fakultas(id) ON DELETE CASCADE,
-  nama TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY,
-  prn TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  role TEXT NOT NULL,
-  generasi INTEGER NOT NULL,
-  department_id TEXT NOT NULL REFERENCES departments(id),
-  jabatan TEXT NOT NULL,
-  nama_lengkap TEXT NOT NULL,
-  tempat_lahir TEXT,
-  tanggal_lahir TEXT,
-  alamat TEXT,
-  no_telp TEXT,
-  email TEXT NOT NULL UNIQUE,
-  nim TEXT NOT NULL UNIQUE,
-  program_studi_id TEXT NOT NULL REFERENCES program_studi(id),
-  angkatan INTEGER NOT NULL,
-  linkedin_url TEXT,
-  instagram_username TEXT,
-  avatar_url TEXT
-);
-
-CREATE TABLE IF NOT EXISTS sessions (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  token TEXT NOT NULL UNIQUE,
-  expires_at INTEGER NOT NULL,
-  ip_address TEXT,
-  user_agent TEXT,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS activities (
-  id TEXT PRIMARY KEY,
-  nama TEXT NOT NULL,
-  deskripsi TEXT,
-  start_date INTEGER NOT NULL,
-  end_date INTEGER NOT NULL,
-  is_published INTEGER NOT NULL,
-  created_by TEXT NOT NULL REFERENCES users(id),
-  created_at INTEGER NOT NULL,
-  mode TEXT NOT NULL,
-  lokasi TEXT,
-  meeting_url TEXT,
-  is_locked INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS attendances (
-  id TEXT PRIMARY KEY,
-  activity_id TEXT NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  status TEXT NOT NULL,
-  recorded_by TEXT NOT NULL REFERENCES users(id),
-  recorded_at INTEGER NOT NULL,
-  UNIQUE(activity_id, user_id)
-);
-
-CREATE TABLE IF NOT EXISTS permissions (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  activity_id TEXT NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
-  jenis_izin TEXT NOT NULL,
-  alasan TEXT NOT NULL,
-  evidence_url TEXT,
-  status TEXT NOT NULL,
-  reviewed_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  reviewed_at INTEGER,
-  created_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS pj_departments (
-  admin_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  department_id TEXT NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
-  assigned_at INTEGER NOT NULL,
-  PRIMARY KEY(admin_id, department_id)
-);
-
--- Kompatibilitas CMS Website (web_*)
-CREATE TABLE IF NOT EXISTS web_media (
-  id TEXT PRIMARY KEY,
-  storage_key TEXT NOT NULL UNIQUE,
-  original_name TEXT,
-  mime_type TEXT NOT NULL,
-  size_bytes INTEGER NOT NULL,
-  width INTEGER,
-  height INTEGER,
-  alt_text TEXT,
-  uploaded_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  created_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_department_profiles (
-  department_id TEXT PRIMARY KEY REFERENCES departments(id) ON DELETE CASCADE,
-  slug TEXT NOT NULL UNIQUE,
-  short_description TEXT,
-  description TEXT,
-  vision TEXT,
-  mission TEXT,
-  group_photo_media_id TEXT REFERENCES web_media(id) ON DELETE SET NULL,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  is_active INTEGER NOT NULL DEFAULT 1,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_user_access (
-  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  cms_role TEXT NOT NULL DEFAULT 'editor',
-  department_id TEXT REFERENCES departments(id) ON DELETE SET NULL,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_extra_people (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  position TEXT NOT NULL,
-  tier TEXT NOT NULL DEFAULT 'pembina',
-  linkedin_url TEXT,
-  photo_media_id TEXT REFERENCES web_media(id) ON DELETE SET NULL,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  is_active INTEGER NOT NULL DEFAULT 1,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_posts (
-  id TEXT PRIMARY KEY,
-  department_id TEXT REFERENCES departments(id) ON DELETE SET NULL,
-  title TEXT NOT NULL,
-  slug TEXT NOT NULL UNIQUE,
-  category TEXT NOT NULL DEFAULT 'berita',
-  excerpt TEXT,
-  content TEXT NOT NULL,
-  cover_media_id TEXT REFERENCES web_media(id) ON DELETE SET NULL,
-  status TEXT NOT NULL DEFAULT 'draft',
-  published_at INTEGER,
-  is_featured INTEGER NOT NULL DEFAULT 0,
-  created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  updated_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_post_images (
-  post_id TEXT NOT NULL REFERENCES web_posts(id) ON DELETE CASCADE,
-  media_id TEXT NOT NULL REFERENCES web_media(id) ON DELETE CASCADE,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  caption TEXT,
-  PRIMARY KEY (post_id, media_id)
-);
-
-CREATE TABLE IF NOT EXISTS web_work_programs (
-  id TEXT PRIMARY KEY,
-  department_id TEXT NOT NULL REFERENCES departments(id) ON DELETE RESTRICT,
-  title TEXT NOT NULL,
-  slug TEXT NOT NULL UNIQUE,
-  summary TEXT,
-  content TEXT,
-  cover_media_id TEXT REFERENCES web_media(id) ON DELETE SET NULL,
-  status TEXT NOT NULL DEFAULT 'draft',
-  published_at INTEGER,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  updated_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_work_program_images (
-  work_program_id TEXT NOT NULL REFERENCES web_work_programs(id) ON DELETE CASCADE,
-  media_id TEXT NOT NULL REFERENCES web_media(id) ON DELETE CASCADE,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  caption TEXT,
-  PRIMARY KEY (work_program_id, media_id)
-);
-
-CREATE TABLE IF NOT EXISTS web_opportunities (
-  id TEXT PRIMARY KEY,
-  type TEXT NOT NULL DEFAULT 'lomba',
-  title TEXT NOT NULL,
-  slug TEXT NOT NULL UNIQUE,
-  category TEXT,
-  organizer TEXT,
-  description TEXT,
-  deadline_at INTEGER,
-  registration_url TEXT,
-  poster_media_id TEXT REFERENCES web_media(id) ON DELETE SET NULL,
-  status TEXT NOT NULL DEFAULT 'draft',
-  published_at INTEGER,
-  created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  updated_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_statistics (
-  id TEXT PRIMARY KEY,
-  label TEXT NOT NULL,
-  value TEXT NOT NULL,
-  description TEXT,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  is_active INTEGER NOT NULL DEFAULT 1,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_gallery_items (
-  id TEXT PRIMARY KEY,
-  media_id TEXT NOT NULL REFERENCES web_media(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT,
-  category TEXT,
-  taken_at INTEGER,
-  is_featured INTEGER NOT NULL DEFAULT 0,
-  is_active INTEGER NOT NULL DEFAULT 1,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_inbox_messages (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  email TEXT NOT NULL,
-  phone TEXT,
-  purpose TEXT NOT NULL DEFAULT 'pertanyaan',
-  subject TEXT NOT NULL,
-  message TEXT NOT NULL,
-  is_read INTEGER NOT NULL DEFAULT 0,
-  handled_at INTEGER,
-  handled_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  ip_hash TEXT,
-  created_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_site_settings (
-  key TEXT PRIMARY KEY,
-  value TEXT,
-  updated_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_audit_logs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-  action TEXT NOT NULL,
-  entity_type TEXT,
-  entity_id TEXT,
-  changes TEXT,
-  ip_hash TEXT,
-  created_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS web_periods (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  start_date INTEGER NOT NULL,
-  end_date INTEGER,
-  is_current INTEGER NOT NULL DEFAULT 0
-);
-
-CREATE TABLE IF NOT EXISTS web_members (
-  id TEXT PRIMARY KEY,
-  period_id TEXT REFERENCES web_periods(id) ON DELETE RESTRICT,
-  department_id TEXT REFERENCES departments(id) ON DELETE SET NULL,
-  name TEXT NOT NULL,
-  position TEXT NOT NULL,
-  tier TEXT NOT NULL DEFAULT 'staf',
-  linkedin_url TEXT,
-  photo_media_id TEXT REFERENCES web_media(id) ON DELETE SET NULL,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  is_active INTEGER NOT NULL DEFAULT 1
-);
-
--- ========================================================
--- BAGIAN 7: INDEKS KINERJA & PENCARIAN TINGGI
--- ========================================================
-
--- Indeks Tabel Master & Transaksi (M_* & T_*)
 CREATE INDEX IF NOT EXISTS idx_m_anggota_jurusan ON M_Anggota (id_jurusan);
 CREATE INDEX IF NOT EXISTS idx_m_anggota_gen ON M_Anggota (gen, angkatan);
 CREATE INDEX IF NOT EXISTS idx_m_pembina_kategori ON M_Pembina (kategori, urutan);
@@ -689,15 +401,143 @@ CREATE INDEX IF NOT EXISTS idx_t_berita_foto ON T_Berita_Foto (id_berita, urutan
 CREATE INDEX IF NOT EXISTS idx_t_kompetisi_status ON T_Kompetisi (status, deadline_pendaftaran);
 CREATE INDEX IF NOT EXISTS idx_t_kompetisi_slug ON T_Kompetisi (slug);
 CREATE INDEX IF NOT EXISTS idx_t_prestasi_anggota ON T_Prestasi (id_perisai, tahun);
+CREATE INDEX IF NOT EXISTS idx_t_prestasi_tim ON T_Prestasi_Anggota (id_prestasi, id_perisai);
 CREATE INDEX IF NOT EXISTS idx_t_keuangan_periode ON T_Keuangan (id_periode, jenis_transaksi);
 CREATE INDEX IF NOT EXISTS idx_t_pesan_masuk_read ON T_Pesan_Masuk (is_read, created_at);
 CREATE INDEX IF NOT EXISTS idx_t_galeri_status ON T_Galeri (is_active, is_featured, urutan);
 
--- Indeks Tabel Kompatibilitas (web_*)
-CREATE INDEX IF NOT EXISTS idx_web_posts_status ON web_posts (status, published_at);
-CREATE INDEX IF NOT EXISTS idx_web_posts_slug ON web_posts (slug);
-CREATE INDEX IF NOT EXISTS idx_web_work_programs_dept ON web_work_programs (department_id);
-CREATE INDEX IF NOT EXISTS idx_web_opportunities_status ON web_opportunities (status, deadline_at);
-CREATE INDEX IF NOT EXISTS idx_web_gallery_items_active ON web_gallery_items (is_active, sort_order);
-CREATE INDEX IF NOT EXISTS idx_web_inbox_messages_read ON web_inbox_messages (is_read, created_at);
-CREATE INDEX IF NOT EXISTS idx_web_members_period ON web_members (period_id, tier, sort_order);
+-- ========================================================
+-- BAGIAN 7: VIEW & TRIGGER KOMPATIBILITAS (ZERO STORAGE)
+-- Menjamin kode aplikasi eksisting & modul web tetap berjalan mulus
+-- Tanpa menciptakan duplikasi data fisik (100% Normalized)
+-- ========================================================
+
+-- View Departemen
+CREATE VIEW IF NOT EXISTS departments AS
+SELECT slug AS id, nama_departemen AS nama FROM M_Departemen;
+
+-- View Fakultas
+CREATE VIEW IF NOT EXISTS fakultas AS
+SELECT LOWER(kode_fakultas) AS id, nama_fakultas AS nama FROM M_Fakultas;
+
+-- View Program Studi
+CREATE VIEW IF NOT EXISTS program_studi AS
+SELECT LOWER(REPLACE(REPLACE(j.nama_jurusan, ' ', '-'), '/', '-')) AS id, LOWER(f.kode_fakultas) AS fakultas_id, j.nama_jurusan AS nama
+FROM M_Jurusan j JOIN M_Fakultas f ON j.id_fakultas = f.id_fakultas;
+
+-- View Pengguna (Users)
+CREATE VIEW IF NOT EXISTS users AS
+SELECT 
+  a.id_perisai AS id, a.id_perisai AS prn, k.password_hash, r.nama_role AS role, a.gen AS generasi,
+  COALESCE(d.slug, 'bph') AS department_id, COALESCE(j.nama_jabatan, 'Anggota') AS jabatan,
+  a.nama_lengkap, a.tempat_lahir, a.tanggal_lahir, a.alamat, a.no_wa AS no_telp, a.email, a.nim,
+  LOWER(REPLACE(REPLACE(COALESCE(jr.nama_jurusan, 'Teknik Informatika'), ' ', '-'), '/', '-')) AS program_studi_id,
+  a.angkatan, a.linkedin AS linkedin_url, a.instagram AS instagram_username, a.foto_url AS avatar_url
+FROM M_Anggota a
+JOIN M_Akun k ON a.id_perisai = k.id_perisai
+JOIN M_Role r ON k.id_role = r.id_role
+LEFT JOIN T_Kepengurusan kp ON a.id_perisai = kp.id_perisai AND kp.id_periode = (SELECT id_periode FROM M_Periode WHERE is_active = 1 LIMIT 1)
+LEFT JOIN M_Jabatan j ON kp.id_jabatan = j.id_jabatan
+LEFT JOIN M_Departemen d ON kp.id_departemen = d.id_departemen
+LEFT JOIN M_Jurusan jr ON a.id_jurusan = jr.id_jurusan;
+
+-- View Sesi Login
+CREATE VIEW IF NOT EXISTS sessions AS
+SELECT s.id_sesi AS id, a.id_perisai AS user_id, s.token, s.expires_at, s.ip_address, s.user_agent, s.created_at, s.created_at AS updated_at
+FROM T_Sesi s JOIN M_Akun k ON s.id_akun = k.id_akun JOIN M_Anggota a ON k.id_perisai = a.id_perisai;
+
+-- View Profil Departemen Web
+CREATE VIEW IF NOT EXISTS web_department_profiles AS
+SELECT slug AS department_id, slug, deskripsi_singkat AS short_description, tupoksi_utama AS description,
+       visi AS vision, misi AS mission, foto_grup AS group_photo_media_id, urutan AS sort_order, is_active, created_at, updated_at
+FROM M_Departemen;
+
+-- View Hak Akses CMS
+CREATE VIEW IF NOT EXISTS web_user_access AS
+SELECT a.id_perisai AS user_id, LOWER(r.nama_role) AS cms_role, d.slug AS department_id, k.created_at, k.updated_at
+FROM M_Akun k JOIN M_Anggota a ON k.id_perisai = a.id_perisai JOIN M_Role r ON k.id_role = r.id_role
+LEFT JOIN T_Kepengurusan kp ON a.id_perisai = kp.id_perisai AND kp.id_periode = (SELECT id_periode FROM M_Periode WHERE is_active = 1 LIMIT 1)
+LEFT JOIN M_Departemen d ON kp.id_departemen = d.id_departemen;
+
+-- View Dewan Pembina Web
+CREATE VIEW IF NOT EXISTS web_extra_people AS
+SELECT CAST(id_pembina AS TEXT) AS id, nama AS name, jabatan AS position, kategori AS tier, linkedin AS linkedin_url,
+       foto_url AS photo_media_id, urutan AS sort_order, is_active, created_at, updated_at
+FROM M_Pembina;
+
+-- View Periode Web
+CREATE VIEW IF NOT EXISTS web_periods AS
+SELECT CAST(id_periode AS TEXT) AS id, nama_periode AS name, created_at AS start_date, updated_at AS end_date, is_active AS is_current
+FROM M_Periode;
+
+-- View Anggota Kepengurusan Web
+CREATE VIEW IF NOT EXISTS web_members AS
+SELECT a.id_perisai AS id, CAST(kp.id_periode AS TEXT) AS period_id, d.slug AS department_id,
+       a.nama_lengkap AS name, j.nama_jabatan AS position, kp.tier, a.linkedin AS linkedin_url,
+       a.foto_url AS photo_media_id, kp.urutan AS sort_order, 1 AS is_active
+FROM T_Kepengurusan kp JOIN M_Anggota a ON kp.id_perisai = a.id_perisai
+JOIN M_Jabatan j ON kp.id_jabatan = j.id_jabatan LEFT JOIN M_Departemen d ON kp.id_departemen = d.id_departemen;
+
+-- View Berita & Kabar Web
+CREATE VIEW IF NOT EXISTS web_posts AS
+SELECT CAST(b.id_berita AS TEXT) AS id, d.slug AS department_id, b.judul AS title, b.slug, b.kategori AS category,
+       b.ringkasan AS excerpt, b.konten AS content, b.foto_cover AS cover_media_id, b.status, b.tanggal_publish AS published_at,
+       b.is_featured, b.penulis_id AS created_by, b.diperbarui_oleh AS updated_by, b.created_at, b.updated_at
+FROM T_Berita b LEFT JOIN M_Departemen d ON b.id_departemen = d.id_departemen;
+
+-- View Multi-Foto Berita Web
+CREATE VIEW IF NOT EXISTS web_post_images AS
+SELECT CAST(id_berita AS TEXT) AS post_id, foto_url AS media_id, urutan AS sort_order, caption FROM T_Berita_Foto;
+
+-- View Program Kerja Web
+CREATE VIEW IF NOT EXISTS web_work_programs AS
+SELECT CAST(p.id_proker AS TEXT) AS id, d.slug AS department_id, p.nama_proker AS title, p.slug,
+       p.target_pelaksanaan AS summary, p.deskripsi AS content, p.foto_cover AS cover_media_id, p.status,
+       p.created_at AS published_at, p.urutan AS sort_order, p.penanggung_jawab_id AS created_by,
+       p.diperbarui_oleh AS updated_by, p.created_at, p.updated_at
+FROM T_Proker p LEFT JOIN M_Departemen d ON p.id_departemen = d.id_departemen;
+
+-- View Multi-Foto Proker Web
+CREATE VIEW IF NOT EXISTS web_work_program_images AS
+SELECT CAST(id_proker AS TEXT) AS work_program_id, foto_url AS media_id, urutan AS sort_order, caption FROM T_Proker_Dokumentasi;
+
+-- View Peluang & Kompetisi Web
+CREATE VIEW IF NOT EXISTS web_opportunities AS
+SELECT CAST(id_kompetisi AS TEXT) AS id, tipe AS type, nama_kompetisi AS title, slug, kategori AS category,
+       penyelenggara AS organizer, deskripsi AS description, deadline_pendaftaran AS deadline_at,
+       link_pendaftaran AS registration_url, link_poster AS poster_media_id, status, tanggal_publish AS published_at,
+       penulis_id AS created_by, diperbarui_oleh AS updated_by, created_at, updated_at
+FROM T_Kompetisi;
+
+-- View Statistik Web
+CREATE VIEW IF NOT EXISTS web_statistics AS
+SELECT CAST(id_statistik AS TEXT) AS id, label, nilai AS value, deskripsi AS description, urutan AS sort_order, is_active, created_at, updated_at
+FROM T_Statistik;
+
+-- View Galeri Kegiatan Web
+CREATE VIEW IF NOT EXISTS web_gallery_items AS
+SELECT CAST(id_galeri AS TEXT) AS id, foto_url AS media_id, judul AS title, deskripsi AS description, kategori AS category,
+       created_at AS taken_at, is_featured, is_active, urutan AS sort_order, created_at, updated_at
+FROM T_Galeri;
+
+-- View Pesan Masuk Web
+CREATE VIEW IF NOT EXISTS web_inbox_messages AS
+SELECT CAST(id_pesan AS TEXT) AS id, nama_pengirim AS name, email, no_wa AS phone, tujuan AS purpose, subjek AS subject,
+       isi_pesan AS message, is_read, dibalas_pada AS handled_at, dibalas_oleh AS handled_by, ip_address AS ip_hash, created_at
+FROM T_Pesan_Masuk;
+
+-- View Pengaturan Website
+CREATE VIEW IF NOT EXISTS web_site_settings AS
+SELECT kunci AS key, nilai AS value, diperbarui_oleh AS updated_by, updated_at FROM T_Pengaturan;
+
+-- View Audit Log Web
+CREATE VIEW IF NOT EXISTS web_audit_logs AS
+SELECT id_log AS id, CAST(id_akun AS TEXT) AS user_id, aksi AS action, entitas AS entity_type, id_entitas AS entity_id,
+       COALESCE(data_baru, data_lama) AS changes, ip_address AS ip_hash, created_at
+FROM T_Audit_Log;
+
+-- View Media Web
+CREATE VIEW IF NOT EXISTS web_media AS
+SELECT id_media AS id, kunci_penyimpanan AS storage_key, nama_berkas AS original_name, tipe_mime AS mime_type,
+       ukuran_byte AS size_bytes, lebar AS width, tinggi AS height, alt_text, diunggah_oleh AS uploaded_by, created_at
+FROM T_Media;

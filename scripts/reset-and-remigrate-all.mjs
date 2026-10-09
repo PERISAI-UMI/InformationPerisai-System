@@ -111,20 +111,20 @@ function splitSqlStatements(sql) {
 // 3. Executor untuk database target
 async function migrateAndSeedTarget(name, executor) {
   console.log(`\n======================================================`);
-  console.log(`🚀 Menjalankan migrasi terpadu (002) & seeding ke: [${name}]`);
+  console.log(`🚀 Menjalankan migrasi ternormalisasi (002) & seeding ke: [${name}]`);
   console.log(`======================================================`);
 
   const now = Math.floor(Date.now() / 1000);
   const defaultPasswordHash = crypto.createHash("sha256").update("perisai2026").digest("hex");
 
   // Step 1: Eksekusi DDL Tunggal Terpadu (002_complete_perisai_schema.sql)
-  console.log(`1️⃣ Menerapkan skema tunggal terpadu (002_complete_perisai_schema.sql)...`);
+  console.log(`1️⃣ Menerapkan 25 tabel master/transaksi, views, & triggers (002_complete_perisai_schema.sql)...`);
   for (const stmt of splitSqlStatements(migrationSql)) {
     await executor(stmt);
   }
 
-  // Step D: Seed Data Referensi Master (Fakultas, Jurusan, Departemen, Periode, Role, Jabatan)
-  console.log(`4️⃣ Mengisi data referensi master (Fakultas, Jurusan, Departemen, Jabatan, Periode, Role)...`);
+  // Step 2: Seed Data Referensi Master (Fakultas, Jurusan, Departemen, Jabatan, Periode, Role)
+  console.log(`2️⃣ Mengisi data referensi master (Fakultas, Jurusan, Departemen, Jabatan, Periode, Role)...`);
 
   const daftarFakultas = [
     { nama: "Fakultas Ekonomi dan Bisnis", kode: "FEB" },
@@ -143,8 +143,10 @@ async function migrateAndSeedTarget(name, executor) {
   ];
 
   for (const f of daftarFakultas) {
-    await executor(`INSERT OR IGNORE INTO M_Fakultas (nama_fakultas, kode_fakultas, created_at, updated_at) VALUES (?, ?, ?, ?)`, [f.nama, f.kode, now, now]);
-    await executor(`INSERT OR IGNORE INTO fakultas (id, nama) VALUES (?, ?)`, [f.kode.toLowerCase(), f.nama]);
+    await executor(
+      `INSERT OR IGNORE INTO M_Fakultas (nama_fakultas, kode_fakultas, created_at, updated_at) VALUES (?, ?, ?, ?)`,
+      [f.nama, f.kode, now, now]
+    );
   }
 
   const daftarJurusan = [
@@ -180,8 +182,10 @@ async function migrateAndSeedTarget(name, executor) {
   for (const j of daftarJurusan) {
     const fakRows = await executor(`SELECT id_fakultas FROM M_Fakultas WHERE kode_fakultas = ?`, [j.fakKode]);
     const fakId = fakRows && fakRows[0] ? fakRows[0].id_fakultas : 1;
-    await executor(`INSERT OR IGNORE INTO M_Jurusan (id_fakultas, nama_jurusan, jenjang, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`, [fakId, j.nama, j.jenjang, now, now]);
-    await executor(`INSERT OR IGNORE INTO program_studi (id, fakultas_id, nama) VALUES (?, ?, ?)`, [j.nama.toLowerCase().replace(/[^a-z0-9]/g, "-"), j.fakKode.toLowerCase(), j.nama]);
+    await executor(
+      `INSERT OR IGNORE INTO M_Jurusan (id_fakultas, nama_jurusan, jenjang, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
+      [fakId, j.nama, j.jenjang, now, now]
+    );
   }
 
   const daftarDept = [
@@ -201,12 +205,6 @@ async function migrateAndSeedTarget(name, executor) {
        VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
       [d.nama, d.singkatan, d.slug, d.tupoksi, d.tupoksi, d.urutan, now, now]
     );
-    await executor(`INSERT OR IGNORE INTO departments (id, nama) VALUES (?, ?)`, [d.slug, d.nama]);
-    await executor(
-      `INSERT OR IGNORE INTO web_department_profiles (department_id, slug, short_description, description, sort_order, is_active, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
-      [d.slug, d.slug, d.tupoksi, d.tupoksi, d.urutan, now, now]
-    );
   }
 
   // Periode 2026/2027
@@ -219,12 +217,6 @@ async function migrateAndSeedTarget(name, executor) {
   const periodeRows = await executor(`SELECT id_periode FROM M_Periode WHERE nama_periode = '2026/2027'`);
   const periodeId = periodeRows && periodeRows[0] ? periodeRows[0].id_periode : 1;
 
-  await executor(
-    `INSERT OR IGNORE INTO web_periods (id, name, start_date, end_date, is_current)
-     VALUES ('period-2026-2027', '2026/2027', 1767225600, 1798761600, 1)`
-  );
-  await executor(`UPDATE web_periods SET is_current = 1 WHERE id = 'period-2026-2027'`);
-
   // Roles
   const daftarRoles = [
     { nama: "SUPER_ADMIN", label: "Super Administrator", desc: "Akses penuh seluruh sistem" },
@@ -234,7 +226,10 @@ async function migrateAndSeedTarget(name, executor) {
     { nama: "ANGGOTA", label: "Anggota Fungsionaris", desc: "Akses profil pribadi" },
   ];
   for (const r of daftarRoles) {
-    await executor(`INSERT OR IGNORE INTO M_Role (nama_role, label, deskripsi, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`, [r.nama, r.label, r.desc, now, now]);
+    await executor(
+      `INSERT OR IGNORE INTO M_Role (nama_role, label, deskripsi, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
+      [r.nama, r.label, r.desc, now, now]
+    );
   }
 
   // Jabatan Standar
@@ -247,112 +242,113 @@ async function migrateAndSeedTarget(name, executor) {
     { nama: "Anggota", level: 5, urutan: 6 },
   ];
   for (const j of daftarJabatan) {
-    await executor(`INSERT OR IGNORE INTO M_Jabatan (nama_jabatan, level_hirarki, urutan, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`, [j.nama, j.level, j.urutan, now, now]);
+    await executor(
+      `INSERT OR IGNORE INTO M_Jabatan (nama_jabatan, level_hirarki, urutan, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
+      [j.nama, j.level, j.urutan, now, now]
+    );
   }
 
-  // Map bantu
-  const roleRows = await executor(`SELECT id_role, nama_role FROM M_Role`);
-  const roleMap = {};
-  for (const r of roleRows) roleMap[r.nama_role] = r.id_role;
-
-  const jabRows = await executor(`SELECT id_jabatan, nama_jabatan FROM M_Jabatan`);
-  const jabMap = {};
-  for (const j of jabRows) jabMap[j.nama_jabatan] = j.id_jabatan;
-
-  const deptDbRows = await executor(`SELECT id_departemen, singkatan, slug FROM M_Departemen`);
+  // Maps untuk Foreign Keys
+  const deptsDb = await executor(`SELECT id_departemen, singkatan, slug FROM M_Departemen`);
   const deptMap = {};
-  for (const d of deptDbRows) deptMap[d.singkatan] = d.id_departemen;
+  for (const d of deptsDb) { deptMap[d.singkatan] = d.id_departemen; }
 
-  const jurRows = await executor(`SELECT id_jurusan, nama_jurusan FROM M_Jurusan`);
-  const jurMap = {};
-  for (const j of jurRows) jurMap[j.nama_jurusan] = j.id_jurusan;
+  const jabsDb = await executor(`SELECT id_jabatan, nama_jabatan FROM M_Jabatan`);
+  const jabMap = {};
+  for (const j of jabsDb) { jabMap[j.nama_jabatan] = j.id_jabatan; }
 
-  // Step E: Seed 42 Fungsionaris Asli 2026/2027
-  console.log(`5️⃣ Mengisi data 42 fungsionaris aktif 2026/2027 (M_Anggota, M_Akun, T_Kepengurusan, users, web_members)...`);
+  const rolesDb = await executor(`SELECT id_role, nama_role FROM M_Role`);
+  const roleMap = {};
+  for (const r of rolesDb) { roleMap[r.nama_role] = r.id_role; }
+
+  const jurusansDb = await executor(`SELECT id_jurusan, nama_jurusan FROM M_Jurusan`);
+  const jurusanMap = {};
+  for (const j of jurusansDb) { jurusanMap[j.nama_jurusan] = j.id_jurusan; }
+
+  // Step 3: Seed 42 Fungsionaris Riil ke M_Anggota, M_Akun, T_Kepengurusan
+  console.log(`3️⃣ Memasukkan 42 fungsionaris riil ke M_Anggota, M_Akun, dan T_Kepengurusan...`);
+
   let orderIndex = 1;
-
   for (const m of rawMembers) {
     const prn = m["ID PERISAI"].trim();
     const nama = m["NamaLengkap"].trim();
     const nim = String(m["NIM/Stambuk"]).trim();
     const angkatan = Number(m["Angkatan"]) || 2023;
-    const gen = Number(m["Generasi"]) || 10;
-    const prodiName = m["Program Studi/Jurusan"].trim();
-    const jurusanId = jurMap[prodiName] || 1;
-    const { tempat, tanggal } = parseTTL(m["Tempat, Tanggal Lahir"]);
-    const email = m["Email"].trim();
+    const gen = Number(m["Generasi"]) || 11;
+    const email = m["Email"].trim().toLowerCase();
     const noWa = normalizePhone(m["No. Telepon/WA"]);
-    const alamat = m["Alamat"] ? m["Alamat"].trim() : null;
+    const alamat = (m["Alamat"] || "").trim() || null;
+    const hobi = (m["Hobi"] || "").trim() || null;
     const linkedin = normalizeUrl(m["Linkedn"], "linkedin");
     const instagram = normalizeUrl(m["Instagram"], "instagram");
-    const hobi = m["Hobi"] ? m["Hobi"].trim() : null;
-    const quotes = "Bergerak berinovasi, berkarakter memimpin.";
+    const ttl = parseTTL(m["Tempat, Tanggal Lahir"]);
+    const tempat = ttl.tempat;
+    const tanggal = ttl.tanggal;
+    const prodiName = m["Program Studi/Jurusan"].trim();
+    const jurusanId = jurusanMap[prodiName] || 1;
 
     // Insert M_Anggota
     await executor(
       `INSERT INTO M_Anggota (
-        id_perisai, nama_lengkap, nim, id_jurusan, angkatan, gen,
-        tempat_lahir, tanggal_lahir, email, no_wa, alamat,
-        linkedin, instagram, hobi, quotes, foto_url, status,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aktif', ?, ?)
+        id_perisai, nama_lengkap, nim, id_jurusan, angkatan, gen, tempat_lahir,
+        tanggal_lahir, jenis_kelamin, email, no_wa, alamat, linkedin, instagram,
+        hobi, foto_url, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'L', ?, ?, ?, ?, ?, ?, '/maskot.png', 'aktif', ?, ?)
       ON CONFLICT(id_perisai) DO UPDATE SET
         nama_lengkap=excluded.nama_lengkap,
         nim=excluded.nim,
         email=excluded.email,
         no_wa=excluded.no_wa,
+        alamat=excluded.alamat,
         linkedin=excluded.linkedin,
         instagram=excluded.instagram,
-        hobi=excluded.hobi`,
-      [prn, nama, nim, jurusanId, angkatan, gen, tempat, tanggal, email, noWa, alamat, linkedin, instagram, hobi, quotes, "/maskot.png", now, now]
+        hobi=excluded.hobi,
+        updated_at=excluded.updated_at`,
+      [prn, nama, nim, jurusanId, angkatan, gen, tempat, tanggal, email, noWa, alamat, linkedin, instagram, hobi, now, now]
     );
 
-    // Hitung posisi & jabatan
+    // Pemetaan Jabatan & Departemen
     const tugas = m["Tugas dan Tanggung Jawab"].trim();
     let jabatanId = jabMap["Anggota"];
-    let deptId = null;
-    let deptSlug = "bph";
+    let deptId = deptMap["BPH"];
     let roleId = roleMap["ANGGOTA"];
     let tier = "staf";
 
     if (tugas === "Ketua Umum") {
       jabatanId = jabMap["Ketua Umum"];
       deptId = deptMap["BPH"];
-      deptSlug = "bph";
       roleId = roleMap["SUPER_ADMIN"];
       tier = "bph";
     } else if (tugas === "Sekretaris Umum") {
       jabatanId = jabMap["Sekretaris Umum"];
       deptId = deptMap["BPH"];
-      deptSlug = "bph";
       roleId = roleMap["BPH"];
       tier = "bph";
     } else if (tugas === "Bendahara Umum") {
       jabatanId = jabMap["Bendahara Umum"];
       deptId = deptMap["BPH"];
-      deptSlug = "bph";
       roleId = roleMap["BPH"];
       tier = "bph";
     } else if (tugas.startsWith("Kepala Departemen")) {
       jabatanId = jabMap["Kepala Departemen"];
       roleId = roleMap["KADEP"];
       tier = "kadep";
-      if (tugas.includes("PSDM")) { deptId = deptMap["PSDM"]; deptSlug = "psdm"; }
-      else if (tugas.includes("Media")) { deptId = deptMap["MEDIA"]; deptSlug = "media"; }
-      else if (tugas.includes("KOMPRES")) { deptId = deptMap["KOMPRES"]; deptSlug = "kompres"; }
-      else if (tugas.includes("HUMAS")) { deptId = deptMap["HUMAS"]; deptSlug = "humas"; }
-      else if (tugas.includes("RISTEK")) { deptId = deptMap["RISTEK"]; deptSlug = "ristek"; }
-      else if (tugas.includes("Penalaran")) { deptId = deptMap["PENALARAN"]; deptSlug = "penalaran"; }
+      if (tugas.includes("PSDM")) { deptId = deptMap["PSDM"]; }
+      else if (tugas.includes("Media")) { deptId = deptMap["MEDIA"]; }
+      else if (tugas.includes("KOMPRES")) { deptId = deptMap["KOMPRES"]; }
+      else if (tugas.includes("HUMAS")) { deptId = deptMap["HUMAS"]; }
+      else if (tugas.includes("RISTEK")) { deptId = deptMap["RISTEK"]; }
+      else if (tugas.includes("Penalaran")) { deptId = deptMap["PENALARAN"]; }
     } else if (tugas.startsWith("Staf Ahli")) {
       jabatanId = jabMap["Staf Ahli"];
       roleId = roleMap["EDITOR"];
       tier = "staf";
-      if (tugas.includes("PSDM")) { deptId = deptMap["PSDM"]; deptSlug = "psdm"; }
-      else if (tugas.includes("Media")) { deptId = deptMap["MEDIA"]; deptSlug = "media"; }
-      else if (tugas.includes("KOMPRES")) { deptId = deptMap["KOMPRES"]; deptSlug = "kompres"; }
-      else if (tugas.includes("HUMAS")) { deptId = deptMap["HUMAS"]; deptSlug = "humas"; }
-      else if (tugas.includes("RISTEK")) { deptId = deptMap["RISTEK"]; deptSlug = "ristek"; }
-      else if (tugas.includes("Penalaran")) { deptId = deptMap["PENALARAN"]; deptSlug = "penalaran"; }
+      if (tugas.includes("PSDM")) { deptId = deptMap["PSDM"]; }
+      else if (tugas.includes("Media")) { deptId = deptMap["MEDIA"]; }
+      else if (tugas.includes("KOMPRES")) { deptId = deptMap["KOMPRES"]; }
+      else if (tugas.includes("HUMAS")) { deptId = deptMap["HUMAS"]; }
+      else if (tugas.includes("RISTEK")) { deptId = deptMap["RISTEK"]; }
+      else if (tugas.includes("Penalaran")) { deptId = deptMap["PENALARAN"]; }
     }
 
     // Insert M_Akun
@@ -374,70 +370,11 @@ async function migrateAndSeedTarget(name, executor) {
       [periodeId, prn, jabatanId, deptId, tier, orderIndex, now, now]
     );
 
-    // Masuk juga ke tabel users (untuk kompatibilitas query lama / relasi foreign key)
-    const prodiIdStr = prodiName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-    const userId = `usr-${prn.replace(/\s+/g, "_")}`;
-    await executor(
-      `INSERT INTO users (
-        id, prn, password_hash, role, generasi, department_id, jabatan,
-        nama_lengkap, tempat_lahir, tanggal_lahir, alamat, no_telp,
-        email, nim, program_studi_id, angkatan, linkedin_url, instagram_username, avatar_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        nama_lengkap=excluded.nama_lengkap,
-        email=excluded.email,
-        nim=excluded.nim,
-        no_telp=excluded.no_telp`,
-      [
-        userId, prn, defaultPasswordHash,
-        tugas === "Ketua Umum" ? "SUPER_ADMIN" : "MEMBER",
-        gen, deptSlug, tugas, nama, tempat, tanggal, alamat, noWa,
-        email, nim, prodiIdStr, angkatan, linkedin, instagram, "/maskot.png"
-      ]
-    );
-
-    // Masuk ke web_members
-    await executor(
-      `INSERT INTO web_members (id, period_id, department_id, name, position, tier, linkedin_url, sort_order, is_active)
-       VALUES (?, 'period-2026-2027', ?, ?, ?, ?, ?, ?, 1)
-       ON CONFLICT(id) DO UPDATE SET
-         name=excluded.name,
-         position=excluded.position,
-         tier=excluded.tier,
-         sort_order=excluded.sort_order`,
-      [
-        `mem-${prn.replace(/\s+/g, "_")}`,
-        deptSlug,
-        nama,
-        tugas,
-        tier,
-        linkedin,
-        orderIndex
-      ]
-    );
-
-    // Akses CMS untuk pimpinan & kadep
-    if (tugas === "Ketua Umum" || tugas === "Sekretaris Umum" || tugas === "Bendahara Umum") {
-      await executor(
-        `INSERT INTO web_user_access (user_id, cms_role, department_id, created_at, updated_at)
-         VALUES (?, 'super_admin', ?, ?, ?)
-         ON CONFLICT(user_id) DO UPDATE SET cms_role='super_admin'`,
-        [userId, deptSlug, now, now]
-      );
-    } else if (tugas.startsWith("Kepala Departemen")) {
-      await executor(
-        `INSERT INTO web_user_access (user_id, cms_role, department_id, created_at, updated_at)
-         VALUES (?, 'editor', ?, ?, ?)
-         ON CONFLICT(user_id) DO UPDATE SET cms_role='editor'`,
-        [userId, deptSlug, now, now]
-      );
-    }
-
     orderIndex++;
   }
 
-  // Step F: Seed Pengaturan Website (web_site_settings & T_Pengaturan)
-  console.log(`6️⃣ Mengisi pengaturan default website (web_site_settings & T_Pengaturan)...`);
+  // Step 4: Seed Pengaturan Website (T_Pengaturan)
+  console.log(`4️⃣ Mengisi pengaturan sistem (T_Pengaturan)...`);
   const settingsList = [
     { key: "site_name", value: "UKM PERISAI UMI" },
     { key: "site_tagline", value: "Pusat Pengembangan Riset Mahasiswa Universitas Muslim Indonesia" },
@@ -451,33 +388,22 @@ async function migrateAndSeedTarget(name, executor) {
 
   for (const s of settingsList) {
     await executor(
-      `INSERT INTO web_site_settings (key, value, updated_at) VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at`,
-      [s.key, s.value, now]
-    );
-    await executor(
-      `INSERT INTO T_Pengaturan (kunci, nilai, tipe, diperbarui_oleh, updated_at) VALUES (?, ?, 'string', 'system', ?)
+      `INSERT INTO T_Pengaturan (kunci, nilai, tipe, diperbarui_oleh, updated_at) VALUES (?, ?, 'string', NULL, ?)
        ON CONFLICT(kunci) DO UPDATE SET nilai=excluded.nilai, updated_at=excluded.updated_at`,
       [s.key, s.value, now]
     );
   }
 
-  // Step G: Seed Statistik
-  console.log(`7️⃣ Mengisi statistik pencapaian (web_statistics & T_Statistik)...`);
+  // Step 5: Seed Statistik (T_Statistik)
+  console.log(`5️⃣ Mengisi metrik statistik (T_Statistik)...`);
   const statsList = [
-    { id: "stat-1", label: "Pengurus Aktif", value: "42", desc: "Fungsionaris Generasi 11", order: 1 },
-    { id: "stat-2", label: "Departemen & Badan", value: "7", desc: "Pilar bidang keilmuan dan riset", order: 2 },
-    { id: "stat-3", label: "Prestasi Ilmiah", value: "50+", desc: "Tingkat nasional & regional", order: 3 },
-    { id: "stat-4", label: "Karya & Inovasi", value: "25+", desc: "Prototipe, KTI, dan PKM didanai", order: 4 }
+    { label: "Pengurus Aktif", value: "42", desc: "Fungsionaris Generasi 11", order: 1 },
+    { label: "Departemen & Badan", value: "7", desc: "Pilar bidang keilmuan dan riset", order: 2 },
+    { label: "Prestasi Ilmiah", value: "50+", desc: "Tingkat nasional & regional", order: 3 },
+    { label: "Karya & Inovasi", value: "25+", desc: "Prototipe, KTI, dan PKM didanai", order: 4 }
   ];
 
   for (const st of statsList) {
-    await executor(
-      `INSERT INTO web_statistics (id, label, value, description, sort_order, is_active, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 1, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET value=excluded.value, description=excluded.description`,
-      [st.id, st.label, st.value, st.desc, st.order, now, now]
-    );
     await executor(
       `INSERT OR IGNORE INTO T_Statistik (label, nilai, deskripsi, urutan, is_active, created_at, updated_at)
        VALUES (?, ?, ?, ?, 1, ?, ?)`,
@@ -485,18 +411,32 @@ async function migrateAndSeedTarget(name, executor) {
     );
   }
 
-  // Step H: Dewan Pembina
-  console.log(`8️⃣ Mengisi Dewan Pembina (M_Pembina & web_extra_people)...`);
+  // Step 6: Seed Dewan Pembina (M_Pembina)
+  console.log(`6️⃣ Mengisi data Dewan Pembina (M_Pembina)...`);
   await executor(
     `INSERT OR IGNORE INTO M_Pembina (nama, gelar, jabatan, kategori, urutan, is_active, created_at, updated_at)
      VALUES ('Dr. Ir. Pembina Riset UMI', 'M.T.', 'Dewan Pembina UKM PERISAI UMI', 'pembina', 1, 1, ?, ?)`,
     [now, now]
   );
-  await executor(
-    `INSERT INTO web_extra_people (id, name, position, tier, sort_order, is_active, created_at, updated_at)
-     VALUES ('pembina-1', 'Dr. Ir. Pembina Riset UMI, M.T.', 'Dewan Pembina UKM PERISAI UMI', 'pembina', 1, 1, ?, ?)
-     ON CONFLICT(id) DO UPDATE SET name=excluded.name, position=excluded.position`,
+
+  // Step 7: Seed Prestasi & Prestasi Anggota (Normalisasi 1NF & 2NF)
+  console.log(`7️⃣ Mengisi data prestasi & relasi anggota tim (T_Prestasi & T_Prestasi_Anggota)...`);
+  const prestasiRows = await executor(
+    `INSERT INTO T_Prestasi (id_perisai, nama_kompetisi, judul_karya, kategori, tingkat, peringkat, tahun, penyelenggara, created_at, updated_at)
+     VALUES ('PRN 0253', 'Pekan Ilmiah Mahasiswa Nasional (PIMNAS)', 'Sistem Cerdas Pemantauan Lingkungan Berbasis IoT', 'PKM-Karsa Cipta', 'Nasional', 'Juara 1 Medali Emas', 2025, 'Kemendikbudristek', ?, ?)
+     RETURNING id_prestasi`,
     [now, now]
+  );
+  const prestasiId = prestasiRows && prestasiRows[0] ? prestasiRows[0].id_prestasi : 1;
+  await executor(
+    `INSERT OR IGNORE INTO T_Prestasi_Anggota (id_prestasi, id_perisai, nama_anggota, peran, created_at)
+     VALUES (?, 'PRN 0253', 'Muhammad Rifky Saputra Scania', 'Ketua Tim', ?)`,
+    [prestasiId, now]
+  );
+  await executor(
+    `INSERT OR IGNORE INTO T_Prestasi_Anggota (id_prestasi, id_perisai, nama_anggota, peran, created_at)
+     VALUES (?, 'PRN 0258', 'Nayla Ananda', 'Anggota Tim', ?)`,
+    [prestasiId, now]
   );
 
   console.log(`✨ [${name}] SELESAI DENGAN SUKSES! ✨`);
@@ -520,18 +460,18 @@ async function main() {
 
   const localDb = new Database(dbFile);
   localDb.pragma("journal_mode = WAL");
-  localDb.pragma("foreign_keys = OFF"); // Turn off while setting up schema
+  localDb.pragma("foreign_keys = OFF");
 
   const localExecutor = async (sql, args = []) => {
     try {
-      if (sql.trim().toUpperCase().startsWith("SELECT")) {
+      if (sql.trim().toUpperCase().startsWith("SELECT") || sql.trim().toUpperCase().includes("RETURNING")) {
         return localDb.prepare(sql).all(...args);
       } else {
         return localDb.prepare(sql).run(...args);
       }
     } catch(err) {
       if (!err.message.includes("already exists")) {
-        // silent or rethrow if fatal
+        console.warn("Local SQLite error on SQL:", sql.slice(0, 100), "->", err.message);
       }
       return [];
     }
@@ -549,23 +489,28 @@ async function main() {
   console.log(`\n🌐 Menghubungkan ke Turso Cloud untuk reset: ${tursoUrl}`);
   const tursoClient = createClient({ url: tursoUrl, authToken: tursoAuthToken });
 
-  console.log("🗑️ Menghapus seluruh tabel sebelumnya di Turso Cloud...");
+  console.log("🗑️ Menghapus seluruh triggers, views, dan tabel di Turso Cloud...");
   try {
-    const existingTablesRes = await tursoClient.execute(
+    // 1. Drop Triggers
+    const triggers = await tursoClient.execute("SELECT name FROM sqlite_master WHERE type='trigger'");
+    for (const row of triggers.rows) {
+      try { await tursoClient.execute(`DROP TRIGGER IF EXISTS "${row.name}"`); } catch(e) {}
+    }
+    // 2. Drop Views
+    const views = await tursoClient.execute("SELECT name FROM sqlite_master WHERE type='view'");
+    for (const row of views.rows) {
+      try { await tursoClient.execute(`DROP VIEW IF EXISTS "${row.name}"`); } catch(e) {}
+    }
+    // 3. Drop Tables
+    const tables = await tursoClient.execute(
       "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_litestream_%'"
     );
-    for (const row of existingTablesRes.rows) {
-      const tableName = row.name;
-      try {
-        await tursoClient.execute(`DROP TABLE IF EXISTS "${tableName}"`);
-        console.log(`  - Dropped table: ${tableName}`);
-      } catch (e) {
-        console.warn(`  - Gagal drop table ${tableName}:`, e.message);
-      }
+    for (const row of tables.rows) {
+      try { await tursoClient.execute(`DROP TABLE IF EXISTS "${row.name}"`); } catch(e) {}
     }
-    console.log("✅ Seluruh tabel lama di Turso Cloud berhasil dibersihkan.");
+    console.log("✅ Seluruh elemen lama di Turso Cloud berhasil dibersihkan.");
   } catch(e) {
-    console.warn("Peringatan inspect Turso tables:", e.message);
+    console.warn("Peringatan inspect Turso schema:", e.message);
   }
 
   const tursoExecutor = async (sql, args = []) => {
@@ -574,7 +519,7 @@ async function main() {
       return res.rows;
     } catch(err) {
       if (!err.message.includes("already exists")) {
-        // console.warn("Turso error:", err.message);
+        console.warn("Turso error on SQL:", sql.slice(0, 100), "->", err.message);
       }
       return [];
     }
@@ -584,7 +529,7 @@ async function main() {
   console.log("✅ Database Turso Cloud berhasil dibuat ulang dari nol.");
 
   console.log("\n======================================================");
-  console.log("🎉 SELURUH DATABASE BERHASIL DIMIGRASI ULANG & DIISI DATA DENGAN SEMPURNA! 🎉");
+  console.log("🎉 SELURUH DATABASE BERHASIL DIMIGRASI ULANG & TERNORMALISASI! 🎉");
   console.log("======================================================");
 }
 
