@@ -26,10 +26,10 @@ export function AboutNavTabs() {
             key={item.href}
             href={item.href}
             className={cn(
-              "rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold transition-all shadow-sm",
+              "rounded-full px-5 py-2 text-xs sm:text-sm font-bold transition-all duration-300 shadow-sm",
               isActive
-                ? "bg-[#E6AF2E] text-[#282F44] shadow-md ring-2 ring-[#E6AF2E]/40"
-                : "bg-[#ECECEC] text-[#282F44] hover:bg-[#E6AF2E] hover:text-[#282F44] dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-[#E6AF2E] dark:hover:text-[#282F44]"
+                ? "bg-[#FFB22C] text-[#1b1b1f] font-extrabold shadow-[0_0_15px_rgba(255,178,44,0.35)] ring-2 ring-[#FFB22C]/50"
+                : "bg-[#2b2b31]/80 text-zinc-300 border border-white/10 hover:border-[#FFB22C]/40 hover:bg-[#FFB22C]/10 hover:text-[#FFB22C]"
             )}
           >
             {item.label}

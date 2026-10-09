@@ -29,33 +29,34 @@ export function WorkProgramCard({ program }: WorkProgramCardProps) {
   };
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-      <Link href="/tentang/sumber-daya#proker" className="block">
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#2b2b31]/80 shadow-md transition-all duration-300 hover:border-[#FFB22C]/60 hover:shadow-[0_0_20px_rgba(255,178,44,0.15)]">
+      <Link href="/tentang/sumber-daya#proker" className="block overflow-hidden">
         <ResponsiveImage
           src={program.coverImageUrl}
           alt={program.name}
           aspectRatio="video"
+          className="group-hover:scale-105 transition-transform duration-500"
         />
       </Link>
       <div className="flex flex-1 flex-col justify-between p-5">
         <div>
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-[#E6AF2E] dark:text-[#F5D061]">
+            <span className="text-xs font-bold text-[#FFB22C]">
               {program.department?.name || "Program Kerja"}
             </span>
             {getStatusBadge(program.status)}
           </div>
-          <h3 className="mt-2 text-lg font-semibold text-zinc-900 group-hover:text-[#E6AF2E] transition dark:text-zinc-100">
+          <h3 className="mt-2 text-base font-bold text-white group-hover:text-[#FFB22C] transition-colors">
             <Link href="/tentang/sumber-daya#proker">{program.name}</Link>
           </h3>
-          <p className="mt-2 text-sm text-zinc-600 line-clamp-3 dark:text-zinc-400">
+          <p className="mt-2 text-xs text-zinc-300 line-clamp-3 leading-relaxed">
             {program.description}
           </p>
         </div>
-        <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="mt-4 pt-3 border-t border-white/10">
           <Link
             href="/tentang/sumber-daya#proker"
-            className="text-xs font-bold text-[#E6AF2E] hover:text-[#b8861b]"
+            className="text-xs font-bold text-[#FFB22C] hover:underline"
           >
             Lihat Detail Proker →
           </Link>
