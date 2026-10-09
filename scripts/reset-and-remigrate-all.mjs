@@ -491,22 +491,29 @@ async function main() {
 
   console.log("🗑️ Menghapus seluruh triggers, views, dan tabel di Turso Cloud...");
   try {
+    await tursoClient.execute("PRAGMA foreign_keys = OFF");
+
     // 1. Drop Triggers
     const triggers = await tursoClient.execute("SELECT name FROM sqlite_master WHERE type='trigger'");
     for (const row of triggers.rows) {
       try { await tursoClient.execute(`DROP TRIGGER IF EXISTS "${row.name}"`); } catch(e) {}
     }
+
     // 2. Drop Views
     const views = await tursoClient.execute("SELECT name FROM sqlite_master WHERE type='view'");
     for (const row of views.rows) {
       try { await tursoClient.execute(`DROP VIEW IF EXISTS "${row.name}"`); } catch(e) {}
     }
-    // 3. Drop Tables
-    const tables = await tursoClient.execute(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_litestream_%'"
-    );
-    for (const row of tables.rows) {
-      try { await tursoClient.execute(`DROP TABLE IF EXISTS "${row.name}"`); } catch(e) {}
+
+    // 3. Drop Tables (Retry loop to handle any remaining constraints)
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const tables = await tursoClient.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_litestream_%'"
+      );
+      if (tables.rows.length === 0) break;
+      for (const row of tables.rows) {
+        try { await tursoClient.execute(`DROP TABLE IF EXISTS "${row.name}"`); } catch(e) {}
+      }
     }
     console.log("✅ Seluruh elemen lama di Turso Cloud berhasil dibersihkan.");
   } catch(e) {
