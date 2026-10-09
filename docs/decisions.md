@@ -53,3 +53,14 @@ Dokumen ini mencatat keputusan-keputusan teknis fundamental dalam perancangan da
 - **Konteks**: Universitas Muslim Indonesia berlokasi di Makassar, Sulawesi Selatan (Waktu Indonesia Tengah).
 - **Keputusan**: Semua representasi tanggal dan waktu pada tampilan pengguna dan pelaporan menggunakan format bahasa Indonesia dengan zona waktu WITA (`Asia/Makassar`).
 - **Konsekuensi**: Menghindari kebingungan tenggat waktu lomba atau waktu publikasi berita antara pengurus dan mahasiswa.
+
+---
+
+## ADR 007: Basis Data Terpadu PSDM (SQLite & Turso) & Schema Guard
+- **Status**: Accepted
+- **Konteks**: Website profil publik harus menggunakan basis data yang sama dengan sistem PSDM (berkas `psdm-db.db` atau klaster Turso LibSQL). Website tidak boleh merusak, mengubah tipe, menghapus, atau memicu migrasi destruktif pada tabel bawaan PSDM (`users`, `departments`, dll).
+- **Keputusan**:
+  1. Semua tabel baru khusus website menggunakan awalan `web_` (contoh: `web_posts`, `web_work_programs`, `web_opportunities`).
+  2. Prisma digunakan sebagai query client via adapter `@prisma/adapter-better-sqlite3` dan `@prisma/adapter-libsql`.
+  3. Dilarang menjalankan `prisma migrate dev` atau `db push` destruktif. Seluruh perubahan skema dikawal oleh `node db/guard.mjs` dan skrip SQL aditif di `db/migrations/`.
+- **Konsekuensi**: Data fungsionaris PSDM terlindungi secara mutlak (read-only dari sisi CMS publik) tanpa risiko kehilangan data saat pembaruan fitur website.

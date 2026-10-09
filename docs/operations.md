@@ -28,21 +28,32 @@ bash deploy/backup.sh
 
 ## 2. Pemulihan Data (Restore)
 
-### Memulihkan Basis Data PostgreSQL / MySQL
-1. Hentikan layanan web untuk mencegah konflik tulis:
+### Memulihkan Basis Data (Restore)
+1. Hentikan layanan web untuk mencegah konflik akses berkas:
    ```bash
    sudo systemctl stop perisai-umi
    ```
-2. Pulihkan berkas dump:
-   - **PostgreSQL**:
+2. Pulihkan berkas database cadangan:
+   - **SQLite (`psdm-db.db`)**:
      ```bash
-     gunzip -c /var/backups/perisai-umi/db_backup_YYYY-MM-DD.sql.gz | psql -U $DB_USER -d $DB_NAME
+     gunzip -c /var/backups/perisai-umi/psdm_sqlite_YYYYMMDD_HHMMSS.db.gz > /opt/perisai-umi/psdm-db.db
+     sudo chown perisai:perisai /opt/perisai-umi/psdm-db.db
+     chmod 660 /opt/perisai-umi/psdm-db.db
      ```
-   - **MySQL**:
+   - **Turso Cloud**:
+     Gunakan fitur point-in-time recovery atau impor via Turso CLI:
      ```bash
-     gunzip -c /var/backups/perisai-umi/db_backup_YYYY-MM-DD.sql.gz | mysql -u $DB_USER -p $DB_NAME
+     turso db create <new-db-name> --from-dump <backup-file.sql>
      ```
-3. Mulai kembali layanan:
+   - **PostgreSQL (opsional jika aktif)**:
+     ```bash
+     gunzip -c /var/backups/perisai-umi/pg_backup_YYYYMMDD_HHMMSS.sql.gz | psql -U $DB_USER -d $DB_NAME
+     ```
+3. Verifikasi skema dengan guard sebelum menjalankan kembali sistem:
+   ```bash
+   node db/guard.mjs live
+   ```
+4. Mulai kembali layanan:
    ```bash
    sudo systemctl start perisai-umi
    ```

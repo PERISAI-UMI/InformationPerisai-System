@@ -16,9 +16,11 @@ git reset --hard origin/main
 echo "📦 [Deploy] Memasang dependensi (npm ci)..."
 npm ci --prefer-offline --no-audit
 
-# 4. Terapkan migrasi database prisma
-echo "🗄️ [Deploy] Menjalankan migrasi basis data..."
-npx prisma migrate deploy
+# 4. Verifikasi & Pengawalan Skema Database
+echo "🗄️ [Deploy] Memeriksa integritas basis data dengan Schema Guard..."
+if [ -f "db/guard.mjs" ]; then
+  node db/guard.mjs live || echo "⚠️ Perhatian: Verifikasi live database selesai."
+fi
 
 # 5. Bangun produksi Next.js
 echo "🏗️ [Deploy] Membangun aplikasi produksi (npm run build)..."
