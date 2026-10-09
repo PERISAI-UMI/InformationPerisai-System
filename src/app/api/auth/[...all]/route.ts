@@ -29,10 +29,19 @@ export async function POST(request: Request) {
 
   if (action === "login") {
     try {
-      const { email, password } = await request.json();
+      const body = await request.json();
+      const identifier = String(body.email || body.identifier || body.username || "").trim();
+      const password = String(body.password || "");
+      const cleanPrn = identifier.replace(/\s+/g, "").toUpperCase();
 
-      const user = await prisma.user.findUnique({
-        where: { email },
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: identifier.toLowerCase() },
+            { id: cleanPrn },
+            { prn: cleanPrn },
+          ],
+        },
         include: { cmsAccess: true },
       });
 

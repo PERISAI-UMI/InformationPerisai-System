@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS M_Pembina (
 
 -- 8. Master Anggota & Fungsionaris (Identitas Mahasiswa & PRN) (3NF: Relasi ke M_Jurusan tanpa redundansi fakultas)
 CREATE TABLE IF NOT EXISTS M_Anggota (
-  id_perisai TEXT PRIMARY KEY, -- Format ID PERISAI: PRN XXXX
+  id_perisai TEXT PRIMARY KEY, -- Format ID PERISAI: PRNXXXX (Tanpa spasi, contoh: PRN0238 sebagai Username Login)
   nama_lengkap TEXT NOT NULL,
   nim TEXT NOT NULL UNIQUE,
   id_jurusan INTEGER REFERENCES M_Jurusan(id_jurusan) ON DELETE SET NULL,

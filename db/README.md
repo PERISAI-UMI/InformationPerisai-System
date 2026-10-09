@@ -17,7 +17,7 @@ Skema database UKM PERISAI UMI dirancang dengan normalisasi relasional tinggi, m
 | `M_Jabatan` | Struktur jabatan fungsionaris | `id_jabatan` (PK), `id_departemen` (FK), `nama_jabatan`, `level_hirarki` |
 | `M_Periode` | Periode masa bakti kepengurusan | `id_periode` (PK), `nama_periode`, `tahun_mulai`, `tahun_selesai`, `is_active` |
 | `M_Role` | Hak akses otorisasi sistem (RBAC) | `id_role` (PK), `nama_role` (`Admin`, `BPH`, `Kadep`, `Staf Ahli`, `Anggota Biasa`) |
-| `M_Anggota` | Profil lengkap anggota dan pengurus | `id_perisai` (PK - contoh: `PRN 0238`), `nama_lengkap`, `nim`, `tempat_lahir`, `tanggal_lahir`, `no_wa`, `email`, `linkedin`, `instagram`, `hobi`, `angkatan`, `gen` |
+| `M_Anggota` | Profil lengkap anggota dan pengurus | `id_perisai` (PK - contoh: `PRN0238`), `nama_lengkap`, `nim`, `tempat_lahir`, `tanggal_lahir`, `no_wa`, `email`, `linkedin`, `instagram`, `hobi`, `angkatan`, `gen` |
 | `M_Pembina` | Data Dewan Pembina / Penasihat Organisasi | `id_pembina` (PK), `nama`, `gelar`, `jabatan_struktural`, `foto_url`, `is_active` |
 | `M_Akun` | Kredensial autentikasi login fungsionaris | `id_akun` (PK), `id_perisai` (FK/Unique), `id_role` (FK), `password_hash` (SHA-256), `is_active`, `last_login` |
 

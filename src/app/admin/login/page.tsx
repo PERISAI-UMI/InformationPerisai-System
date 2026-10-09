@@ -69,12 +69,12 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            type="email"
-            label="Alamat Email Pengurus *"
+            type="text"
+            label="ID PRN atau Alamat Email Pengurus *"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            placeholder="admin@perisai-umi.org"
+            placeholder="PRN0238 atau admin@perisai-umi.org"
           />
 
           <Input

@@ -988,7 +988,7 @@ async function main() {
 
   let orderIndex = 1;
   for (const m of rawMembers) {
-    const prn = m["ID PERISAI"].trim();
+    const prn = m["ID PERISAI"].trim().replace(/\s+/g, "");
     const nama = m["NamaLengkap"].trim();
     const nim = String(m["NIM/Stambuk"]).trim();
     const angkatan = Number(m["Angkatan"]) || 2023;
