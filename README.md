@@ -176,7 +176,9 @@ Buka peramban Anda dan kunjungi:
 | `npm run start` | Menjalankan server aplikasi Next.js dalam mode produksi |
 | `npm run lint` | Menjalankan audit kualitas kode menggunakan ESLint |
 | `npm test` | Menjalankan seluruh rangkaian automated unit tests |
-| `node ./node_modules/prisma/build/index.js generate` | Menghasilkan TypeScript client Prisma dengan 21 model terbaru |
+| `node ./node_modules/prisma/build/index.js generate` | Menghasilkan TypeScript client Prisma dengan 24 model data |
+| `node scripts/reset-and-remigrate-all.mjs` | Migrasi ulang bersih seluruh skema & seed 42 pengurus ke SQLite & Turso Cloud |
+| `node scripts/verify-all-db.mjs` | Memverifikasi konsistensi 49 tabel antara SQLite lokal dan Turso Cloud |
 | `npx tsx scripts/seed-complete-2026.ts` | Mengisi data 42 pengurus 2026/2027 ke SQLite lokal `psdm-db.db` |
 | `node scripts/migrate-and-seed-turso.mjs` | Menjalankan migrasi DDL dan seeding data pengurus ke Turso Cloud |
 | `node db/guard.mjs live` | Memeriksa integritas tabel terlindungi PSDM pada database live |
@@ -190,10 +192,9 @@ Buka peramban Anda dan kunjungi:
 InformationPerisai-System/
 ├── db/                         # Skrip keamanan basis data dan migrasi aditif
 │   ├── guard.mjs               # Validator pengawal skema (mencegah modifikasi destruktif)
-│   ├── README.md               # Dokumentasi lengkap kamus data 21 tabel & SOP PSDM
+│   ├── README.md               # Dokumentasi lengkap kamus data & SOP serah-terima PSDM
 │   ├── migrations/             # Berkas SQL skema DDL
-│   │   ├── 001_create_web_tables.sql       # Skema web_* transisional
-│   │   └── 002_complete_perisai_schema.sql # Skema 21 tabel komprehensif (M_* & T_*)
+│   │   └── 002_complete_perisai_schema.sql # Skema tunggal komprehensif (M_* & T_*)
 │   └── protected-schema...     # Snapshot tabel terlindungi milik PSDM
 ├── deploy/                     # Konfigurasi deployment server mandiri (VPS)
 │   ├── backup.sh               # Skrip backup otomatis berkala (SQLite / Postgres)

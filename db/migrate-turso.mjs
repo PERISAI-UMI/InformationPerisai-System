@@ -7,8 +7,8 @@ const authToken = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3
 const client = createClient({ url, authToken });
 
 async function migrate() {
-  console.log("🚀 Applying web_* migrations to Turso...");
-  const sql = fs.readFileSync("db/migrations/001_create_web_tables.sql", "utf8");
+  console.log("🚀 Applying unified schema (002_complete_perisai_schema.sql) to Turso...");
+  const sql = fs.readFileSync("db/migrations/002_complete_perisai_schema.sql", "utf8");
   
   // Remove line comments first
   const cleanSql = sql

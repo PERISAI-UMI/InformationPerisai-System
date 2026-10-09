@@ -4,9 +4,9 @@ Direktori ini memuat seluruh skrip DDL, migrasi, dan pengamanan basis data organ
 
 ---
 
-## 🏛️ Arsitektur 21 Tabel Master & Transaksi
+## 🏛️ Arsitektur Skema Master & Transaksi Terpadu
 
-Skema database UKM PERISAI UMI dirancang dengan normalisasi relasional tinggi, memisahkan data referensi master (`M_*`) dan data transaksi/konten operasional (`T_*`):
+Skema database UKM PERISAI UMI dirancang dengan normalisasi relasional tinggi, memisahkan data referensi master (`M_*`), data transaksi/konten operasional (`T_*`), serta tabel pendukung operasional yang telah **disatukan dalam satu berkas migrasi resmi tunggal** (`db/migrations/002_complete_perisai_schema.sql`):
 
 ### 1. Tabel Master (`M_*`)
 | Nama Tabel | Deskripsi | Keterangan Kunci |
@@ -18,19 +18,22 @@ Skema database UKM PERISAI UMI dirancang dengan normalisasi relasional tinggi, m
 | `M_Periode` | Periode masa bakti kepengurusan | `id_periode` (PK), `nama_periode`, `tahun_mulai`, `tahun_selesai`, `is_active` |
 | `M_Role` | Hak akses otorisasi sistem (RBAC) | `id_role` (PK), `nama_role` (`Admin`, `BPH`, `Kadep`, `Staf Ahli`, `Anggota Biasa`) |
 | `M_Anggota` | Profil lengkap anggota dan pengurus | `id_perisai` (PK - contoh: `PRN 0238`), `nama_lengkap`, `nim`, `tempat_lahir`, `tanggal_lahir`, `no_wa`, `email`, `linkedin`, `instagram`, `hobi`, `angkatan`, `gen` |
+| `M_Pembina` | Data Dewan Pembina / Penasihat Organisasi | `id_pembina` (PK), `nama`, `gelar`, `jabatan_struktural`, `foto_url`, `is_active` |
 | `M_Akun` | Kredensial autentikasi login fungsionaris | `id_akun` (PK), `id_perisai` (FK/Unique), `id_role` (FK), `password_hash` (SHA-256), `is_active`, `last_login` |
 
 ### 2. Tabel Transaksi & Konten (`T_*`)
 | Nama Tabel | Deskripsi | Keterangan Kunci |
 | :--- | :--- | :--- |
 | `T_Sesi` | Penyimpanan sesi aktif dan token cache | `id_sesi` (PK), `id_akun` (FK), `token` (Unique), `expires_at` |
-| `T_Kepengurusan` | Pemetaan penugasan anggota di periode aktif | `id_kepengurusan` (PK), `id_periode` (FK), `id_perisai` (FK), `id_jabatan` (FK), `id_departemen` (FK) |
+| `T_Kepengurusan` | Pemetaan penugasan anggota di periode aktif | `id_kepengurusan` (PK), `id_periode` (FK), `id_perisai` (FK), `id_jabatan` (FK), `id_departemen` (FK), `tier` (`bph`, `kadep`, `staf`) |
 | `T_Proker` | Program kerja tahunan tiap departemen | `id_proker` (PK), `id_departemen` (FK), `id_periode` (FK), `nama_proker`, `slug`, `target_pelaksanaan`, `penanggung_jawab_id` |
+| `T_Proker_Dokumentasi` | Galeri multi-foto dokumentasi program kerja | `id_foto` (PK), `id_proker` (FK), `foto_url`, `keterangan`, `urutan` |
 | `T_Berita` | Publikasi berita, opini, dan kabar riset | `id_berita` (PK), `id_departemen` (FK), `penulis_id` (FK), `judul`, `slug`, `konten`, `foto_cover`, `status` |
-| `T_Kompetisi` | Direktori peluang lomba, riset, dan hibah | `id_kompetisi` (PK), `id_departemen` (FK), `nama_kompetisi`, `slug`, `kategori`, `tingkat`, `deadline_pendaftaran` |
+| `T_Berita_Foto` | Galeri multi-foto pendukung artikel berita | `id_foto` (PK), `id_berita` (FK), `foto_url`, `caption`, `urutan` |
+| `T_Kompetisi` | Direktori peluang lomba, riset, dan hibah | `id_kompetisi` (PK), `id_departemen` (FK), `nama_kompetisi`, `slug`, `kategori`, `tingkat`, `tipe`, `deadline_pendaftaran` |
 | `T_Prestasi` | Portofolio rekam jejak juara & medali | `id_prestasi` (PK), `id_perisai` (FK), `nama_kompetisi`, `judul_karya`, `peringkat`, `tahun` |
 | `T_Keuangan` | Pembukuan kas masuk & kas keluar organisasi | `id_transaksi` (PK), `id_periode` (FK), `jenis_transaksi`, `kategori`, `nominal`, `tanggal_transaksi`, `dicatat_oleh` (FK) |
-| `T_Galeri` | Dokumentasi visual kegiatan resmi | `id_galeri` (PK), `judul`, `kategori`, `foto_url`, `tanggal_kegiatan`, `is_featured` |
+| `T_Galeri` | Dokumentasi visual kegiatan resmi | `id_galeri` (PK), `judul`, `kategori`, `foto_url`, `tanggal_kegiatan`, `is_featured`, `is_active` |
 | `T_Pesan_Masuk` | Kotak masuk formulir kontak publik | `id_pesan` (PK), `nama_pengirim`, `email`, `no_wa`, `subjek`, `isi_pesan`, `is_read` |
 | `T_Statistik` | Metrik angka pencapaian portal publik | `id_statistik` (PK), `label`, `nilai`, `urutan`, `is_active` |
 | `T_Pengaturan` | Pengaturan konfigurasi sistem (*key-value*) | `kunci` (PK), `nilai`, `tipe`, `diperbarui_oleh` |
@@ -83,6 +86,12 @@ Berkas DDL SQL murni tersedia di:
 ## ⚡ Skrip Operasional Database
 
 ```bash
+# Migrasi ulang bersih seluruh skema & seed fungsionaris ke SQLite lokal & Turso Cloud
+node scripts/reset-and-remigrate-all.mjs
+
+# Verifikasi konsistensi seluruh 49 tabel antara SQLite lokal & Turso Cloud
+node scripts/verify-all-db.mjs
+
 # Seeding data lengkap pengurus 2026/2027 ke SQLite lokal
 npx tsx scripts/seed-complete-2026.ts
 

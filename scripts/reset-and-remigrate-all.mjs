@@ -94,105 +94,8 @@ function normalizePhone(raw) {
   return `+${s}`;
 }
 
-// 2. Skrip DDL untuk tabel-tabel inti
-const corePsdmSql = `
-CREATE TABLE IF NOT EXISTS departments (
-  id TEXT PRIMARY KEY,
-  nama TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS fakultas (
-  id TEXT PRIMARY KEY,
-  nama TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS program_studi (
-  id TEXT PRIMARY KEY,
-  fakultas_id TEXT NOT NULL REFERENCES fakultas(id) ON DELETE CASCADE,
-  nama TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY,
-  prn TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  role TEXT NOT NULL,
-  generasi INTEGER NOT NULL,
-  department_id TEXT NOT NULL REFERENCES departments(id),
-  jabatan TEXT NOT NULL,
-  nama_lengkap TEXT NOT NULL,
-  tempat_lahir TEXT,
-  tanggal_lahir TEXT,
-  alamat TEXT,
-  no_telp TEXT,
-  email TEXT NOT NULL UNIQUE,
-  nim TEXT NOT NULL UNIQUE,
-  program_studi_id TEXT NOT NULL REFERENCES program_studi(id),
-  angkatan INTEGER NOT NULL,
-  linkedin_url TEXT,
-  instagram_username TEXT,
-  avatar_url TEXT
-);
-
-CREATE TABLE IF NOT EXISTS sessions (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  token TEXT NOT NULL UNIQUE,
-  expires_at INTEGER NOT NULL,
-  ip_address TEXT,
-  user_agent TEXT,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS activities (
-  id TEXT PRIMARY KEY,
-  nama TEXT NOT NULL,
-  deskripsi TEXT,
-  start_date INTEGER NOT NULL,
-  end_date INTEGER NOT NULL,
-  is_published INTEGER NOT NULL,
-  created_by TEXT NOT NULL REFERENCES users(id),
-  created_at INTEGER NOT NULL,
-  mode TEXT NOT NULL,
-  lokasi TEXT,
-  meeting_url TEXT,
-  is_locked INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS attendances (
-  id TEXT PRIMARY KEY,
-  activity_id TEXT NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  status TEXT NOT NULL,
-  recorded_by TEXT NOT NULL REFERENCES users(id),
-  recorded_at INTEGER NOT NULL,
-  UNIQUE(activity_id, user_id)
-);
-
-CREATE TABLE IF NOT EXISTS permissions (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  activity_id TEXT NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
-  jenis_izin TEXT NOT NULL,
-  alasan TEXT NOT NULL,
-  evidence_url TEXT,
-  status TEXT NOT NULL,
-  reviewed_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-  reviewed_at INTEGER,
-  created_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS pj_departments (
-  admin_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  department_id TEXT NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
-  assigned_at INTEGER NOT NULL,
-  PRIMARY KEY(admin_id, department_id)
-);
-`;
-
-const migration001Sql = fs.readFileSync("db/migrations/001_create_web_tables.sql", "utf8");
-const migration002Sql = fs.readFileSync("db/migrations/002_complete_perisai_schema.sql", "utf8");
+// 2. Skrip DDL Tunggal Terpadu (002_complete_perisai_schema.sql)
+const migrationSql = fs.readFileSync("db/migrations/002_complete_perisai_schema.sql", "utf8");
 
 function splitSqlStatements(sql) {
   const clean = sql
@@ -208,27 +111,15 @@ function splitSqlStatements(sql) {
 // 3. Executor untuk database target
 async function migrateAndSeedTarget(name, executor) {
   console.log(`\n======================================================`);
-  console.log(`🚀 Menjalankan migrasi penuh & seeding ke: [${name}]`);
+  console.log(`🚀 Menjalankan migrasi terpadu (002) & seeding ke: [${name}]`);
   console.log(`======================================================`);
 
   const now = Math.floor(Date.now() / 1000);
   const defaultPasswordHash = crypto.createHash("sha256").update("perisai2026").digest("hex");
 
-  // Step A: Eksekusi DDL Core PSDM
-  console.log(`1️⃣ Menerapkan tabel inti PSDM...`);
-  for (const stmt of splitSqlStatements(corePsdmSql)) {
-    await executor(stmt);
-  }
-
-  // Step B: Eksekusi DDL Migration 001 (web_*)
-  console.log(`2️⃣ Menerapkan tabel website (001_create_web_tables.sql)...`);
-  for (const stmt of splitSqlStatements(migration001Sql)) {
-    await executor(stmt);
-  }
-
-  // Step C: Eksekusi DDL Migration 002 (M_* & T_*)
-  console.log(`3️⃣ Menerapkan tabel master & transaksi baru (002_complete_perisai_schema.sql)...`);
-  for (const stmt of splitSqlStatements(migration002Sql)) {
+  // Step 1: Eksekusi DDL Tunggal Terpadu (002_complete_perisai_schema.sql)
+  console.log(`1️⃣ Menerapkan skema tunggal terpadu (002_complete_perisai_schema.sql)...`);
+  for (const stmt of splitSqlStatements(migrationSql)) {
     await executor(stmt);
   }
 
@@ -474,12 +365,13 @@ async function migrateAndSeedTarget(name, executor) {
 
     // Insert T_Kepengurusan
     await executor(
-      `INSERT INTO T_Kepengurusan (id_periode, id_perisai, id_jabatan, id_departemen, status, urutan, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 'aktif', ?, ?, ?)
+      `INSERT INTO T_Kepengurusan (id_periode, id_perisai, id_jabatan, id_departemen, tier, status, urutan, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'aktif', ?, ?, ?)
        ON CONFLICT(id_periode, id_perisai, id_jabatan) DO UPDATE SET
          id_departemen=excluded.id_departemen,
+         tier=excluded.tier,
          urutan=excluded.urutan`,
-      [periodeId, prn, jabatanId, deptId, orderIndex, now, now]
+      [periodeId, prn, jabatanId, deptId, tier, orderIndex, now, now]
     );
 
     // Masuk juga ke tabel users (untuk kompatibilitas query lama / relasi foreign key)
@@ -594,6 +486,12 @@ async function migrateAndSeedTarget(name, executor) {
   }
 
   // Step H: Dewan Pembina
+  console.log(`8️⃣ Mengisi Dewan Pembina (M_Pembina & web_extra_people)...`);
+  await executor(
+    `INSERT OR IGNORE INTO M_Pembina (nama, gelar, jabatan, kategori, urutan, is_active, created_at, updated_at)
+     VALUES ('Dr. Ir. Pembina Riset UMI', 'M.T.', 'Dewan Pembina UKM PERISAI UMI', 'pembina', 1, 1, ?, ?)`,
+    [now, now]
+  );
   await executor(
     `INSERT INTO web_extra_people (id, name, position, tier, sort_order, is_active, created_at, updated_at)
      VALUES ('pembina-1', 'Dr. Ir. Pembina Riset UMI, M.T.', 'Dewan Pembina UKM PERISAI UMI', 'pembina', 1, 1, ?, ?)

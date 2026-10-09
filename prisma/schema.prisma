@@ -495,12 +495,29 @@ model TSesi {
   @@map("T_Sesi")
 }
 
+model MPembina {
+  idPembina   Int      @id @default(autoincrement()) @map("id_pembina")
+  nama        String
+  gelar       String?
+  jabatan     String
+  kategori    String   @default("pembina")
+  fotoUrl     String?  @map("foto_url")
+  linkedin    String?
+  urutan      Int      @default(0)
+  isActive    Int      @default(1) @map("is_active")
+  createdAt   Int      @default(dbgenerated("(unixepoch())")) @map("created_at")
+  updatedAt   Int      @default(dbgenerated("(unixepoch())")) @map("updated_at")
+
+  @@map("M_Pembina")
+}
+
 model TKepengurusan {
   idKepengurusan Int          @id @default(autoincrement()) @map("id_kepengurusan")
   idPeriode      Int          @map("id_periode")
   idPerisai      String       @map("id_perisai")
   idJabatan      Int          @map("id_jabatan")
   idDepartemen   Int?         @map("id_departemen")
+  tier           String       @default("staf")
   status         String       @default("aktif")
   urutan         Int          @default(0)
   createdAt      Int          @default(dbgenerated("(unixepoch())")) @map("created_at")
@@ -516,71 +533,105 @@ model TKepengurusan {
 }
 
 model TProker {
-  idProker             Int          @id @default(autoincrement()) @map("id_proker")
-  idDepartemen         Int          @map("id_departemen")
-  idPeriode            Int          @map("id_periode")
-  namaProker           String       @map("nama_proker")
-  slug                 String       @unique
-  deskripsi            String?
-  targetPelaksanaan    String?      @map("target_pelaksanaan")
-  indikatorKeberhasilan String?     @map("indikator_keberhasilan")
-  penanggungJawabId    String?      @map("penanggung_jawab_id")
-  fotoCover            String?      @map("foto_cover")
-  status               String       @default("rencana")
-  urutan               Int          @default(0)
-  createdAt            Int          @default(dbgenerated("(unixepoch())")) @map("created_at")
-  updatedAt            Int          @default(dbgenerated("(unixepoch())")) @map("updated_at")
+  idProker              Int                  @id @default(autoincrement()) @map("id_proker")
+  idDepartemen          Int                  @map("id_departemen")
+  idPeriode             Int                  @map("id_periode")
+  namaProker            String               @map("nama_proker")
+  slug                  String               @unique
+  deskripsi             String?
+  targetPelaksanaan     String?              @map("target_pelaksanaan")
+  indikatorKeberhasilan String?              @map("indikator_keberhasilan")
+  penanggungJawabId     String?              @map("penanggung_jawab_id")
+  fotoCover             String?              @map("foto_cover")
+  status                String               @default("rencana")
+  urutan                Int                  @default(0)
+  diperbaruiOleh        String?              @map("diperbarui_oleh")
+  createdAt             Int                  @default(dbgenerated("(unixepoch())")) @map("created_at")
+  updatedAt             Int                  @default(dbgenerated("(unixepoch())")) @map("updated_at")
 
-  departemen           MDepartemen  @relation(fields: [idDepartemen], references: [idDepartemen], onDelete: Cascade)
-  periode              MPeriode     @relation(fields: [idPeriode], references: [idPeriode], onDelete: Cascade)
-  penanggungJawab      MAnggota?    @relation("ProkerPenanggungJawab", fields: [penanggungJawabId], references: [idPerisai], onDelete: SetNull)
+  departemen            MDepartemen          @relation(fields: [idDepartemen], references: [idDepartemen], onDelete: Cascade)
+  periode               MPeriode             @relation(fields: [idPeriode], references: [idPeriode], onDelete: Cascade)
+  penanggungJawab       MAnggota?            @relation("ProkerPenanggungJawab", fields: [penanggungJawabId], references: [idPerisai], onDelete: SetNull)
+  dokumentasi           TProkerDokumentasi[]
 
   @@map("T_Proker")
 }
 
+model TProkerDokumentasi {
+  idProkerDok Int      @id @default(autoincrement()) @map("id_proker_dok")
+  idProker    Int      @map("id_proker")
+  fotoUrl     String   @map("foto_url")
+  caption     String?
+  urutan      Int      @default(0)
+  createdAt   Int      @default(dbgenerated("(unixepoch())")) @map("created_at")
+
+  proker      TProker  @relation(fields: [idProker], references: [idProker], onDelete: Cascade)
+
+  @@map("T_Proker_Dokumentasi")
+}
+
 model TBerita {
-  idBerita       Int          @id @default(autoincrement()) @map("id_berita")
-  idDepartemen   Int?         @map("id_departemen")
+  idBerita       Int           @id @default(autoincrement()) @map("id_berita")
+  idDepartemen   Int?          @map("id_departemen")
   judul          String
-  slug           String       @unique
-  kategori       String       @default("berita")
+  slug           String        @unique
+  kategori       String        @default("berita")
   ringkasan      String?
   konten         String
-  fotoCover      String?      @map("foto_cover")
-  penulisId      String?      @map("penulis_id")
-  status         String       @default("draft")
-  tanggalPublish Int?         @map("tanggal_publish")
-  isFeatured     Int          @default(0) @map("is_featured")
-  views          Int          @default(0)
-  createdAt      Int          @default(dbgenerated("(unixepoch())")) @map("created_at")
-  updatedAt      Int          @default(dbgenerated("(unixepoch())")) @map("updated_at")
+  fotoCover      String?       @map("foto_cover")
+  penulisId      String?       @map("penulis_id")
+  status         String        @default("draft")
+  tanggalPublish Int?          @map("tanggal_publish")
+  isFeatured     Int           @default(0) @map("is_featured")
+  views          Int           @default(0)
+  diperbaruiOleh String?       @map("diperbarui_oleh")
+  createdAt      Int           @default(dbgenerated("(unixepoch())")) @map("created_at")
+  updatedAt      Int           @default(dbgenerated("(unixepoch())")) @map("updated_at")
 
-  departemen     MDepartemen? @relation(fields: [idDepartemen], references: [idDepartemen], onDelete: SetNull)
-  penulis        MAnggota?    @relation("BeritaPenulis", fields: [penulisId], references: [idPerisai], onDelete: SetNull)
+  departemen     MDepartemen?  @relation(fields: [idDepartemen], references: [idDepartemen], onDelete: SetNull)
+  penulis        MAnggota?     @relation("BeritaPenulis", fields: [penulisId], references: [idPerisai], onDelete: SetNull)
+  foto           TBeritaFoto[]
 
   @@map("T_Berita")
 }
 
-model TKompetisi {
-  idKompetisi        Int          @id @default(autoincrement()) @map("id_kompetisi")
-  idDepartemen       Int?         @map("id_departemen")
-  namaKompetisi      String       @map("nama_kompetisi")
-  slug               String       @unique
-  kategori           String       @default("KTI")
-  tingkat            String       @default("Nasional")
-  penyelenggara      String
-  deskripsi          String?
-  deadlinePendaftaran Int?        @map("deadline_pendaftaran")
-  tanggalPelaksanaan String?      @map("tanggal_pelaksanaan")
-  linkPendaftaran    String?      @map("link_pendaftaran")
-  linkPanduan        String?      @map("link_panduan")
-  linkPoster         String?      @map("link_poster")
-  status             String       @default("published")
-  views              Int          @default(0)
-  createdAt          Int          @default(dbgenerated("(unixepoch())")) @map("created_at")
-  updatedAt          Int          @default(dbgenerated("(unixepoch())")) @map("updated_at")
+model TBeritaFoto {
+  idBeritaFoto Int      @id @default(autoincrement()) @map("id_berita_foto")
+  idBerita     Int      @map("id_berita")
+  fotoUrl      String   @map("foto_url")
+  caption      String?
+  urutan       Int      @default(0)
+  createdAt    Int      @default(dbgenerated("(unixepoch())")) @map("created_at")
 
-  departemen         MDepartemen? @relation(fields: [idDepartemen], references: [idDepartemen], onDelete: SetNull)
+  berita       TBerita  @relation(fields: [idBerita], references: [idBerita], onDelete: Cascade)
+
+  @@map("T_Berita_Foto")
+}
+
+model TKompetisi {
+  idKompetisi         Int          @id @default(autoincrement()) @map("id_kompetisi")
+  idDepartemen        Int?         @map("id_departemen")
+  tipe                String       @default("lomba")
+  namaKompetisi       String       @map("nama_kompetisi")
+  slug                String       @unique
+  kategori            String       @default("KTI")
+  tingkat             String       @default("Nasional")
+  penyelenggara       String
+  deskripsi           String?
+  deadlinePendaftaran Int?         @map("deadline_pendaftaran")
+  tanggalPelaksanaan  String?      @map("tanggal_pelaksanaan")
+  linkPendaftaran     String?      @map("link_pendaftaran")
+  linkPanduan         String?      @map("link_panduan")
+  linkPoster          String?      @map("link_poster")
+  status              String       @default("published")
+  tanggalPublish      Int?         @map("tanggal_publish")
+  views               Int          @default(0)
+  penulisId           String?      @map("penulis_id")
+  diperbaruiOleh      String?      @map("diperbarui_oleh")
+  createdAt           Int          @default(dbgenerated("(unixepoch())")) @map("created_at")
+  updatedAt           Int          @default(dbgenerated("(unixepoch())")) @map("updated_at")
+
+  departemen          MDepartemen? @relation(fields: [idDepartemen], references: [idDepartemen], onDelete: SetNull)
 
   @@map("T_Kompetisi")
 }
@@ -633,6 +684,7 @@ model TGaleri {
   deskripsi       String?
   tanggalKegiatan String? @map("tanggal_kegiatan")
   isFeatured      Int     @default(0) @map("is_featured")
+  isActive        Int     @default(1) @map("is_active")
   urutan          Int     @default(0)
   createdAt       Int     @default(dbgenerated("(unixepoch())")) @map("created_at")
   updatedAt       Int     @default(dbgenerated("(unixepoch())")) @map("updated_at")
@@ -711,3 +763,4 @@ model TMedia {
 
   @@map("T_Media")
 }
+

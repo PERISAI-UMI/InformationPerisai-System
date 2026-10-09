@@ -16,7 +16,7 @@ const protectedTables = Object.keys(snapshot.tables);
 
 if (mode === "sql") {
   if (!target) {
-    console.error("Error: Please provide SQL file path, e.g. node db/guard.mjs sql db/migrations/001_create_web_tables.sql");
+    console.error("Error: Please provide SQL file path, e.g. node db/guard.mjs sql db/migrations/002_complete_perisai_schema.sql");
     process.exit(1);
   }
   const sql = fs.readFileSync(path.resolve(process.cwd(), target), "utf-8");
