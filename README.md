@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# InformationPerisai-System — UKM PERISAI UMI
 
-## Getting Started
+Sistem Informasi dan Portal Resmi **UKM PERISAI UMI** (Pusat Pengembangan Riset Mahasiswa Universitas Muslim Indonesia). Sistem ini mencakup portal publik untuk publikasi karya ilmiah, berita, program kerja, departemen, kepengurusan, peluang lomba/prestasi, serta dashboard manajemen internal organisasi.
 
-First, run the development server:
+---
 
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/) (App Router, React 19)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database ORM**: [Prisma](https://www.prisma.io/)
+- **Authentication**: Auth session with Role-Based Access Control (RBAC) via centralized `can()`
+- **Storage**: Multi-driver (Local Storage / Cloudflare R2 / S3 compatible)
+- **Deployment**: Systemd, Caddy Reverse Proxy / Cloudflare Tunnel
+
+---
+
+## 📋 Prasyarat
+
+Sebelum memulai, pastikan telah terpasang:
+- **Node.js** >= 20.x
+- **npm** atau **pnpm**
+- Database server (PostgreSQL / MySQL)
+
+---
+
+## 🚀 Panduan Setup Proyek
+
+### 1. Salin Berkas Lingkungan (.env)
+Salin berkas `.env.example` menjadi `.env`:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
+```
+Sesuaikan konfigurasi koneksi database (`DATABASE_URL`), rahasia otentikasi (`AUTH_SECRET`), dan kredensial awal `SUPERADMIN_*`.
+
+### 2. Instal Dependensi
+```bash
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Migrasi & Seed Database
+Jalankan migrasi Prisma dan lakukan seeding untuk membuat akun `super_admin` pertama:
+```bash
+npx prisma migrate dev --name init
+npm run seed # atau npx tsx prisma/seed.ts
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Jalankan Development Server
+```bash
+npm run dev
+```
+Akses sistem di peramban pada [http://localhost:3000](http://localhost:3000):
+- **Portal Publik**: `http://localhost:3000/`
+- **Panel Admin**: `http://localhost:3000/admin`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 📜 Perintah Tersedia (Available Scripts)
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` : Menjalankan development server lokal.
+- `npm run build` : Membangun bundel produksi Next.js.
+- `npm run start` : Menjalankan server dalam mode produksi.
+- `npm run lint` : Menjalankan pengecekan ESLint.
+- `npx prisma studio` : Membuka antarmuka visual data Prisma.
+- `npx prisma db seed` : Menjalankan skrip seeding akun super_admin.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📂 Struktur Repositori & Dokumentasi
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [`docs/perisai-umi-spec.json`](./docs/perisai-umi-spec.json) : Spesifikasi sistem utama (single source of truth).
+- [`docs/decisions.md`](./docs/decisions.md) : Catatan arsitektur dan keputusan teknis (ADR).
+- [`docs/operations.md`](./docs/operations.md) : Prosedur backup, restore, dan serah terima antar periode kepengurusan.
+- [`deploy/`](./deploy/) : Konfigurasi deployment (Systemd unit, Caddyfile, Cloudflare tunnel, skrip otomatisasi).
+- [`scripts/import-legacy/`](./scripts/import-legacy/) : Panduan dan skrip migrasi data dari sistem lama Laravel.
+- [`src/features/`](./src/features/) : Logika inti per modul organisasi (posts, work-programs, opportunities, members, periods, gallery, inbox, dll).
+- [`tests/`](./tests/) : Pengujian unit untuk permissions, visibility publik/draft, deadline opportunity, dan slug generator.

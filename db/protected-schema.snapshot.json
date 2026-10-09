@@ -1,0 +1,157 @@
+{
+  "generated_at": "2026-10-07T13:23:51.402Z",
+  "note": "Skema tabel milik sistem PSDM. Tidak berisi data.",
+  "tables": {
+    "activities": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "notnull": true, "pk": 1 },
+        { "name": "nama", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "deskripsi", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "start_date", "type": "INTEGER", "notnull": true, "pk": 0 },
+        { "name": "end_date", "type": "INTEGER", "notnull": true, "pk": 0 },
+        { "name": "is_published", "type": "INTEGER", "notnull": true, "pk": 0 },
+        { "name": "created_by", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "created_at", "type": "INTEGER", "notnull": true, "pk": 0 },
+        { "name": "mode", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "lokasi", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "meeting_url", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "is_locked", "type": "INTEGER", "notnull": true, "pk": 0 }
+      ],
+      "indexes": [],
+      "foreignKeys": [
+        { "from": "created_by", "table": "users", "to": "id", "on_delete": "RESTRICT" }
+      ]
+    },
+    "attendances": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "notnull": true, "pk": 1 },
+        { "name": "activity_id", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "user_id", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "status", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "recorded_by", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "recorded_at", "type": "INTEGER", "notnull": true, "pk": 0 }
+      ],
+      "indexes": [
+        { "name": "attendances_activity_user_unique", "unique": true, "columns": ["activity_id", "user_id"] }
+      ],
+      "foreignKeys": [
+        { "from": "recorded_by", "table": "users", "to": "id", "on_delete": "RESTRICT" },
+        { "from": "user_id", "table": "users", "to": "id", "on_delete": "CASCADE" },
+        { "from": "activity_id", "table": "activities", "to": "id", "on_delete": "CASCADE" }
+      ]
+    },
+    "departments": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "notnull": true, "pk": 1 },
+        { "name": "nama", "type": "TEXT", "notnull": true, "pk": 0 }
+      ],
+      "indexes": [
+        { "name": "departments_nama_unique", "unique": true, "columns": ["nama"] }
+      ],
+      "foreignKeys": []
+    },
+    "fakultas": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "notnull": true, "pk": 1 },
+        { "name": "nama", "type": "TEXT", "notnull": true, "pk": 0 }
+      ],
+      "indexes": [
+        { "name": "fakultas_nama_unique", "unique": true, "columns": ["nama"] }
+      ],
+      "foreignKeys": []
+    },
+    "permissions": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "notnull": true, "pk": 1 },
+        { "name": "user_id", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "activity_id", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "jenis_izin", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "alasan", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "evidence_url", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "status", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "reviewed_by", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "reviewed_at", "type": "INTEGER", "notnull": false, "pk": 0 },
+        { "name": "created_at", "type": "INTEGER", "notnull": true, "pk": 0 }
+      ],
+      "indexes": [],
+      "foreignKeys": [
+        { "from": "reviewed_by", "table": "users", "to": "id", "on_delete": "SET NULL" },
+        { "from": "activity_id", "table": "activities", "to": "id", "on_delete": "CASCADE" },
+        { "from": "user_id", "table": "users", "to": "id", "on_delete": "CASCADE" }
+      ]
+    },
+    "pj_departments": {
+      "columns": [
+        { "name": "admin_id", "type": "TEXT", "notnull": true, "pk": 1 },
+        { "name": "department_id", "type": "TEXT", "notnull": true, "pk": 2 },
+        { "name": "assigned_at", "type": "INTEGER", "notnull": true, "pk": 0 }
+      ],
+      "indexes": [],
+      "foreignKeys": [
+        { "from": "department_id", "table": "departments", "to": "id", "on_delete": "CASCADE" },
+        { "from": "admin_id", "table": "users", "to": "id", "on_delete": "CASCADE" }
+      ]
+    },
+    "program_studi": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "notnull": true, "pk": 1 },
+        { "name": "fakultas_id", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "nama", "type": "TEXT", "notnull": true, "pk": 0 }
+      ],
+      "indexes": [],
+      "foreignKeys": [
+        { "from": "fakultas_id", "table": "fakultas", "to": "id", "on_delete": "CASCADE" }
+      ]
+    },
+    "sessions": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "notnull": true, "pk": 1 },
+        { "name": "user_id", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "token", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "expires_at", "type": "INTEGER", "notnull": true, "pk": 0 },
+        { "name": "ip_address", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "user_agent", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "created_at", "type": "INTEGER", "notnull": true, "pk": 0 },
+        { "name": "updated_at", "type": "INTEGER", "notnull": true, "pk": 0 }
+      ],
+      "indexes": [
+        { "name": "sessions_token_unique", "unique": true, "columns": ["token"] }
+      ],
+      "foreignKeys": [
+        { "from": "user_id", "table": "users", "to": "id", "on_delete": "CASCADE" }
+      ]
+    },
+    "users": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "notnull": true, "pk": 1 },
+        { "name": "prn", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "password_hash", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "role", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "generasi", "type": "INTEGER", "notnull": true, "pk": 0 },
+        { "name": "department_id", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "jabatan", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "nama_lengkap", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "tempat_lahir", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "tanggal_lahir", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "alamat", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "no_telp", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "email", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "nim", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "program_studi_id", "type": "TEXT", "notnull": true, "pk": 0 },
+        { "name": "angkatan", "type": "INTEGER", "notnull": true, "pk": 0 },
+        { "name": "linkedin_url", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "instagram_username", "type": "TEXT", "notnull": false, "pk": 0 },
+        { "name": "avatar_url", "type": "TEXT", "notnull": false, "pk": 0 }
+      ],
+      "indexes": [
+        { "name": "users_nim_unique", "unique": true, "columns": ["nim"] },
+        { "name": "users_email_unique", "unique": true, "columns": ["email"] },
+        { "name": "users_prn_unique", "unique": true, "columns": ["prn"] }
+      ],
+      "foreignKeys": [
+        { "from": "program_studi_id", "table": "program_studi", "to": "id", "on_delete": "RESTRICT" },
+        { "from": "department_id", "table": "departments", "to": "id", "on_delete": "RESTRICT" }
+      ]
+    }
+  }
+}

@@ -3,14 +3,327 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
 }
 
-model Anggota {
-  id        Int      @id @default(autoincrement())
-  nama      String
-  nim       String   @unique
-  fakultas  String
-  createdAt DateTime @default(now())
+// ==========================================
+// TABEL PSDM TERLINDUNGI (READ-ONLY OLEH WEBSITE)
+// ==========================================
+
+model User {
+  id                String       @id
+  prn               String?      @unique
+  passwordHash      String       @map("password_hash")
+  role              String
+  generasi          Int
+  departmentId      String       @map("department_id")
+  jabatan           String
+  namaLengkap       String       @map("nama_lengkap")
+  tempatLahir       String?      @map("tempat_lahir")
+  tanggalLahir      String?      @map("tanggal_lahir")
+  alamat            String?
+  noTelp            String?      @map("no_telp")
+  email             String       @unique
+  nim               String       @unique
+  programStudiId    String       @map("program_studi_id")
+  angkatan          Int
+  linkedinUrl       String?      @map("linkedin_url")
+  instagramUsername String?      @map("instagram_username")
+  avatarUrl         String?      @map("avatar_url")
+
+  department        Department   @relation(fields: [departmentId], references: [id])
+  cmsAccess         UserAccess?
+
+  @@map("users")
+}
+
+model Department {
+  id          String              @id
+  nama        String              @unique
+
+  users       User[]
+  profile     DepartmentProfile?
+  programs    WorkProgram[]
+  posts       Post[]
+  members     Member[]
+
+  @@map("departments")
+}
+
+model Fakultas {
+  id          String         @id
+  nama        String         @unique
+  prodiList   ProgramStudi[]
+
+  @@map("fakultas")
+}
+
+model ProgramStudi {
+  id          String     @id
+  fakultasId  String     @map("fakultas_id")
+  nama        String
+
+  fakultas    Fakultas   @relation(fields: [fakultasId], references: [id])
+
+  @@map("program_studi")
+}
+
+// ==========================================
+// TABEL WEBSITE KHUSUS (NAMA LOGIS -> @@map("web_*"))
+// ==========================================
+
+model Period {
+  id          String     @id @default(uuid())
+  name        String
+  startDate   Int        @map("start_date")
+  endDate     Int?       @map("end_date")
+  isCurrent   Int        @default(0) @map("is_current")
+
+  members     Member[]
+
+  @@map("web_periods")
+}
+
+model Member {
+  id           String      @id @default(uuid())
+  periodId     String      @map("period_id")
+  departmentId String?     @map("department_id")
+  name         String
+  position     String
+  tier         String      @default("staf")
+  linkedinUrl  String?     @map("linkedin_url")
+  photoMediaId String?     @map("photo_media_id")
+  sortOrder    Int         @default(0) @map("sort_order")
+  isActive     Int         @default(1) @map("is_active")
+
+  period       Period      @relation(fields: [periodId], references: [id])
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  @@map("web_members")
+}
+
+model Media {
+  id           String      @id @default(uuid())
+  storageKey   String      @unique @map("storage_key")
+  originalName String?     @map("original_name")
+  mimeType     String      @map("mime_type")
+  sizeBytes    Int         @map("size_bytes")
+  width        Int?
+  height       Int?
+  altText      String?     @map("alt_text")
+  uploadedBy   String?     @map("uploaded_by")
+  createdAt    Int         @map("created_at")
+
+  galleryItems GalleryItem[]
+  postImages   PostImage[]
+  programImages WorkProgramImage[]
+
+  @@map("web_media")
+}
+
+model DepartmentProfile {
+  departmentId       String      @id @map("department_id")
+  slug               String      @unique
+  shortDescription   String?     @map("short_description")
+  description        String?
+  vision             String?
+  mission            String?
+  groupPhotoMediaId  String?     @map("group_photo_media_id")
+  sortOrder          Int         @default(0) @map("sort_order")
+  isActive           Int         @default(1) @map("is_active")
+  createdAt          Int         @map("created_at")
+  updatedAt          Int         @map("updated_at")
+
+  department         Department  @relation(fields: [departmentId], references: [id])
+
+  @@map("web_department_profiles")
+}
+
+model UserAccess {
+  userId        String      @id @map("user_id")
+  cmsRole       String      @default("editor") @map("cms_role")
+  departmentId  String?     @map("department_id")
+  createdAt     Int         @map("created_at")
+  updatedAt     Int         @map("updated_at")
+
+  user          User        @relation(fields: [userId], references: [id])
+
+  @@map("web_user_access")
+}
+
+model ExtraPerson {
+  id           String      @id @default(uuid())
+  name         String
+  position     String
+  tier         String      @default("pembina")
+  linkedinUrl  String?     @map("linkedin_url")
+  photoMediaId String?     @map("photo_media_id")
+  sortOrder    Int         @default(0) @map("sort_order")
+  isActive     Int         @default(1) @map("is_active")
+  createdAt    Int         @map("created_at")
+  updatedAt    Int         @map("updated_at")
+
+  @@map("web_extra_people")
+}
+
+model Post {
+  id           String          @id @default(uuid())
+  departmentId String?         @map("department_id")
+  title        String
+  slug         String          @unique
+  category     String          @default("berita")
+  excerpt      String?
+  content      String
+  coverMediaId String?         @map("cover_media_id")
+  status       String          @default("draft")
+  publishedAt  Int?            @map("published_at")
+  isFeatured   Int             @default(0) @map("is_featured")
+  createdBy    String?         @map("created_by")
+  updatedBy    String?         @map("updated_by")
+  createdAt    Int             @map("created_at")
+  updatedAt    Int             @map("updated_at")
+
+  department   Department?     @relation(fields: [departmentId], references: [id])
+  images       PostImage[]
+
+  @@map("web_posts")
+}
+
+model PostImage {
+  postId    String      @map("post_id")
+  mediaId   String      @map("media_id")
+  sortOrder Int         @default(0) @map("sort_order")
+  caption   String?
+
+  post      Post        @relation(fields: [postId], references: [id])
+  media     Media       @relation(fields: [mediaId], references: [id])
+
+  @@id([postId, mediaId])
+  @@map("web_post_images")
+}
+
+model WorkProgram {
+  id           String                 @id @default(uuid())
+  departmentId String                 @map("department_id")
+  title        String
+  slug         String                 @unique
+  summary      String?
+  content      String?
+  coverMediaId String?                @map("cover_media_id")
+  status       String                 @default("draft")
+  publishedAt  Int?                   @map("published_at")
+  sortOrder    Int                    @default(0) @map("sort_order")
+  createdBy    String?                @map("created_by")
+  updatedBy    String?                @map("updated_by")
+  createdAt    Int                    @map("created_at")
+  updatedAt    Int                    @map("updated_at")
+
+  department   Department             @relation(fields: [departmentId], references: [id])
+  images       WorkProgramImage[]
+
+  @@map("web_work_programs")
+}
+
+model WorkProgramImage {
+  workProgramId String         @map("work_program_id")
+  mediaId       String         @map("media_id")
+  sortOrder     Int            @default(0) @map("sort_order")
+  caption       String?
+
+  workProgram   WorkProgram    @relation(fields: [workProgramId], references: [id])
+  media         Media          @relation(fields: [mediaId], references: [id])
+
+  @@id([workProgramId, mediaId])
+  @@map("web_work_program_images")
+}
+
+model Opportunity {
+  id              String      @id @default(uuid())
+  type            String      @default("lomba")
+  title           String
+  slug            String      @unique
+  category        String?
+  organizer       String?
+  description     String?
+  deadlineAt      Int?        @map("deadline_at")
+  registrationUrl String?     @map("registration_url")
+  posterMediaId   String?     @map("poster_media_id")
+  status          String      @default("draft")
+  publishedAt     Int?        @map("published_at")
+  createdBy       String?     @map("created_by")
+  updatedBy       String?     @map("updated_by")
+  createdAt       Int         @map("created_at")
+  updatedAt       Int         @map("updated_at")
+
+  @@map("web_opportunities")
+}
+
+model Statistic {
+  id          String      @id @default(uuid())
+  label       String
+  value       String
+  description String?
+  sortOrder   Int         @default(0) @map("sort_order")
+  isActive    Int         @default(1) @map("is_active")
+  createdAt   Int         @map("created_at")
+  updatedAt   Int         @map("updated_at")
+
+  @@map("web_statistics")
+}
+
+model GalleryItem {
+  id          String      @id @default(uuid())
+  mediaId     String      @map("media_id")
+  title       String
+  description String?
+  category    String?
+  takenAt     Int?        @map("taken_at")
+  isFeatured  Int         @default(0) @map("is_featured")
+  isActive    Int         @default(1) @map("is_active")
+  sortOrder   Int         @default(0) @map("sort_order")
+  createdAt   Int         @map("created_at")
+  updatedAt   Int         @map("updated_at")
+
+  media       Media       @relation(fields: [mediaId], references: [id])
+
+  @@map("web_gallery_items")
+}
+
+model InboxMessage {
+  id          String      @id @default(uuid())
+  name        String
+  email       String
+  phone       String?
+  purpose     String      @default("pertanyaan")
+  subject     String
+  message     String
+  isRead      Int         @default(0) @map("is_read")
+  handledAt   Int?        @map("handled_at")
+  handledBy   String?     @map("handled_by")
+  ipHash      String?     @map("ip_hash")
+  createdAt   Int         @map("created_at")
+
+  @@map("web_inbox_messages")
+}
+
+model Setting {
+  key         String      @id
+  value       String?
+  updatedBy   String?     @map("updated_by")
+  updatedAt   Int         @map("updated_at")
+
+  @@map("web_site_settings")
+}
+
+model AuditLog {
+  id          Int         @id @default(autoincrement())
+  userId      String?     @map("user_id")
+  action      String
+  entityType  String?     @map("entity_type")
+  entityId    String?     @map("entity_id")
+  changes     String?
+  ipHash      String?     @map("ip_hash")
+  createdAt   Int         @map("created_at")
+
+  @@map("web_audit_logs")
 }

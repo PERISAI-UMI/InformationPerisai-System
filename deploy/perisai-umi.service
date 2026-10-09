@@ -1,0 +1,25 @@
+[Unit]
+Description=InformationPerisai System - Next.js Production Service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=perisai
+WorkingDirectory=/opt/perisai-umi
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=/opt/perisai-umi/.env
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=perisai-umi
+
+# Sandbox & Security Hardening
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

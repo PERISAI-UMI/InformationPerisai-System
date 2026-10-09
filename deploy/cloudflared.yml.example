@@ -1,0 +1,9 @@
+tunnel: your-tunnel-uuid-here
+credentials-file: /etc/cloudflared/your-tunnel-uuid-here.json
+
+ingress:
+  - hostname: perisai-umi.org
+    service: http://localhost:3000
+  - hostname: www.perisai-umi.org
+    service: http://localhost:3000
+  - service: http_status:404

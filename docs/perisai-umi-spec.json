@@ -1,0 +1,115 @@
+{
+  "$schema_note": "Dokumen spesifikasi produk untuk AI coder dan developer. Sumber kebenaran untuk rebuild PERISAI UMI. Jika kode bertentangan dengan dokumen ini, dokumen ini yang menang, kecuali ditandai status 'open'.",
+  "meta": {
+    "name": "PERISAI UMI",
+    "tagline_working": "Pusat Pengembangan Riset Mahasiswa",
+    "doc_version": "1.0.0",
+    "doc_language": "Teks deskripsi memakai Bahasa Indonesia. Nama tabel, kolom, route, dan identifier kode memakai Bahasa Inggris.",
+    "project_type": "rebuild/migrasi dari aplikasi Laravel 11 lama",
+    "legacy_stack": "PHP 8.2, Laravel 11, Sanctum, Blade, Vite, Tailwind 3",
+    "status_legend": {
+      "confirmed": "Sudah diputuskan pemilik proyek. Jangan diubah tanpa konfirmasi.",
+      "proposed": "Rekomendasi default. Boleh dipakai sampai ada keputusan lain.",
+      "open": "Belum diputuskan. AI coder WAJIB bertanya sebelum mengimplementasikan."
+    }
+  },
+  "ai_coder_rules": [
+    "Baca seluruh dokumen ini sebelum menulis kode.",
+    "Jangan menambah fitur yang tidak ada di 'features' atau yang tercantum di 'non_goals'.",
+    "Jangan mengarang nama tabel, kolom, atau endpoint. Gunakan persis yang ada di 'data_model' dan 'api'.",
+    "Jika menemukan item berstatus 'open', berhenti dan tanyakan ke pemilik proyek.",
+    "Setiap endpoint tulis (create/update/delete) WAJIB cek autentikasi DAN role di sisi server. Menyembunyikan tombol di frontend bukan otorisasi.",
+    "Semua input divalidasi di server. Jangan percaya validasi frontend.",
+    "Konten publik hanya boleh menampilkan data berstatus 'published' dan is_active=true. Draft tidak boleh bocor lewat route publik maupun API publik.",
+    "Jangan menyimpan secret, password, atau kredensial di repo. Gunakan environment variable.",
+    "Jangan menjalankan migration yang memakai DROP TABLE pada database berisi data. Migration harus aditif dan reversible.",
+    "Tulis kode dalam TypeScript strict jika stack JS dipilih. Jangan memakai tipe 'any'.",
+    "Setiap fitur selesai harus lolos acceptance criteria pada bagian 'features'.",
+    "Sebelum mengubah skema, update dokumen ini lebih dulu.",
+    "Proyek ini TIDAK memakai Docker. Jangan membuat Dockerfile, docker-compose.yml, atau instruksi berbasis container. Gunakan instalasi native, systemd/PM2, dan skrip shell.",
+    "DATABASE INI DIBAGI dengan sistem PSDM. Baca dan patuhi bagian 'shared_database' serta file database-safety.md. Boleh MENAMBAH, dilarang rename/hapus/ubah apa pun milik PSDM.",
+    "Tabel baru website wajib berawalan 'web_'. Nama tabel di bagian 'data_model' adalah nama LOGIS; nama fisik di database = 'web_' + nama logis (mis. posts -> web_posts).",
+    "Jangan memakai prisma migrate dev/reset atau db push dengan opsi destruktif. Migration ditulis sebagai SQL manual di db/migrations/ dan diperiksa dengan 'node db/guard.mjs sql'.",
+    "Jangan pernah menulis ke tabel PSDM dari website dan jangan memakai SELECT * pada users/sessions."
+  ],
+  "product": {
+    "summary": "Website profil publik PERISAI UMI beserta panel admin (CMS) agar pengurus dapat memperbarui konten tanpa mengubah kode.",
+    "primary_goals": [
+      "Memperkenalkan organisasi, departemen, dan kepengurusan kepada mahasiswa dan calon mitra.",
+      "Menampilkan karya, kegiatan, berita, dan prestasi sebagai bukti organisasi aktif.",
+      "Mempublikasikan peluang (lomba, rekrutmen, pelatihan) beserta status buka/tutup dan deadline.",
+      "Menyediakan kanal kontak dan kolaborasi lewat formulir yang tujuannya jelas.",
+      "Memberi admin alat sederhana untuk mengelola konten, galeri, statistik, kontak, dan pesan masuk."
+    ],
+    "audiences": [
+      {
+        "id": "student",
+        "description": "Mahasiswa UMI yang mencari info kegiatan, lomba, dan cara bergabung. Mayoritas membuka lewat HP."
+      },
+      {
+        "id": "partner",
+        "description": "Calon mitra, dosen, atau instansi yang menilai kredibilitas organisasi dan ingin berkolaborasi."
+      },
+      {
+        "id": "admin",
+        "description": "Pengurus yang memperbarui konten. Berganti tiap periode, jadi panel harus mudah dipelajari."
+      }
+    ],
+    "non_goals": [
+      "Bukan sistem keanggotaan atau pendaftaran anggota.",
+      "Bukan platform pengelolaan lomba end-to-end. Pendaftaran lomba mengarah ke tautan eksternal.",
+      "Tidak ada akun pengguna publik. Pengunjung tidak perlu login.",
+      "Tidak ada fitur komentar, forum, chat, atau e-commerce.",
+      "Tidak ada registrasi mandiri. Akun admin dibuat oleh super_admin."
+    ]
+  },
+  "decisions": {
+    "database": {
+      "status": "confirmed",
+      "value": "Database SQLite yang sama dengan sistem PSDM (berkas psdm-db.db).",
+      "engine": {
+        "status": "proposed",
+        "value": "SQLite (mengikuti database PSDM)",
+        "note": "Menggantikan rekomendasi PostgreSQL sebelumnya, karena database harus sama dengan sistem PSDM."
+      },
+      "migration_tool": {
+        "status": "confirmed",
+        "value": "SQL manual di db/migrations/ + db/guard.mjs. Prisma hanya sebagai client, BUKAN pengelola migration."
+      }
+    },
+    "hosting": {
+      "status": "confirmed",
+      "value": "Server sendiri (self-hosted) di belakang Cloudflare"
+    },
+    "application_stack": {
+      "status": "confirmed",
+      "value": "Next.js (App Router) + TypeScript + Prisma, fullstack. Tidak ada backend Laravel."
+    },
+    "roles_model": {
+      "status": "proposed",
+      "value": "Mulai dengan dua role aktif: super_admin dan editor."
+    },
+    "media_storage": {
+      "status": "proposed",
+      "value": "Disk lokal server di belakang Cloudflare CDN, atau Cloudflare R2 (kompatibel S3)."
+    },
+    "containerization": {
+      "status": "confirmed",
+      "value": "Tanpa Docker. Database dan aplikasi dipasang langsung (native) di server dan di mesin developer."
+    }
+  },
+  "shared_database": {
+    "status": "confirmed",
+    "summary": "Database website ini adalah database yang sama dengan sistem PSDM (absensi dan data pengurus). Website menambah tabel sendiri tetapi tidak boleh merusak milik PSDM.",
+    "source_file": "psdm-db.db (SQLite 3). Jangan di-commit.",
+    "owner_of_protected_tables": "Sistem PSDM",
+    "conventions_of_existing_db": {
+      "id": "text (UUID string), dibuat oleh aplikasi. Tabel baru web_* memakai gaya yang sama.",
+      "timestamps": "integer, detik sejak epoch (unix seconds).",
+      "booleans": "integer 0/1.",
+      "column_language": "Bahasa Indonesia untuk kolom PSDM.",
+      "foreign_keys_pragma": "PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;",
+      "naming_for_new_tables": "Awalan 'web_', nama kolom bahasa Inggris snake_case."
+    }
+  }
+}
