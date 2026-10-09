@@ -65,11 +65,15 @@ Website dirancang dengan konsep **Dark Luxury & Scientific Prestige** yang mence
 - **Audit Logging Terpusat (`/admin/audit-log`)**: Jejak rekam aktivitas setiap pengurus dalam mengubah data.
 - **Manajemen Pengguna & Hak Akses (`/admin/users`)**: Pemberian hak akses CMS (`super_admin`, `editor`) bagi fungsionaris.
 
-### 3. Keamanan & Integritas Basis Data (PSDM Shared-DB Guard)
-- **Berbagi Basis Data dengan PSDM**: Sistem ini terhubung langsung ke basis data organisasi yang sama dengan sistem PSDM (`psdm-db.db` / Turso LibSQL).
-- **Prefix Khusus Website (`web_*`)**: Semua tabel milik website secara ketat menggunakan awalan `web_` (contoh: `web_posts`, `web_work_programs`, `web_opportunities`).
-- **Tabel PSDM Terlindungi (Read-Only)**: Tabel bawaan PSDM (`users`, `departments`, dll.) hanya dibaca dan tidak boleh diubah atau dihapus oleh website.
-- **Schema Safety Guard (`db/guard.mjs`)**: Sistem pencegah eksekusi SQL destruktif (`DROP TABLE`, `DROP COLUMN`, `ALTER TABLE non-web_`).
+### 3. Keamanan & Integritas Basis Data Terpadu (Dual SQLite & Turso Cloud)
+- **Berbagi Basis Data dengan PSDM**: Sistem ini terhubung langsung ke basis data organisasi yang sama dengan sistem PSDM (`psdm-db.db` lokal atau klaster Turso Cloud LibSQL).
+- **Skema Komprehensif 21 Tabel (`M_*` & `T_*`)**: Seluruh master referensi data akademik/organisasi dan transaksi dipetakan ke 21 tabel terstandarisasi:
+  - **Tabel Master (`M_*`)**: `M_Fakultas`, `M_Jurusan`, `M_Departemen`, `M_Jabatan`, `M_Periode`, `M_Role`, `M_Anggota`, `M_Akun`.
+  - **Tabel Transaksi & Konten (`T_*`)**: `T_Sesi`, `T_Kepengurusan`, `T_Proker`, `T_Berita`, `T_Kompetisi`, `T_Prestasi`, `T_Keuangan`, `T_Galeri`, `T_Pesan_Masuk`, `T_Statistik`, `T_Pengaturan`, `T_Audit_Log`, `T_Media`.
+- **Kepengurusan Riil Periode 2026–2027**: 42 fungsionaris aktif (BPH dan 6 departemen) terdata lengkap di `M_Anggota` dan `T_Kepengurusan`, tersinkronisasi langsung ke tampilan publik profil organisasi.
+- **Autentikasi Berbasis PRN (ID PERISAI)**: Seluruh pengurus memiliki akun di `M_Akun` dengan username menggunakan nomor registrasi anggota (contoh: `PRN 0238`) dan password default terenkripsi SHA-256 (`perisai2026`).
+- **Tabel PSDM Terlindungi (Read-Only)**: Tabel bawaan PSDM terdahulu (`users`, `departments`, dll.) tetap dilindungi dan tidak boleh diubah secara destruktif.
+- **Schema Safety Guard (`db/guard.mjs`)**: Sistem pencegah eksekusi SQL destruktif (`DROP TABLE`, `DROP COLUMN`, `ALTER TABLE` non-website).
 
 ---
 
@@ -131,17 +135,24 @@ STORAGE_DRIVER="local"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-> **Catatan Penggunaan Turso Cloud:** Jika menggunakan database Turso yang terdistribusi, isi variabel:
+> **Catatan Penggunaan Turso Cloud:** Jika menggunakan database Turso yang terdistribusi, tambahkan variabel:
 > ```env
 > TURSO_DATABASE_URL="libsql://your-db.turso.io"
 > TURSO_AUTH_TOKEN="your-turso-auth-token"
 > ```
 
-### 4. Verifikasi Keamanan Skema & Migrasi
-Validasi berkas migrasi menggunakan Schema Guard:
+### 4. Eksekusi Migrasi & Sinkronisasi Database
+Eksekusi migrasi skema 21 tabel dan pembaruan Prisma Client:
 ```bash
-node db/guard.mjs sql db/migrations/001_create_web_tables.sql
-node db/guard.mjs live
+# 1. Jalankan skrip seeding data pengurus 2026/2027 ke SQLite lokal
+npx tsx scripts/seed-complete-2026.ts
+
+# 2. (Opsional) Sinkronkan migrasi dan data ke Turso Cloud LibSQL
+node scripts/migrate-and-seed-turso.mjs
+
+# 3. Perbarui Prisma schema dan client
+node scripts/update-prisma-schema.js
+node ./node_modules/prisma/build/index.js generate
 ```
 
 ### 5. Jalankan Development Server
@@ -151,6 +162,7 @@ npm run dev
 
 Buka peramban Anda dan kunjungi:
 - **Portal Publik**: [http://localhost:3000](http://localhost:3000)
+- **Struktur Organisasi 2026/2027**: [http://localhost:3000/tentang/struktur](http://localhost:3000/tentang/struktur)
 - **Panel Admin**: [http://localhost:3000/admin](http://localhost:3000/admin)
 
 ---
@@ -164,6 +176,9 @@ Buka peramban Anda dan kunjungi:
 | `npm run start` | Menjalankan server aplikasi Next.js dalam mode produksi |
 | `npm run lint` | Menjalankan audit kualitas kode menggunakan ESLint |
 | `npm test` | Menjalankan seluruh rangkaian automated unit tests |
+| `node ./node_modules/prisma/build/index.js generate` | Menghasilkan TypeScript client Prisma dengan 21 model terbaru |
+| `npx tsx scripts/seed-complete-2026.ts` | Mengisi data 42 pengurus 2026/2027 ke SQLite lokal `psdm-db.db` |
+| `node scripts/migrate-and-seed-turso.mjs` | Menjalankan migrasi DDL dan seeding data pengurus ke Turso Cloud |
 | `node db/guard.mjs live` | Memeriksa integritas tabel terlindungi PSDM pada database live |
 | `node db/guard.mjs sql <path>` | Memeriksa apakah file SQL aman dan tidak melanggar aturan proteksi |
 
@@ -175,7 +190,10 @@ Buka peramban Anda dan kunjungi:
 InformationPerisai-System/
 ├── db/                         # Skrip keamanan basis data dan migrasi aditif
 │   ├── guard.mjs               # Validator pengawal skema (mencegah modifikasi destruktif)
-│   ├── migrations/             # Berkas SQL mentah (001_create_web_tables.sql)
+│   ├── README.md               # Dokumentasi lengkap kamus data 21 tabel & SOP PSDM
+│   ├── migrations/             # Berkas SQL skema DDL
+│   │   ├── 001_create_web_tables.sql       # Skema web_* transisional
+│   │   └── 002_complete_perisai_schema.sql # Skema 21 tabel komprehensif (M_* & T_*)
 │   └── protected-schema...     # Snapshot tabel terlindungi milik PSDM
 ├── deploy/                     # Konfigurasi deployment server mandiri (VPS)
 │   ├── backup.sh               # Skrip backup otomatis berkala (SQLite / Postgres)
@@ -184,15 +202,18 @@ InformationPerisai-System/
 │   ├── perisai-umi.service     # Unit file Systemd untuk auto-restart aplikasi
 │   └── README.md               # Panduan setup VPS dari nol
 ├── docs/                       # Dokumentasi arsitektur dan spesifikasi resmi
-│   ├── decisions.md            # Architecture Decision Records (ADR)
+│   ├── decisions.md            # Architecture Decision Records (ADR 001 - ADR 008)
 │   ├── operations.md           # SOP Backup, Restore, dan Serah-Terima Kepengurusan
 │   └── perisai-umi-spec.json   # Single Source of Truth spesifikasi sistem
 ├── prisma/                     # Konfigurasi Prisma ORM
-│   ├── schema.prisma           # Pemetaan skema relasional tabel PSDM dan tabel web_*
+│   ├── schema.prisma           # Pemetaan skema 21 tabel relasional M_* dan T_*
 │   └── seed.ts                 # Skrip seed awal akun super admin
 ├── public/                     # Aset statis publik (gambar, logo, ikon, font)
-├── scripts/                    # Skrip bantu dan migrasi data sistem lama
-│   └── import-legacy/          # Panduan dan skrip impor data dari Laravel
+├── scripts/                    # Skrip migrasi, seeding, dan otomasi
+│   ├── seed-complete-2026.ts       # Seeding data 42 pengurus 2026/2027 ke SQLite
+│   ├── migrate-and-seed-turso.mjs  # Migrasi DDL & seeding ke Turso Cloud LibSQL
+│   ├── update-prisma-schema.js     # Generator sinkronisasi model Prisma
+│   └── import-legacy/              # Panduan dan skrip impor data dari Laravel
 ├── src/                        # Kode sumber aplikasi utama
 │   ├── app/                    # Next.js App Router
 │   │   ├── (public)/           # Rute publik (Beranda, Tentang, Kontak, Lomba, Kabar)
@@ -209,7 +230,7 @@ InformationPerisai-System/
 │   │   ├── departments/        # Profil dan deskripsi divisi riset
 │   │   ├── gallery/            # Galeri dokumentasi visual
 │   │   ├── inbox/              # Pesan masuk formulir kontak
-│   │   ├── members/            # Fungsionaris dan anggota kepengurusan
+│   │   ├── members/            # Fungsionaris dan anggota kepengurusan (T_Kepengurusan)
 │   │   ├── opportunities/      # Lomba, kompetisi, dan peluang riset
 │   │   ├── periods/            # Periode kepengurusan tahunan
 │   │   ├── posts/              # Artikel, liputan, dan berita organisasi

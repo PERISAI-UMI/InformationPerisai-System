@@ -4,10 +4,10 @@ Direktori ini berisi panduan dan skrip sekali pakai (*one-off migration scripts*
 
 ---
 
-## ⚠️ Perhatian Keamanan (PSDM Safety)
-
+## ⚠️ Perhatian Keamanan & Skema
+ 
 - Sebelum menjalankan skrip impor, pastikan telah melakukan pencadangan database (`psdm-db.db`).
-- Skrip impor ini hanya menyasar tabel dengan prefix `web_*` atau melakukan pemetaan referensi yang aman tanpa mengubah struktur tabel bawaan PSDM.
+- Skrip impor ini menyasar pemetaan ke skema relasional 21 tabel baru (`M_*` dan `T_*`) serta tabel kompatibilitas `web_*` secara aditif tanpa merusak struktur bawaan PSDM.
 - Jalankan pemeriksaan keamanan skema terlebih dahulu:
   ```bash
   node db/guard.mjs live
@@ -24,22 +24,22 @@ Direktori ini berisi panduan dan skrip sekali pakai (*one-off migration scripts*
    ```bash
    npx tsx scripts/import-legacy/02-import-core.ts
    ```
-   Memetakan dan mengimpor data departemen, periode kepengurusan, anggota/fungsionaris, dan angka statistik awal.
+   Memetakan dan mengimpor data departemen (`M_Departemen`), periode kepengurusan (`M_Periode`), anggota/fungsionaris (`M_Anggota`, `T_Kepengurusan`), dan angka statistik awal (`T_Statistik`).
 
 3. **Impor Konten Organisasi**:
    ```bash
    npx tsx scripts/import-legacy/03-import-content.ts
    ```
    Mengonversi data konten historis:
-   - `news` → `web_posts`
-   - `competitions` → `web_opportunities`
-   - `work_programs` → `web_work_programs`
+   - `news` → `T_Berita` / `web_posts`
+   - `competitions` → `T_Kompetisi` / `web_opportunities`
+   - `work_programs` → `T_Proker` / `web_work_programs`
 
 4. **Impor & Sinkronisasi Berkas Media**:
    ```bash
    npx tsx scripts/import-legacy/04-import-media.ts
    ```
-   Menyalin aset gambar/thumbnail fisik dari direktori lama `storage/app/public/` ke direktori baru `public/uploads/` dan mencatat entri pada tabel `web_media`.
+   Menyalin aset gambar/thumbnail fisik dari direktori lama `storage/app/public/` ke direktori baru `public/uploads/` dan mencatat entri pada tabel `T_Media` / `web_media`.
 
 5. **Verifikasi Integritas Data**:
    ```bash

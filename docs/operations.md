@@ -86,3 +86,23 @@ Sistem menyediakan endpoint cek kesehatan di:
 - `GET /api/health`
 Mengembalikan status konektivitas database dan status layanan.
 Endpoint ini digunakan oleh uptime monitor (misal UptimeKuma / BetterUptime).
+
+---
+
+## 5. SOP Penyerahan Basis Data ke Tim PSDM
+
+Untuk menyerahkan database ke divisi PSDM:
+1. **Pemeriksaan Integritas Lokal**:
+   Pastikan file database `psdm-db.db` memiliki seluruh data terbaru (42 fungsionaris):
+   ```bash
+   node db/guard.mjs live
+   ```
+2. **Kompilasi Berkas Serah-Terima**:
+   Serahkan dua berkas utama kepada koordinator PSDM:
+   - `psdm-db.db` : Berkas database SQLite siap pakai.
+   - `db/migrations/002_complete_perisai_schema.sql` : Skrip DDL skema 21 tabel.
+   - `db/README.md` : Panduan kamus data dan struktur tabel.
+3. **Aktivasi Akun Fungsionaris Baru**:
+   - Berikan daftar PRN (ID PERISAI) kepada masing-masing anggota.
+   - Beritahukan kata sandi default `perisai2026` dan instruksikan untuk menggantinya pada saat pertama kali login.
+

@@ -7,7 +7,7 @@ Panduan langkah demi langkah untuk mengonfigurasi Virtual Private Server (VPS) U
 ## 🏗️ Ringkasan Arsitektur Deployment
 
 - **Aplikasi**: Next.js 16 (App Router, Node.js v20+) — Fullstack native (tanpa Docker).
-- **Basis Data**: Berbagi database dengan sistem PSDM menggunakan **SQLite** (`psdm-db.db`) atau **Turso Cloud LibSQL**. Seluruh tabel web diawali prefix `web_*` dan dilindungi oleh `db/guard.mjs`.
+- **Basis Data**: Berbagi database dengan sistem PSDM menggunakan skema komprehensif 21 tabel (`M_*` dan `T_*`) pada **SQLite** (`psdm-db.db`) atau **Turso Cloud LibSQL**. Dilengkapi perlindungan `db/guard.mjs`.
 - **Process Manager**: Systemd (`perisai-umi.service`) untuk auto-restart dan manajemen background process.
 - **Reverse Proxy**: Caddy Web Server dengan sertifikat HTTPS (SSL/TLS) otomatis dari Let's Encrypt / ZeroSSL.
 - **Edge CDN & Keamanan**: Cloudflare (DNS, DDoS Protection, WAF, Caching).
@@ -41,7 +41,7 @@ npm -v
 
 ## 3. Konfigurasi Basis Data (SQLite / Turso)
 
-Sistem InformationPerisai-System dirancang untuk hemat sumber daya dan terintegrasi aman dengan data PSDM:
+Sistem InformationPerisai-System dirancang untuk hemat sumber daya dan terintegrasi aman dengan data kepengurusan:
 
 ### Opsi A: SQLite Lokal (psdm-db.db) — Rekomendasi Mandiri
 Jika file database PSDM berada di server lokal:
@@ -51,11 +51,19 @@ Jika file database PSDM berada di server lokal:
    sudo chown perisai:perisai /opt/perisai-umi/psdm-db.db
    chmod 660 /opt/perisai-umi/psdm-db.db
    ```
+3. Eksekusi skema 21 tabel dan seeding data pengurus riil jika belum ada:
+   ```bash
+   npx tsx scripts/seed-complete-2026.ts
+   ```
 
 ### Opsi B: Turso Cloud LibSQL — Rekomendasi Replikasi Cloud
 Jika menggunakan database Turso terdistribusi:
 - Dapatkan URL database (`libsql://...`) dan Auth Token dari dasbor Turso.
 - Isikan pada variabel lingkungan `TURSO_DATABASE_URL` dan `TURSO_AUTH_TOKEN`.
+- Jalankan sinkronisasi migrasi skema:
+   ```bash
+   node scripts/migrate-and-seed-turso.mjs
+   ```
 
 ---
 

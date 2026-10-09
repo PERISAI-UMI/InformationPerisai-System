@@ -64,3 +64,18 @@ Dokumen ini mencatat keputusan-keputusan teknis fundamental dalam perancangan da
   2. Prisma digunakan sebagai query client via adapter `@prisma/adapter-better-sqlite3` dan `@prisma/adapter-libsql`.
   3. Dilarang menjalankan `prisma migrate dev` atau `db push` destruktif. Seluruh perubahan skema dikawal oleh `node db/guard.mjs` dan skrip SQL aditif di `db/migrations/`.
 - **Konsekuensi**: Data fungsionaris PSDM terlindungi secara mutlak (read-only dari sisi CMS publik) tanpa risiko kehilangan data saat pembaruan fitur website.
+ 
+---
+ 
+## ADR 008: Skema Komprehensif 2026/2027 (M_* & T_*) dengan Autentikasi Berbasis PRN
+- **Status**: Accepted
+- **Konteks**: Organisasi UKM PERISAI UMI membutuhkan standarisasi data menyeluruh yang mencakup data akademik fungsionaris (NIM, Fakultas, Jurusan, TTL), media sosial, hobi, peran fungsionaris per periode aktif, program kerja, keuangan, publikasi berita, dan akun login menggunakan Nomor Registrasi Perisai (PRN).
+- **Keputusan**:
+  1. Menerapkan konvensi tabel 21 relasional:
+     - Tabel Master (`M_*`): `M_Fakultas`, `M_Jurusan`, `M_Departemen`, `M_Jabatan`, `M_Periode`, `M_Role`, `M_Anggota`, `M_Akun`.
+     - Tabel Transaksi (`T_*`): `T_Sesi`, `T_Kepengurusan`, `T_Proker`, `T_Berita`, `T_Kompetisi`, `T_Prestasi`, `T_Keuangan`, `T_Galeri`, `T_Pesan_Masuk`, `T_Statistik`, `T_Pengaturan`, `T_Audit_Log`, `T_Media`.
+  2. Menggunakan `id_perisai` (PRN) sebagai ID primer pada `M_Anggota` dan username unik pada `M_Akun`.
+  3. Menggunakan default password hash SHA-256 (`perisai2026`) untuk kemudahan aktivasi awal oleh fungsionaris baru.
+  4. Menyinkronkan model ke Prisma ORM (`prisma/schema.prisma`) dan menghubungkan query publik profil organisasi langsung ke `T_Kepengurusan`.
+- **Konsekuensi**: Arsitektur data menjadi sangat modular, mudah diserah-terimakan ke divisi PSDM, dan siap untuk ekspansi sistem keanggotaan jangka panjang.
+
