@@ -63,6 +63,7 @@ export default function AdminLoginPage() {
         
         {/* Header Branding */}
         <div className="text-center mb-6">
+          <h1 className="sr-only">Login Pengurus UKM PERISAI UMI</h1>
           <Link href="/" className="inline-block">
             <Image
               src="/logoperisaidengantulisan.png"
@@ -73,13 +74,6 @@ export default function AdminLoginPage() {
               priority
             />
           </Link>
-
-          <h1 className="mt-4 text-xl font-bold tracking-tight text-white">
-            Login
-          </h1>
-          <p className="mt-1 text-xs text-zinc-400">
-            Sistem Informasi UKM PERISAI UMI
-          </p>
         </div>
 
         {/* Error Notification Alert */}
