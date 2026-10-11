@@ -1014,7 +1014,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Garis: Info Lomba -> Perisai Merchant */}
+      {/* Garis: Info Lomba -> Perisai Store */}
       <Connector
         paths={[
           "M300 0 C 300 100, 500 100, 500 200",
@@ -1025,7 +1025,7 @@ export default async function HomePage() {
       </Connector>
 
       {/* ======================================================== */}
-      {/* 7. PERISAI MERCHANT                                      */}
+      {/* 7. PERISAI STORE                                         */}
       {/* ======================================================== */}
       <section className="relative pb-24 pt-4">
         <Sparkle className="left-[5%] top-12 hidden md:block" size={26} delay={0.5} float />
@@ -1050,22 +1050,21 @@ export default async function HomePage() {
                 className="text-3xl font-extrabold uppercase sm:text-4xl lg:text-5xl"
                 style={{ color: GOLD }}
               >
-                Perisai Merchant
+                Perisai Store
               </h2>
 
               {/* Tombol CTA Elegan */}
               <div className="pt-2">
                 <a
-                  href="https://wa.me/6281234567890?text=Halo%20Admin%20PERISAI%20Merchant,%20saya%20tertarik%20dengan%20katalog%20merchandise%20resmi!"
+                  href="https://wa.me/6281234567890?text=Halo%20Admin%20PERISAI%20Store,%20saya%20tertarik%20dengan%20katalog%20merchandise%20resmi!"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center gap-2 rounded-full px-8 py-3 text-xs sm:text-sm font-bold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/25 transition-all duration-300 hover:scale-105 hover:brightness-110 active:scale-95"
+                  className="group inline-flex items-center justify-center rounded-full px-8 py-3 text-xs sm:text-sm font-bold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/25 transition-all duration-300 hover:scale-105 hover:brightness-110 active:scale-95"
                   style={{
                     background: "linear-gradient(135deg, #FFC85A 0%, #FFB22C 50%, #FFA000 100%)",
                   }}
                 >
-                  <span>Kunjungi PERISAI Merchant</span>
-                  <span className="transition-transform duration-300 group-hover:translate-x-1 font-bold">↗</span>
+                  <span>Kunjungi PERISAI Store</span>
                 </a>
               </div>
             </div>
