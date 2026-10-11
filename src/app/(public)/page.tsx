@@ -5,6 +5,8 @@ import { getPublicWorkPrograms } from "@/features/work-programs/queries.public";
 import { getPublicActiveMembers } from "@/features/members/queries.public";
 import { getPublicStatistics } from "@/features/statistics/queries.public";
 import { getPublicOpportunities } from "@/features/opportunities/queries.public";
+import { getPublicSettings } from "@/features/settings/queries.public";
+import { toYouTubeEmbedUrl, toYouTubeWatchUrl } from "@/lib/youtube";
 import { formatDateIndonesian } from "@/lib/dates";
 
 /* ------------------------------------------------------------------ */
@@ -106,13 +108,18 @@ function Connector({
 }
 
 export default async function HomePage() {
-  const [postsData, workPrograms, statistics, activeMembers, opportunitiesData] = await Promise.all([
+  const [postsData, workPrograms, statistics, activeMembers, opportunitiesData, publicSettings] = await Promise.all([
     getPublishedPosts({ pageSize: 6 }),
     getPublicWorkPrograms(),
     getPublicStatistics(),
     getPublicActiveMembers(),
     getPublicOpportunities(),
+    getPublicSettings(),
   ]);
+
+  const videoProfileUrl = publicSettings.video_profile_url || "https://www.youtube.com/embed/JWg_p9PfnTg?si=87vTr-0un14kRxu6";
+  const videoProfileEmbedUrl = toYouTubeEmbedUrl(videoProfileUrl);
+  const videoProfileWatchUrl = toYouTubeWatchUrl(videoProfileUrl);
 
   const alumniStat =
     statistics.find((s) => s.label.toLowerCase().includes("alumni"))?.value || "100";
@@ -419,38 +426,15 @@ export default async function HomePage() {
                 <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#FFB22C]/15 blur-3xl" />
                 <div className="pointer-events-none absolute -left-16 -bottom-16 h-56 w-56 rounded-full bg-[#FFA000]/10 blur-3xl" />
 
-                {/* Cinematic Obsidian Video Cover */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center select-none">
-                  <div className="mb-3 flex items-center gap-3 rounded-full border border-[#FFB22C]/30 bg-black/40 px-4 py-1.5 backdrop-blur-md">
-                    <Image
-                      src="/logoperisaii.png"
-                      alt="Logo UKM PERISAI UMI"
-                      width={28}
-                      height={28}
-                      className="h-6 w-6 object-contain"
-                    />
-                    <span className="text-xs font-bold tracking-widest uppercase text-[#FFB22C]">
-                      Video Profil Resmi UKM PERISAI UMI
-                    </span>
-                  </div>
-                  <p className="max-w-md text-xs sm:text-sm text-zinc-300 font-light">
-                    Kiprah Riset, Inovasi, & Prestasi Mahasiswa Universitas Muslim Indonesia
-                  </p>
-                </div>
-
-                <div className="absolute inset-0 flex items-center justify-center bg-black/25 backdrop-blur-[1px]">
-                  <a
-                    href="https://youtube.com/@perisaiumi"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Tonton Video Profile di YouTube"
-                    className="flex h-16 w-24 items-center justify-center rounded-2xl bg-red-600 text-white shadow-xl transition hover:scale-110 sm:h-20 sm:w-28 hover:bg-red-500"
-                  >
-                    <svg className="h-9 w-9 sm:h-11 sm:w-11" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </a>
-                </div>
+                {/* Embedded YouTube Iframe Player */}
+                <iframe
+                  src={`${videoProfileEmbedUrl}?rel=0&modestbranding=1`}
+                  title="Video Profil Resmi UKM PERISAI UMI"
+                  className="relative z-10 h-full w-full rounded-3xl border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
               </div>
             </div>
 
@@ -465,7 +449,7 @@ export default async function HomePage() {
                 henti, hingga prestasi yang mengukir nama. PERISAI UMI hadir sebagai ruang tumbuh,
                 ruang belajar, dan ruang pulang bagi para inovator.
               </p>
-              <div className="flex justify-center md:justify-start pt-1">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-1">
                 <Link
                   href="/tentang"
                   className="inline-block rounded-xl px-7 py-2.5 text-base font-bold text-[#1b1b1f] transition hover:brightness-110 shadow-md"
@@ -473,6 +457,17 @@ export default async function HomePage() {
                 >
                   Pelajari Selengkapnya
                 </Link>
+                <a
+                  href={videoProfileWatchUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 hover:border-[#FFB22C]/50"
+                >
+                  <svg className="h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                  </svg>
+                  <span>Tonton di YouTube</span>
+                </a>
               </div>
             </div>
           </div>
