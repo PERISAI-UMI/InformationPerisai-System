@@ -117,3 +117,22 @@ body::-webkit-scrollbar,
   animation: shakeSubtle 0.4s ease-in-out;
 }
 
+/* Multi-line truncation utilities with clean ellipsis */
+.line-clamp-2-clean {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+@media (min-width: 640px) {
+  .sm-line-clamp-2-clean {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
+

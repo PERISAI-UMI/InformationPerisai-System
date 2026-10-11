@@ -36,7 +36,7 @@ export function PostCard({ post, hrefPrefix = "/activity" }: PostCardProps) {
   );
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-[#202026] shadow-lg transition-all duration-300 hover:-translate-y-1.5 hover:border-[#FFB22C]/60 hover:shadow-[0_0_30px_rgba(255,178,44,0.18)]">
+    <article className="group flex flex-col h-full overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-[#202026] shadow-lg transition-all duration-300 hover:-translate-y-1.5 hover:border-[#FFB22C]/60 hover:shadow-[0_0_30px_rgba(255,178,44,0.18)]">
       {/* Bagian Visual Header Card: Menggunakan Style Obsidian Gold Emblem Seperti di Dashboard */}
       <Link href={destination} className="relative block w-full overflow-hidden">
         {hasCustomImage ? (
@@ -125,16 +125,18 @@ export function PostCard({ post, hrefPrefix = "/activity" }: PostCardProps) {
             </span>
           </div>
 
-          {/* Title */}
-          <h3 className="mt-1.5 sm:mt-2.5 text-xs sm:text-base font-bold leading-tight sm:leading-snug text-white transition-colors duration-200 group-hover:text-[#FFB22C] line-clamp-2">
+          {/* Title: 2 baris konsisten dengan min-height */}
+          <h3 className="mt-1.5 sm:mt-2.5 text-xs sm:text-base font-bold leading-tight sm:leading-snug text-white transition-colors duration-200 group-hover:text-[#FFB22C] line-clamp-2-clean sm:min-h-[2.75rem]">
             <Link href={destination}>{post.title}</Link>
           </h3>
 
-          {/* Excerpt: Disembunyikan di HP agar card 2-kolom ringkas & sejajar rapi */}
-          {post.excerpt && (
-            <p className="mt-2 hidden sm:block text-xs sm:text-sm leading-relaxed text-zinc-400 line-clamp-2 font-normal">
+          {/* Excerpt: Dibatasi maksimal 2 baris dengan ellipsis agar ukuran card selalu presisi dan seragam */}
+          {post.excerpt ? (
+            <p className="mt-2 hidden sm-line-clamp-2-clean text-xs sm:text-sm leading-relaxed text-zinc-400 font-normal sm:min-h-[2.5rem]">
               {post.excerpt}
             </p>
+          ) : (
+            <div className="mt-2 hidden sm:block sm:min-h-[2.5rem]" aria-hidden />
           )}
         </div>
 
