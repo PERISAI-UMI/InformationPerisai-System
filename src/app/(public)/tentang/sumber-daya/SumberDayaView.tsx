@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 
 const GOLD = "#FFB22C";
@@ -266,22 +266,20 @@ function PersonCard({
 
   return (
     <div
-      className={`relative w-full ${
-        isMini
+      className={`relative w-full ${isMini
           ? "max-w-[72px] sm:max-w-[110px] md:max-w-[145px] lg:max-w-[175px] rounded-lg sm:rounded-xl md:rounded-2xl"
           : isCompact
-          ? "max-w-[120px] sm:max-w-[165px] md:max-w-[190px] rounded-xl sm:rounded-2xl"
-          : "max-w-[115px] sm:max-w-[170px] md:max-w-[220px] rounded-xl sm:rounded-2xl"
-      } aspect-[3/4] border border-[#FFB22C]/30 bg-[#202026] overflow-hidden flex flex-col justify-between shadow-lg transition-colors duration-200 hover:border-[#FFB22C] hover:shadow-[0_0_22px_rgba(255,178,44,0.35)] group mx-auto`}
+            ? "max-w-[120px] sm:max-w-[165px] md:max-w-[190px] rounded-xl sm:rounded-2xl"
+            : "max-w-[115px] sm:max-w-[170px] md:max-w-[220px] rounded-xl sm:rounded-2xl"
+        } aspect-[3/4] border border-[#FFB22C]/30 bg-[#202026] overflow-hidden flex flex-col justify-between shadow-lg transition-colors duration-200 hover:border-[#FFB22C] hover:shadow-[0_0_22px_rgba(255,178,44,0.35)] group mx-auto`}
     >
       {/* Top right: Tombol Icon Media Sosial (Dinamis hingga 5 icon, default LinkedIn) */}
       {activeSocials && activeSocials.length > 0 && (
         <div
-          className={`absolute ${
-            isMini
+          className={`absolute ${isMini
               ? "top-1 right-1 gap-0.5 max-w-[45px] sm:max-w-[80px]"
               : "top-1.5 right-1.5 sm:top-2 sm:right-2 gap-1 max-w-[70px] sm:max-w-[110px]"
-          } z-30 flex items-center flex-wrap justify-end`}
+            } z-30 flex items-center flex-wrap justify-end`}
           onClick={(e) => e.stopPropagation()}
         >
           {activeSocials.map((soc, idx) => {
@@ -294,11 +292,10 @@ function PersonCard({
                 rel="noopener noreferrer"
                 title={`Buka ${soc.platform.toUpperCase()}`}
                 aria-label={soc.platform}
-                className={`${
-                  isMini
+                className={`${isMini
                     ? "w-4 h-4 sm:w-5 sm:h-5 md:w-5.5 md:h-5.5"
                     : "w-5 h-5 sm:w-6 sm:h-6 md:w-6.5 md:h-6.5"
-                } rounded-full bg-black/75 backdrop-blur-md border border-[#FFB22C]/40 text-[#FFB22C] hover:bg-[#FFB22C] hover:text-[#17171a] hover:border-[#FFB22C] flex items-center justify-center transition-all duration-200 shadow-md hover:scale-110 active:scale-95`}
+                  } rounded-full bg-black/75 backdrop-blur-md border border-[#FFB22C]/40 text-[#FFB22C] hover:bg-[#FFB22C] hover:text-[#17171a] hover:border-[#FFB22C] flex items-center justify-center transition-all duration-200 shadow-md hover:scale-110 active:scale-95`}
               >
                 <SocialIcon platform={soc.platform} compact={isMini || isCompact} />
               </a>
@@ -314,30 +311,70 @@ function PersonCard({
 
       {/* Bottom Nameplate Overlay: Hanya Nama & Jabatan */}
       <div
-        className={`absolute bottom-0 inset-x-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent ${
-          isMini
+        className={`absolute bottom-0 inset-x-0 z-20 bg-gradient-to-t from-black via-black/80 to-transparent ${isMini
             ? "pt-3 sm:pt-4 pb-1 sm:pb-2 px-1"
             : "pt-4 sm:pt-6 pb-1.5 sm:pb-2.5 px-1.5 sm:px-2.5"
-        } text-center`}
+          } text-center`}
       >
         <p
-          className={`${
-            isMini
+          className={`${isMini
               ? "text-[7.5px] sm:text-[9.5px] md:text-xs"
               : "text-[9.5px] sm:text-xs md:text-sm"
-          } font-bold text-white group-hover:text-[#FFB22C] transition-colors truncate`}
+            } font-bold text-white group-hover:text-[#FFB22C] transition-colors truncate`}
         >
           {name}
         </p>
         <p
-          className={`${
-            isMini
+          className={`${isMini
               ? "text-[6.5px] sm:text-[8px] md:text-[9.5px]"
               : "text-[8px] sm:text-[9.5px] md:text-[11px]"
-          } font-black tracking-wider uppercase text-[#FFB22C] mt-0.5 truncate`}
+            } font-black tracking-wider uppercase text-[#FFB22C] mt-0.5 truncate`}
         >
           {role}
         </p>
+      </div>
+
+      {/* Efek Api Halus & Partikel Bara Api (Subtle Flame Aura & Embers - Tampil Hidup di Depan) */}
+      <div className="pointer-events-none absolute bottom-0 inset-x-0 h-20 sm:h-28 overflow-hidden z-25">
+        {/* Glow hangat dasar api */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-16 sm:h-24 opacity-60 group-hover:opacity-90 transition-opacity duration-500"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 100%, rgba(255,178,44,0.55) 0%, rgba(255,107,0,0.28) 48%, transparent 75%)",
+            animation: "pr-flame-pulse 2.8s ease-in-out infinite alternate",
+          }}
+        />
+
+        {/* Lidah api vektor bergelombang halus */}
+        <svg
+          viewBox="0 0 120 40"
+          preserveAspectRatio="none"
+          className="absolute inset-x-0 bottom-0 w-full h-8 sm:h-12 opacity-60 group-hover:opacity-90 transition-opacity duration-300"
+        >
+          <path
+            d="M0 40 Q 15 20, 28 30 T 55 16 T 85 28 T 120 22 L 120 40 Z"
+            fill="rgba(255,107,0,0.45)"
+            style={{ animation: "pr-flame-tongue-1 2.6s ease-in-out infinite alternate" }}
+          />
+          <path
+            d="M0 40 Q 20 24, 38 32 T 70 18 T 95 30 T 120 24 L 120 40 Z"
+            fill="rgba(255,178,44,0.55)"
+            style={{ animation: "pr-flame-tongue-2 2.1s ease-in-out infinite alternate" }}
+          />
+          <path
+            d="M0 40 Q 28 26, 45 34 T 80 22 T 110 32 T 120 28 L 120 40 Z"
+            fill="rgba(255,234,167,0.4)"
+            style={{ animation: "pr-flame-tongue-3 1.8s ease-in-out infinite alternate" }}
+          />
+        </svg>
+
+        {/* Partikel bara api kecil yang melayang naik perlahan */}
+        <span className="pr-ember ember-1" />
+        <span className="pr-ember ember-2" />
+        <span className="pr-ember ember-3" />
+        <span className="pr-ember ember-4" />
+        <span className="pr-ember ember-5" />
       </div>
     </div>
   );
@@ -504,49 +541,129 @@ const STAF_AHLI_LIST = [
 /* ------------------------------------------------------------------ */
 /* ------------------------------------------------------------------ */
 /* Carousel Slider Komponen untuk Kepala Departemen                   */
-/* Mobile: Saling Menumpuk | Desktop/Web: Berjejer Rapi (Tidak Numpuk)*/
-/* Navigasi manual tanpa animasi geser                                */
+/* Fitur: Auto-scroll Halus, Drag/Touch Swipe, Infinite Loop,         */
+/* dan Sorotan Kartu Aktif di Tengah                                 */
 /* ------------------------------------------------------------------ */
 function KadepCarouselSection({
   items,
 }: {
   items: typeof KADEP_LIST;
 }) {
-  const [startIndex, setStartIndex] = useState(0);
+  const N = items.length;
+  // Gandakan array 3x untuk putaran infinite yang mulus tanpa henti
+  const repeatedItems = [...items, ...items, ...items];
+  const [activeIndex, setActiveIndex] = useState(N); // Mulai dari set tengah
+  const [trackOffset, setTrackOffset] = useState(0);
+  const [enableTransition, setEnableTransition] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const touchStartX = useRef<number | null>(null);
+
+  // Hitung offset agar kartu aktif tepat berada di tengah kontainer
+  const updateOffset = useCallback(() => {
+    if (!containerRef.current) return;
+    const targetCard = cardRefs.current[activeIndex];
+    if (!targetCard) return;
+
+    const containerWidth = containerRef.current.clientWidth;
+    const cardLeft = targetCard.offsetLeft;
+    const cardWidth = targetCard.clientWidth;
+
+    const newOffset = containerWidth / 2 - (cardLeft + cardWidth / 2);
+    setTrackOffset(newOffset);
+  }, [activeIndex]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    updateOffset();
+  }, [updateOffset, isMounted]);
+
+  useEffect(() => {
+    const handleResize = () => updateOffset();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [updateOffset]);
+
+  // Timer auto-scroll (berputar halus tiap 3.2 detik)
+  useEffect(() => {
+    if (isPaused) return;
+
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => prev + 1);
+    }, 3200);
+
+    return () => clearInterval(interval);
+  }, [isPaused, N]);
+
+  // Reset posisi silent ketika track mencapai batas pengulangan
+  const handleTransitionEnd = () => {
+    if (activeIndex >= 2 * N) {
+      setEnableTransition(false);
+      setActiveIndex((prev) => prev - N);
+    } else if (activeIndex < N) {
+      setEnableTransition(false);
+      setActiveIndex((prev) => prev + N);
+    }
+  };
+
+  useEffect(() => {
+    if (!enableTransition) {
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setEnableTransition(true);
+        });
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [enableTransition]);
 
   const prevSlide = () => {
-    setStartIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
+    setActiveIndex((prev) => prev - 1);
   };
 
   const nextSlide = () => {
-    setStartIndex((prev) => (prev + 1) % items.length);
+    setActiveIndex((prev) => prev + 1);
   };
 
-  const styleLeft = {
-    zClass: "z-10",
-    stepClass: "mt-4 sm:mt-0",
-    highlightClass: "",
-  };
-  const styleCenter = {
-    zClass: "z-30",
-    stepClass: "mt-0",
-    highlightClass: "scale-[1.03] sm:scale-105 drop-shadow-[0_12px_28px_rgba(255,178,44,0.38)]",
-  };
-  const styleRight = {
-    zClass: "z-10",
-    stepClass: "mt-4 sm:mt-0",
-    highlightClass: "",
+  const goToSlide = (dotIndex: number) => {
+    const currentRep = Math.floor(activeIndex / N);
+    setActiveIndex(currentRep * N + dotIndex);
   };
 
-  const N = items.length;
-  const currentCards = [
-    { item: items[startIndex % N], ...styleLeft },
-    { item: items[(startIndex + 1) % N], ...styleCenter },
-    { item: items[(startIndex + 2) % N], ...styleRight },
-  ];
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsPaused(true);
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current !== null) {
+      const diff = e.changedTouches[0].clientX - touchStartX.current;
+      if (diff > 40) {
+        setActiveIndex((prev) => prev - 1);
+      } else if (diff < -40) {
+        setActiveIndex((prev) => prev + 1);
+      }
+    }
+    touchStartX.current = null;
+    setTimeout(() => setIsPaused(false), 2000);
+  };
+
+  const activeRealIndex = ((activeIndex % N) + N) % N;
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-1.5 sm:px-6 my-4">
+    <div
+      className="w-full max-w-6xl mx-auto px-1.5 sm:px-6 my-4 select-none"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Judul Bagian */}
       <h3
         className="text-lg sm:text-2xl md:text-3xl font-black uppercase tracking-wider text-[#FFB22C] text-center mb-2 sm:mb-3"
@@ -555,18 +672,14 @@ function KadepCarouselSection({
         KEPALA DEPARTEMEN
       </h3>
 
-      {/* Garis Distributor Penghubung ke 3 Card (Di Web membentang ke 3 card, di Mobile rapat) */}
+      {/* Garis Distributor Penghubung ke 3 Card */}
       <div className="w-full max-w-[280px] sm:max-w-xl md:max-w-2xl mx-auto pointer-events-none mb-2 sm:mb-3">
         <svg className="w-full h-7 sm:h-9" viewBox="0 0 600 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* Garis vertikal incoming */}
           <line x1="300" y1="0" x2="300" y2="14" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
-          {/* Busbar horizontal */}
           <line x1="120" y1="14" x2="480" y2="14" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
-          {/* 3 Garis vertikal turun: kiri & kanan (36), tengah (20) */}
           <line x1="120" y1="14" x2="120" y2="36" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
           <line x1="300" y1="14" x2="300" y2="20" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
           <line x1="480" y1="14" x2="480" y2="36" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
-          {/* Titik simpul */}
           <circle cx="120" cy="14" r="3" fill="#FFB22C" />
           <circle cx="300" cy="14" r="3.5" fill="#FFB22C" />
           <circle cx="480" cy="14" r="3" fill="#FFB22C" />
@@ -586,18 +699,45 @@ function KadepCarouselSection({
           </svg>
         </button>
 
-        {/* Viewport Track Carousel: Mobile saling menumpuk, Desktop berjejer rapi berjarak (tidak tumpuk) */}
-        <div className="overflow-hidden w-full max-w-[280px] sm:max-w-xl md:max-w-3xl lg:max-w-4xl py-2 px-1">
-          <div className="flex items-start justify-center gap-0 sm:gap-6 md:gap-8">
-            {currentCards.map((card, i) => {
-              // Di Mobile: saling tumpuk (-ml-8). Di Desktop/Web: TIDAK SALING TUMPUK (sm:ml-0)!
-              const overlapClass = i === 0 ? "" : "-ml-8 sm:ml-0";
+        {/* Viewport Track Carousel dengan Edge Masking Halus */}
+        <div
+          ref={containerRef}
+          className="relative overflow-hidden w-full max-w-[290px] sm:max-w-xl md:max-w-3xl lg:max-w-4xl py-4 px-1"
+        >
+          {/* Subtle Side Fade Gradients for infinite illusion */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-6 sm:w-12 bg-gradient-to-r from-[#17171a] to-transparent z-25" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-6 sm:w-12 bg-gradient-to-l from-[#17171a] to-transparent z-25" />
+
+          {/* Continuous Sliding Track */}
+          <div
+            onTransitionEnd={handleTransitionEnd}
+            className="flex items-center gap-2 sm:gap-6 md:gap-8 will-change-transform"
+            style={{
+              transform: `translateX(${trackOffset}px)`,
+              transition: enableTransition ? "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+            }}
+          >
+            {repeatedItems.map((item, idx) => {
+              const distance = Math.abs(idx - activeIndex);
+              const isCenter = distance === 0;
+              const isNeighbor = distance === 1;
+
               return (
                 <div
-                  key={i}
-                  className={`relative ${card.zClass} ${card.stepClass} ${overlapClass} ${card.highlightClass} w-[115px] sm:w-[170px] md:w-[210px] lg:w-[230px] shrink-0 hover:z-40 hover:-translate-y-1.5 transition-transform duration-200`}
+                  key={idx}
+                  ref={(el) => {
+                    cardRefs.current[idx] = el;
+                  }}
+                  onClick={() => setActiveIndex(idx)}
+                  className={`relative shrink-0 cursor-pointer transition-all duration-700 ease-out ${
+                    isCenter
+                      ? "z-30 scale-105 sm:scale-110 opacity-100 drop-shadow-[0_12px_28px_rgba(255,178,44,0.45)] ring-1.5 ring-[#FFB22C] rounded-2xl"
+                      : isNeighbor
+                      ? "z-20 scale-[0.93] sm:scale-[0.96] opacity-75 sm:opacity-85"
+                      : "z-10 scale-[0.84] sm:scale-[0.86] opacity-35 sm:opacity-45"
+                  } w-[115px] sm:w-[170px] md:w-[205px] lg:w-[225px]`}
                 >
-                  <PersonCard name={card.item.name} role={card.item.role} size="standard" />
+                  <PersonCard name={item.name} role={item.role} size="standard" />
                 </div>
               );
             })}
@@ -616,15 +756,17 @@ function KadepCarouselSection({
         </button>
       </div>
 
-      {/* Indikator Titik (Dots) */}
+      {/* Indikator Titik (Dots) dengan Status Aktif Halus */}
       <div className="flex justify-center items-center gap-1.5 mt-4 sm:mt-5">
         {items.map((_, i) => (
           <button
             key={i}
-            onClick={() => setStartIndex(i)}
+            onClick={() => goToSlide(i)}
             aria-label={`Ke slide ${i + 1}`}
-            className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
-              i === (startIndex % items.length) ? "w-5 sm:w-6 bg-[#FFB22C]" : "w-1.5 sm:w-2 bg-zinc-600 hover:bg-zinc-400"
+            className={`h-1.5 sm:h-2 rounded-full transition-all duration-400 ${
+              i === activeRealIndex
+                ? "w-6 sm:w-8 bg-[#FFB22C] shadow-[0_0_10px_rgba(255,178,44,0.7)]"
+                : "w-1.5 sm:w-2 bg-zinc-600 hover:bg-zinc-400"
             }`}
           />
         ))}
@@ -635,46 +777,126 @@ function KadepCarouselSection({
 
 /* ------------------------------------------------------------------ */
 /* Carousel Slider Komponen untuk Staf Ahli                           */
-/* Mobile: Saling Menumpuk | Desktop/Web: Berjejer Rapi (Tidak Numpuk)*/
-/* Navigasi manual tanpa animasi geser                                */
+/* Fitur: Auto-scroll Halus, Drag/Touch Swipe, Infinite Loop,         */
+/* dan Formasi Multi-Card Berjenjang Estetik                         */
 /* ------------------------------------------------------------------ */
 function StafAhliCarouselSection({
   items,
 }: {
   items: typeof STAF_AHLI_LIST;
 }) {
-  const [startIndex, setStartIndex] = useState(0);
+  const N = items.length;
+  const repeatedItems = [...items, ...items, ...items];
+  const [activeIndex, setActiveIndex] = useState(N);
+  const [trackOffset, setTrackOffset] = useState(0);
+  const [enableTransition, setEnableTransition] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const touchStartX = useRef<number | null>(null);
+
+  const updateOffset = useCallback(() => {
+    if (!containerRef.current) return;
+    const targetCard = cardRefs.current[activeIndex];
+    if (!targetCard) return;
+
+    const containerWidth = containerRef.current.clientWidth;
+    const cardLeft = targetCard.offsetLeft;
+    const cardWidth = targetCard.clientWidth;
+
+    const newOffset = containerWidth / 2 - (cardLeft + cardWidth / 2);
+    setTrackOffset(newOffset);
+  }, [activeIndex]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    updateOffset();
+  }, [updateOffset, isMounted]);
+
+  useEffect(() => {
+    const handleResize = () => updateOffset();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [updateOffset]);
+
+  // Auto-scroll interval 3.2 detik
+  useEffect(() => {
+    if (isPaused) return;
+
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => prev + 1);
+    }, 3200);
+
+    return () => clearInterval(interval);
+  }, [isPaused, N]);
+
+  const handleTransitionEnd = () => {
+    if (activeIndex >= 2 * N) {
+      setEnableTransition(false);
+      setActiveIndex((prev) => prev - N);
+    } else if (activeIndex < N) {
+      setEnableTransition(false);
+      setActiveIndex((prev) => prev + N);
+    }
+  };
+
+  useEffect(() => {
+    if (!enableTransition) {
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setEnableTransition(true);
+        });
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [enableTransition]);
 
   const prevSlide = () => {
-    setStartIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
+    setActiveIndex((prev) => prev - 1);
   };
 
   const nextSlide = () => {
-    setStartIndex((prev) => (prev + 1) % items.length);
+    setActiveIndex((prev) => prev + 1);
   };
 
-  // Definisi style per posisi (mobile bertingkat, web sejajar rapi mt-0):
-  const styleOuterLeft = { zClass: "z-10", stepClass: "mt-6 sm:mt-0", highlightClass: "" };
-  const styleInnerLeft = { zClass: "z-20", stepClass: "mt-3 sm:mt-0", highlightClass: "" };
-  const styleCenter = {
-    zClass: "z-30",
-    stepClass: "mt-0",
-    highlightClass: "scale-[1.02] sm:scale-105 drop-shadow-[0_12px_28px_rgba(255,178,44,0.38)]",
+  const goToSlide = (dotIndex: number) => {
+    const currentRep = Math.floor(activeIndex / N);
+    setActiveIndex(currentRep * N + dotIndex);
   };
-  const styleInnerRight = { zClass: "z-20", stepClass: "mt-3 sm:mt-0", highlightClass: "" };
-  const styleOuterRight = { zClass: "z-10", stepClass: "mt-6 sm:mt-0", highlightClass: "" };
 
-  const N = items.length;
-  const currentCards = [
-    { item: items[startIndex % N], ...styleOuterLeft },
-    { item: items[(startIndex + 1) % N], ...styleInnerLeft },
-    { item: items[(startIndex + 2) % N], ...styleCenter },
-    { item: items[(startIndex + 3) % N], ...styleInnerRight },
-    { item: items[(startIndex + 4) % N], ...styleOuterRight },
-  ];
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsPaused(true);
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current !== null) {
+      const diff = e.changedTouches[0].clientX - touchStartX.current;
+      if (diff > 40) {
+        setActiveIndex((prev) => prev - 1);
+      } else if (diff < -40) {
+        setActiveIndex((prev) => prev + 1);
+      }
+    }
+    touchStartX.current = null;
+    setTimeout(() => setIsPaused(false), 2000);
+  };
+
+  const activeRealIndex = ((activeIndex % N) + N) % N;
 
   return (
-    <div className="w-full max-w-[1380px] mx-auto px-1 sm:px-4 my-4">
+    <div
+      className="w-full max-w-[1380px] mx-auto px-1 sm:px-4 my-4 select-none"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Judul Bagian */}
       <h3
         className="text-lg sm:text-2xl md:text-3xl font-black uppercase tracking-wider text-[#FFB22C] text-center mb-2 sm:mb-3"
@@ -683,21 +905,16 @@ function StafAhliCarouselSection({
         STAF AHLI
       </h3>
 
-      {/* Garis Distributor Penghubung ke 5 Card (Di Web membentang ke 5 card, di Mobile rapat) */}
+      {/* Garis Distributor Penghubung ke 5 Card */}
       <div className="w-full max-w-[340px] sm:max-w-3xl md:max-w-5xl lg:max-w-6xl mx-auto pointer-events-none mb-2 sm:mb-3">
         <svg className="w-full h-8 sm:h-11" viewBox="0 0 1000 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* Garis vertikal incoming dari atas */}
           <line x1="500" y1="0" x2="500" y2="14" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
-          {/* Busbar horizontal melintang ke 5 cabang kartu */}
           <line x1="100" y1="14" x2="900" y2="14" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
-          {/* 5 Cabang vertikal turun ke masing-masing kartu */}
           <line x1="100" y1="14" x2="100" y2="48" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
           <line x1="300" y1="14" x2="300" y2="34" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
           <line x1="500" y1="14" x2="500" y2="20" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
           <line x1="700" y1="14" x2="700" y2="34" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
           <line x1="900" y1="14" x2="900" y2="48" stroke="#FFB22C" strokeWidth="2" style={{ filter: "drop-shadow(0 0 6px rgba(255,178,44,0.6))" }} />
-
-          {/* Titik simpul emas */}
           <circle cx="100" cy="14" r="3" fill="#FFB22C" />
           <circle cx="300" cy="14" r="3" fill="#FFB22C" />
           <circle cx="500" cy="14" r="3.5" fill="#FFB22C" />
@@ -719,18 +936,51 @@ function StafAhliCarouselSection({
           </svg>
         </button>
 
-        {/* Viewport Track Carousel: Mobile saling menumpuk, Desktop berjejer rapi berjarak (tidak tumpuk) */}
-        <div className="overflow-hidden w-full max-w-[340px] sm:max-w-3xl md:max-w-5xl lg:max-w-6xl py-2 px-1">
-          <div className="flex items-start justify-center gap-0 sm:gap-4 md:gap-5 lg:gap-6">
-            {currentCards.map((card, i) => {
-              // Di Mobile: saling tumpuk (-ml-11). Di Desktop/Web: TIDAK SALING TUMPUK (sm:ml-0)!
-              const overlapClass = i === 0 ? "" : "-ml-11 sm:ml-0";
+        {/* Viewport Track Carousel dengan Edge Masking Halus */}
+        <div
+          ref={containerRef}
+          className="relative overflow-hidden w-full max-w-[340px] sm:max-w-3xl md:max-w-5xl lg:max-w-6xl py-4 px-1"
+        >
+          {/* Subtle Side Fade Gradients for panoramic depth */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-[#17171a] to-transparent z-25" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-[#17171a] to-transparent z-25" />
+
+          {/* Continuous Sliding Track */}
+          <div
+            onTransitionEnd={handleTransitionEnd}
+            className="flex items-center gap-1.5 sm:gap-4 md:gap-5 lg:gap-6 will-change-transform"
+            style={{
+              transform: `translateX(${trackOffset}px)`,
+              transition: enableTransition ? "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+            }}
+          >
+            {repeatedItems.map((item, idx) => {
+              const distance = Math.abs(idx - activeIndex);
+              const isCenter = distance === 0;
+              const isInner = distance === 1;
+              const isOuter = distance === 2;
+
+              // Step class untuk efek bertingkat estetik
+              const stepClass = isCenter ? "mt-0" : isInner ? "mt-2 sm:mt-0" : isOuter ? "mt-4 sm:mt-0" : "mt-6 sm:mt-0";
+
               return (
                 <div
-                  key={i}
-                  className={`relative ${card.zClass} ${card.stepClass} ${overlapClass} ${card.highlightClass} w-[100px] sm:w-[155px] md:w-[190px] lg:w-[215px] shrink-0 hover:z-40 hover:-translate-y-1.5 transition-transform duration-200`}
+                  key={idx}
+                  ref={(el) => {
+                    cardRefs.current[idx] = el;
+                  }}
+                  onClick={() => setActiveIndex(idx)}
+                  className={`relative shrink-0 cursor-pointer transition-all duration-700 ease-out ${stepClass} ${
+                    isCenter
+                      ? "z-30 scale-105 sm:scale-110 opacity-100 drop-shadow-[0_12px_28px_rgba(255,178,44,0.45)] ring-1.5 ring-[#FFB22C] rounded-2xl"
+                      : isInner
+                      ? "z-20 scale-[0.93] sm:scale-[0.96] opacity-80 sm:opacity-90"
+                      : isOuter
+                      ? "z-10 scale-[0.85] sm:scale-[0.88] opacity-55 sm:opacity-65"
+                      : "z-0 scale-[0.78] sm:scale-[0.8] opacity-20 sm:opacity-30"
+                  } w-[100px] sm:w-[155px] md:w-[185px] lg:w-[205px]`}
                 >
-                  <PersonCard name={card.item.name} role={card.item.role} size="standard" />
+                  <PersonCard name={item.name} role={item.role} size="standard" />
                 </div>
               );
             })}
@@ -754,10 +1004,12 @@ function StafAhliCarouselSection({
         {items.map((_, i) => (
           <button
             key={i}
-            onClick={() => setStartIndex(i)}
+            onClick={() => goToSlide(i)}
             aria-label={`Ke slide ${i + 1}`}
-            className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
-              i === (startIndex % items.length) ? "w-5 sm:w-6 bg-[#FFB22C]" : "w-1.5 sm:w-2 bg-zinc-600 hover:bg-zinc-400"
+            className={`h-1.5 sm:h-2 rounded-full transition-all duration-400 ${
+              i === activeRealIndex
+                ? "w-6 sm:w-8 bg-[#FFB22C] shadow-[0_0_10px_rgba(255,178,44,0.7)]"
+                : "w-1.5 sm:w-2 bg-zinc-600 hover:bg-zinc-400"
             }`}
           />
         ))}
@@ -910,6 +1162,106 @@ export function SumberDayaView() {
         @keyframes fadeIn {
           from { opacity: 0; transform: scale(0.97); }
           to   { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pr-flame-pulse {
+          0% {
+            opacity: 0.45;
+            transform: scaleY(0.92);
+          }
+          50% {
+            opacity: 0.78;
+            transform: scaleY(1.08);
+          }
+          100% {
+            opacity: 0.52;
+            transform: scaleY(0.96);
+          }
+        }
+        @keyframes pr-flame-tongue-1 {
+          0% {
+            transform: scaleX(1) translateY(0);
+          }
+          50% {
+            transform: scaleX(1.04) translateY(-2px);
+          }
+          100% {
+            transform: scaleX(0.98) translateY(1px);
+          }
+        }
+        @keyframes pr-flame-tongue-2 {
+          0% {
+            transform: scaleX(1) translateY(0);
+          }
+          50% {
+            transform: scaleX(0.97) translateY(-3px);
+          }
+          100% {
+            transform: scaleX(1.03) translateY(-1px);
+          }
+        }
+        @keyframes pr-flame-tongue-3 {
+          0% {
+            transform: scaleX(1) translateY(0);
+          }
+          50% {
+            transform: scaleX(1.02) translateY(-2px);
+          }
+          100% {
+            transform: scaleX(0.96) translateY(1px);
+          }
+        }
+        @keyframes pr-ember-rise {
+          0% {
+            transform: translateY(0) scale(0.6);
+            opacity: 0;
+          }
+          25% {
+            opacity: 0.85;
+          }
+          75% {
+            opacity: 0.55;
+          }
+          100% {
+            transform: translateY(-28px) scale(0.2);
+            opacity: 0;
+          }
+        }
+        .pr-ember {
+          position: absolute;
+          bottom: 4px;
+          width: 2.5px;
+          height: 2.5px;
+          border-radius: 50%;
+          background-color: #ffeaa7;
+          box-shadow: 0 0 5px #ffb22c;
+          pointer-events: none;
+          animation: pr-ember-rise 2.6s ease-out infinite;
+        }
+        .ember-1 {
+          left: 24%;
+          animation-delay: 0.2s;
+          animation-duration: 2.3s;
+        }
+        .ember-2 {
+          left: 50%;
+          animation-delay: 1.1s;
+          animation-duration: 2.8s;
+        }
+        .ember-3 {
+          left: 76%;
+          animation-delay: 1.7s;
+          animation-duration: 2.4s;
+        }
+        .ember-4 {
+          left: 36%;
+          animation-delay: 0.7s;
+          animation-duration: 2.9s;
+        }
+        .ember-5 {
+          left: 64%;
+          animation-delay: 1.4s;
+          animation-duration: 2.2s;
         }
       `}</style>
 
