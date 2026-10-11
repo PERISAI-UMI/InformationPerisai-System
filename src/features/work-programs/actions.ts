@@ -24,18 +24,26 @@ export async function createWorkProgramAction(data: WorkProgramInput): Promise<A
 
   try {
     const now = Math.floor(Date.now() / 1000);
-    const proker = await prisma.workProgram.create({
+    const deptId = parseInt(parsed.data.departmentId, 10);
+    let periodId = parseInt(parsed.data.periodId, 10);
+
+    if (isNaN(periodId)) {
+      const activePeriode = await prisma.mPeriode.findFirst({ where: { isActive: 1 } });
+      periodId = activePeriode ? activePeriode.idPeriode : 1;
+    }
+
+    const proker = await prisma.tProker.create({
       data: {
-        title: parsed.data.name,
-        slug,
-        departmentId: parsed.data.departmentId,
-        summary: parsed.data.objectives || null,
-        content: parsed.data.description,
-        coverMediaId: parsed.data.coverImageUrl,
-        status: "published",
-        publishedAt: now,
-        createdBy: session.user.id,
-        updatedBy: session.user.id,
+        idDepartemen: isNaN(deptId) ? 1 : deptId,
+        idPeriode: periodId,
+        namaProker: parsed.data.name,
+        slug: `${slug}-${Date.now().toString().slice(-4)}`,
+        deskripsi: parsed.data.description,
+        targetPelaksanaan: parsed.data.targetDate || null,
+        indikatorKeberhasilan: parsed.data.objectives || null,
+        fotoCover: parsed.data.coverImageUrl || null,
+        status: parsed.data.status.toLowerCase(),
+        diperbaruiOleh: session.user.id,
         createdAt: now,
         updatedAt: now,
       },
@@ -45,12 +53,12 @@ export async function createWorkProgramAction(data: WorkProgramInput): Promise<A
       userId: session.user.id,
       action: "CREATE_WORK_PROGRAM",
       resource: "work_programs",
-      resourceId: proker.id,
+      resourceId: String(proker.idProker),
     });
 
     revalidatePath("/tentang/sumber-daya");
     revalidatePath("/admin/work-programs");
-    return { success: true, data: proker };
+    return { success: true, data: { id: String(proker.idProker), slug: proker.slug } };
   } catch (err: unknown) {
     return { success: false, message: "Gagal menyimpan program kerja: " + (err instanceof Error ? err.message : String(err)) };
   }
@@ -67,19 +75,44 @@ export async function updateWorkProgramAction(id: string, data: WorkProgramInput
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
+  const idNum = parseInt(id, 10);
+  if (isNaN(idNum)) {
+    return { success: false, message: "ID program kerja tidak valid." };
+  }
+
   try {
     const now = Math.floor(Date.now() / 1000);
-    const updated = await prisma.workProgram.update({
-      where: { id },
-      data: {
-        title: parsed.data.name,
-        departmentId: parsed.data.departmentId,
-        summary: parsed.data.objectives || null,
-        content: parsed.data.description,
-        coverMediaId: parsed.data.coverImageUrl,
-        updatedBy: session.user.id,
-        updatedAt: now,
-      },
+    const deptId = parseInt(parsed.data.departmentId, 10);
+    let periodId = parseInt(parsed.data.periodId, 10);
+
+    const updateData: {
+      namaProker: string;
+      deskripsi: string;
+      fotoCover: string | null;
+      status: string;
+      targetPelaksanaan: string | null;
+      indikatorKeberhasilan: string | null;
+      diperbaruiOleh: string;
+      updatedAt: number;
+      idDepartemen?: number;
+      idPeriode?: number;
+    } = {
+      namaProker: parsed.data.name,
+      deskripsi: parsed.data.description,
+      fotoCover: parsed.data.coverImageUrl || null,
+      status: parsed.data.status.toLowerCase(),
+      targetPelaksanaan: parsed.data.targetDate || null,
+      indikatorKeberhasilan: parsed.data.objectives || null,
+      diperbaruiOleh: session.user.id,
+      updatedAt: now,
+    };
+
+    if (!isNaN(deptId)) updateData.idDepartemen = deptId;
+    if (!isNaN(periodId)) updateData.idPeriode = periodId;
+
+    const updated = await prisma.tProker.update({
+      where: { idProker: idNum },
+      data: updateData,
     });
 
     await writeAuditLog({
@@ -91,7 +124,7 @@ export async function updateWorkProgramAction(id: string, data: WorkProgramInput
 
     revalidatePath("/tentang/sumber-daya");
     revalidatePath("/admin/work-programs");
-    return { success: true, data: updated };
+    return { success: true, data: { id: String(updated.idProker), slug: updated.slug } };
   } catch (err: unknown) {
     return { success: false, message: "Gagal memperbarui program kerja: " + (err instanceof Error ? err.message : String(err)) };
   }
@@ -103,8 +136,13 @@ export async function deleteWorkProgramAction(id: string): Promise<ActionRespons
     return { success: false, message: "Akses ditolak." };
   }
 
+  const idNum = parseInt(id, 10);
+  if (isNaN(idNum)) {
+    return { success: false, message: "ID program kerja tidak valid." };
+  }
+
   try {
-    await prisma.workProgram.delete({ where: { id } });
+    await prisma.tProker.delete({ where: { idProker: idNum } });
     await writeAuditLog({
       userId: session.user.id,
       action: "DELETE_WORK_PROGRAM",

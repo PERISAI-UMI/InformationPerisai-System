@@ -31,19 +31,23 @@ export async function sendContactMessageAction(data: ContactInput): Promise<Acti
   }
 
   try {
-    const message = await prisma.inboxMessage.create({
+    const message = await prisma.tPesanMasuk.create({
       data: {
-        name: parsed.data.name,
+        namaPengirim: parsed.data.name,
         email: parsed.data.email,
-        phone: parsed.data.phone || null,
-        purpose: parsed.data.purpose || "pertanyaan",
-        subject: parsed.data.subject,
-        message: parsed.data.message,
+        noWa: parsed.data.phone || null,
+        tujuan: parsed.data.purpose || "pertanyaan",
+        subjek: parsed.data.subject,
+        isiPesan: parsed.data.message,
         createdAt: Math.floor(Date.now() / 1000),
       },
     });
 
-    return { success: true, message: "Pesan Anda berhasil dikirim ke pengurus UKM PERISAI UMI.", data: message };
+    return {
+      success: true,
+      message: "Pesan Anda berhasil dikirim ke pengurus UKM PERISAI UMI.",
+      data: { id: String(message.idPesan), ...message },
+    };
   } catch (err: unknown) {
     return { success: false, message: "Gagal mengirim pesan: " + (err instanceof Error ? err.message : String(err)) };
   }
@@ -55,10 +59,13 @@ export async function markAsReadAction(id: string): Promise<ActionResponse> {
     return { success: false, message: "Akses ditolak." };
   }
 
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) return { success: false, message: "ID pesan tidak valid." };
+
   try {
-    await prisma.inboxMessage.update({
-      where: { id },
-      data: { isRead: 1, handledAt: Math.floor(Date.now() / 1000), handledBy: session.user.id },
+    await prisma.tPesanMasuk.update({
+      where: { idPesan: numId },
+      data: { isRead: 1, dibalasPada: Math.floor(Date.now() / 1000), dibalasOleh: session.user.id },
     });
 
     revalidatePath("/admin/inbox");
@@ -74,8 +81,11 @@ export async function deleteMessageAction(id: string): Promise<ActionResponse> {
     return { success: false, message: "Akses ditolak." };
   }
 
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) return { success: false, message: "ID pesan tidak valid." };
+
   try {
-    await prisma.inboxMessage.delete({ where: { id } });
+    await prisma.tPesanMasuk.delete({ where: { idPesan: numId } });
     await writeAuditLog({
       userId: session.user.id,
       action: "DELETE_INBOX_MESSAGE",

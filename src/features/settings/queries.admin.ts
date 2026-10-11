@@ -1,7 +1,13 @@
 import prisma from "@/lib/db";
 
 export async function getAdminSettings() {
-  return prisma.setting.findMany({
-    orderBy: { key: "asc" },
+  const rows = await prisma.tPengaturan.findMany({
+    orderBy: { kunci: "asc" },
   });
+  return rows.map((r) => ({
+    key: r.kunci,
+    value: r.nilai,
+    updatedBy: r.diperbaruiOleh,
+    updatedAt: r.updatedAt,
+  }));
 }

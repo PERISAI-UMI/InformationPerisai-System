@@ -73,9 +73,26 @@ Dokumen ini mencatat keputusan-keputusan teknis fundamental dalam perancangan da
 - **Keputusan**:
   1. Menerapkan konvensi tabel 21 relasional:
      - Tabel Master (`M_*`): `M_Fakultas`, `M_Jurusan`, `M_Departemen`, `M_Jabatan`, `M_Periode`, `M_Role`, `M_Anggota`, `M_Akun`.
-     - Tabel Transaksi (`T_*`): `T_Sesi`, `T_Kepengurusan`, `T_Proker`, `T_Berita`, `T_Kompetisi`, `T_Prestasi`, `T_Keuangan`, `T_Galeri`, `T_Pesan_Masuk`, `T_Statistik`, `T_Pengaturan`, `T_Audit_Log`, `T_Media`.
+     - Tabel Transaksi (`T_*`): `T_Sesi`, `T_Kepengurusan`, `T_Proker`, `T_Berita`, `T_Kompetisi`, `T_Prestasi`, `T_Keuangan`, `T_Pesan_Masuk`, `T_Pengaturan`, `T_Audit_Log`, `T_Media`.
   2. Menggunakan `id_perisai` (PRN) sebagai ID primer pada `M_Anggota` dan username unik pada `M_Akun`.
   3. Menggunakan default password hash SHA-256 (`perisai2026`) untuk kemudahan aktivasi awal oleh fungsionaris baru.
   4. Menyinkronkan model ke Prisma ORM (`prisma/schema.prisma`) dan menghubungkan query publik profil organisasi langsung ke `T_Kepengurusan`.
 - **Konsekuensi**: Arsitektur data menjadi sangat modular, mudah diserah-terimakan ke divisi PSDM, dan siap untuk ekspansi sistem keanggotaan jangka panjang.
+
+---
+
+## ADR 009: Konsolidasi Skema Basis Data & Penyesuaian Nomenklatur Organisasi
+- **Status**: Accepted
+- **Konteks**: Berdasarkan hasil evaluasi struktur data dan organisasi UKM PERISAI UMI (Revisi Oktober 2026), beberapa tabel berlebih digabungkan untuk menyederhanakan arsitektur dan mencerminkan struktur organisasi yang sebenarnya.
+- **Keputusan**:
+  1. **Penggabungan Tabel Foto**:
+     - `T_Berita_Foto` digabung langsung ke kolom `foto_dokumentasi` pada `T_Berita` (JSON Array / multi-URL).
+     - `T_Proker_Dokumentasi` digabung langsung ke kolom `foto_dokumentasi` pada `T_Proker`.
+  2. **Penghapusan Tabel Berlebih**:
+     - `T_Galeri` dihapus; aset media dikelola terpadu via `T_Media` dan lampiran dokumentasi proker/berita.
+     - `T_Statistik` dihapus; seluruh metrik beranda (Pengurus Aktif, Departemen, Prestasi Ilmiah, Proker/Karya) dihitung dinamis secara *real-time* dari record aktual database (`prisma.tKepengurusan.count`, `prisma.mDepartemen.count`, `prisma.tPrestasi.count`, `prisma.tProker.count`).
+  3. **Penghapusan SQL Views**: Seluruh 17 SQL views & triggers dihapus sementara untuk menjaga skema tetap ramping dan murni berorientasi tabel fisik (`psdm-db.db` & Turso LibSQL).
+  4. **Penghapusan Istilah "BPH Inti"**: Menghapus nomenklatur tidak resmi "BPH Inti" dan membakukan menjadi "BPH" atau "Badan Pengurus Harian (BPH)" sesuai AD/ART UKM PERISAI UMI.
+- **Konsekuensi**: Skema database lebih ringkas (21 tabel fisik bersih), tidak ada redundansi tabel foto terpisah, performa query agregasi realtime akurat tanpa mismatch counter statistik, dan representasi struktur fungsionaris akurat 100%.
+
 

@@ -3,31 +3,25 @@ import prisma from "@/lib/db";
 export async function getAdminUsers({ page = 1, pageSize = 8 }: { page?: number; pageSize?: number } = {}) {
   const skip = (page - 1) * pageSize;
 
-  const [users, total] = await Promise.all([
-    prisma.user.findMany({
-      select: {
-        id: true,
-        namaLengkap: true,
-        email: true,
+  const [akuns, total] = await Promise.all([
+    prisma.mAkun.findMany({
+      include: {
+        anggota: true,
         role: true,
-        cmsAccess: {
-          select: { cmsRole: true },
-        },
       },
-      orderBy: { namaLengkap: "asc" },
       skip,
       take: pageSize,
     }),
-    prisma.user.count(),
+    prisma.mAkun.count(),
   ]);
 
-  const items = users.map((u) => ({
-    id: u.id,
-    name: u.namaLengkap,
-    email: u.email,
-    role: u.cmsAccess?.cmsRole || (u.role === "SUPER_ADMIN" ? "SUPER_ADMIN" : u.role === "ADMIN" ? "ADMIN" : "EDITOR"),
-    isActive: true,
-    createdAt: new Date().toISOString(),
+  const items = akuns.map((u) => ({
+    id: u.idPerisai,
+    name: u.anggota.namaLengkap,
+    email: u.anggota.email,
+    role: u.role.namaRole,
+    isActive: Boolean(u.isActive),
+    createdAt: new Date(u.createdAt * 1000).toISOString(),
     _count: { posts: 0, uploadedMedia: 0 },
   }));
 
@@ -41,26 +35,23 @@ export async function getAdminUsers({ page = 1, pageSize = 8 }: { page?: number;
 }
 
 export async function getAdminUserById(id: string) {
-  const u = await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      namaLengkap: true,
-      email: true,
+  const u = await prisma.mAkun.findUnique({
+    where: { idPerisai: id },
+    include: {
+      anggota: true,
       role: true,
-      cmsAccess: {
-        select: { cmsRole: true },
-      },
     },
   });
 
   if (!u) return null;
 
   return {
-    id: u.id,
-    name: u.namaLengkap,
-    email: u.email,
-    role: u.cmsAccess?.cmsRole || (u.role === "SUPER_ADMIN" ? "SUPER_ADMIN" : "EDITOR"),
-    isActive: true,
+    id: u.idPerisai,
+    name: u.anggota.namaLengkap,
+    email: u.anggota.email,
+    role: u.role.namaRole,
+    isActive: Boolean(u.isActive),
+    createdAt: new Date(u.createdAt * 1000).toISOString(),
+    _count: { posts: 0, uploadedMedia: 0 },
   };
 }

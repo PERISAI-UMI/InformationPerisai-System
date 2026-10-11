@@ -47,22 +47,25 @@ export async function POST(request: Request) {
       const password = String(body.password || "");
       const cleanPrn = identifier.replace(/\s+/g, "").toUpperCase();
 
-      const user = await prisma.user.findFirst({
+      const anggota = await prisma.mAnggota.findFirst({
         where: {
           OR: [
             { email: identifier.toLowerCase() },
-            { id: cleanPrn },
-            { prn: cleanPrn },
+            { idPerisai: cleanPrn },
           ],
         },
-        include: { cmsAccess: true },
+        include: {
+          akun: {
+            include: { role: true },
+          },
+        },
       });
 
-      if (!user) {
+      if (!anggota || !anggota.akun) {
         return NextResponse.json({ error: "Kredensial login tidak valid." }, { status: 401 });
       }
 
-      const isValid = verifyPassword(password, user.passwordHash);
+      const isValid = verifyPassword(password, anggota.akun.passwordHash);
       if (!isValid) {
         return NextResponse.json({ error: "Kredensial login tidak valid." }, { status: 401 });
       }
@@ -70,16 +73,16 @@ export async function POST(request: Request) {
       const response = NextResponse.json({
         success: true,
         user: {
-          id: user.id,
-          name: user.namaLengkap,
-          email: user.email,
-          role: user.cmsAccess?.cmsRole || user.role,
+          id: anggota.idPerisai,
+          name: anggota.namaLengkap,
+          email: anggota.email,
+          role: anggota.akun.role.namaRole,
         },
       });
 
       response.cookies.set({
         name: SESSION_COOKIE_NAME,
-        value: user.id,
+        value: anggota.idPerisai,
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",

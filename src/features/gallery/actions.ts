@@ -15,11 +15,11 @@ export async function deleteMediaAction(id: string): Promise<ActionResponse> {
   }
 
   try {
-    const media = await prisma.media.findUnique({ where: { id } });
+    const media = await prisma.tMedia.findUnique({ where: { idMedia: id } });
     if (!media) return { success: false, message: "Media tidak ditemukan." };
 
-    await storage.delete(media.storageKey);
-    await prisma.media.delete({ where: { id } });
+    await storage.delete(media.kunciPenyimpanan);
+    await prisma.tMedia.delete({ where: { idMedia: id } });
 
     await writeAuditLog({
       userId: session.user.id,

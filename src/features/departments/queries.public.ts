@@ -1,88 +1,90 @@
 import prisma from "@/lib/db";
 
 export async function getPublicDepartments() {
-  const depts = await prisma.department.findMany({
-    include: {
-      profile: true,
-      programs: {
-        where: { status: "published" },
+  try {
+    const depts = await prisma.mDepartemen.findMany({
+      where: { isActive: 1 },
+      orderBy: { urutan: "asc" },
+      include: {
+        proker: {
+          where: { status: "published" },
+        },
+        kepengurusan: {
+          where: { status: "aktif" },
+          select: { idKepengurusan: true },
+        },
       },
-      users: {
-        where: { generasi: 11 },
-        select: { id: true },
-      },
-    },
-  });
+    });
 
-  return depts
-    .filter((d) => !d.profile || d.profile.isActive === 1)
-    .sort((a, b) => (a.profile?.sortOrder ?? 0) - (b.profile?.sortOrder ?? 0))
-    .map((d) => ({
-      id: d.id,
-      name: d.nama,
-      slug: d.profile?.slug || d.id,
-      shortDescription: d.profile?.shortDescription || "",
-      description: d.profile?.description || "",
-      vision: d.profile?.vision || "",
-      mission: d.profile?.mission || "",
-      isActive: Boolean(d.profile?.isActive ?? 1),
-      orderIndex: d.profile?.sortOrder ?? 0,
+    return depts.map((d) => ({
+      id: String(d.idDepartemen),
+      name: d.namaDepartemen,
+      slug: d.slug,
+      shortDescription: d.deskripsiSingkat || "",
+      description: d.tupoksiUtama || "",
+      vision: d.visi || "",
+      mission: d.misi || "",
+      isActive: Boolean(d.isActive),
+      orderIndex: d.urutan,
       _count: {
-        members: d.users.length,
-        workPrograms: d.programs.length,
+        members: d.kepengurusan.length,
+        workPrograms: d.proker.length,
       },
     }));
+  } catch (err) {
+    console.warn("Notice: failed to load departments:", err);
+    return [];
+  }
 }
 
 export async function getPublicDepartmentBySlug(slug: string) {
-  const profile = await prisma.departmentProfile.findUnique({
-    where: { slug },
-    include: {
-      department: {
-        include: {
-          users: {
-            where: { generasi: 11 },
-            select: {
-              id: true,
-              namaLengkap: true,
-              jabatan: true,
-              linkedinUrl: true,
-              instagramUsername: true,
-              avatarUrl: true,
-            },
+  try {
+    const dept = await prisma.mDepartemen.findFirst({
+      where: { slug, isActive: 1 },
+      include: {
+        kepengurusan: {
+          where: { status: "aktif" },
+          include: {
+            anggota: true,
+            jabatan: true,
           },
-          programs: {
-            where: { status: "published" },
-          },
+          orderBy: { urutan: "asc" },
+        },
+        proker: {
+          where: { status: "published" },
+          orderBy: { urutan: "asc" },
         },
       },
-    },
-  });
+    });
 
-  if (!profile || profile.isActive === 0) return null;
+    if (!dept) return null;
 
-  return {
-    id: profile.departmentId,
-    name: profile.department.nama,
-    slug: profile.slug,
-    shortDescription: profile.shortDescription,
-    description: profile.description,
-    vision: profile.vision,
-    mission: profile.mission,
-    members: profile.department.users.map((u) => ({
-      id: u.id,
-      name: u.namaLengkap,
-      position: u.jabatan,
-      linkedinUrl: u.linkedinUrl,
-      instagramUsername: u.instagramUsername,
-      photoUrl: u.avatarUrl,
-    })),
-    workPrograms: profile.department.programs.map((p) => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      summary: p.summary,
-      content: p.content,
-    })),
-  };
+    return {
+      id: String(dept.idDepartemen),
+      name: dept.namaDepartemen,
+      slug: dept.slug,
+      shortDescription: dept.deskripsiSingkat,
+      description: dept.tupoksiUtama,
+      vision: dept.visi,
+      mission: dept.misi,
+      members: dept.kepengurusan.map((k) => ({
+        id: k.anggota.idPerisai,
+        name: k.anggota.namaLengkap,
+        position: k.jabatan.namaJabatan,
+        linkedinUrl: k.anggota.linkedin,
+        instagramUsername: k.anggota.instagram,
+        photoUrl: k.anggota.fotoUrl,
+      })),
+      workPrograms: dept.proker.map((p) => ({
+        id: String(p.idProker),
+        title: p.namaProker,
+        slug: p.slug,
+        summary: p.deskripsi,
+        content: p.deskripsi,
+      })),
+    };
+  } catch (err) {
+    console.error("Gagal mengambil departemen:", err);
+    return null;
+  }
 }

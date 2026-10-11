@@ -36,19 +36,23 @@ export async function POST(request: Request) {
       isImage ? "image/webp" : file.type
     );
 
-    const mediaRecord = await prisma.media.create({
+    const idMedia = `med-${Date.now()}`;
+    const mediaRecord = await prisma.tMedia.create({
       data: {
-        storageKey: cleanFilename,
-        originalName: file.name,
-        mimeType: isImage ? "image/webp" : file.type,
-        sizeBytes: processedBuffer.length,
-        uploadedBy: session.user.id,
+        idMedia,
+        kunciPenyimpanan: cleanFilename,
+        namaBerkas: file.name,
+        tipeMime: isImage ? "image/webp" : file.type,
+        ukuranByte: processedBuffer.length,
+        url: uploaded.url,
+        diunggahOleh: session.user.id,
         createdAt: Math.floor(Date.now() / 1000),
       },
     });
 
     return NextResponse.json({
-      ...mediaRecord,
+      id: mediaRecord.idMedia,
+      storageKey: mediaRecord.kunciPenyimpanan,
       url: uploaded.url,
       path: uploaded.path,
     });

@@ -28,11 +28,11 @@ export default async function AdminEditDepartmentPage({
       <DepartmentForm
         initialData={{
           id: department.id,
-          name: department.nama,
-          slug: department.profile?.slug || "",
-          code: department.profile?.slug?.toUpperCase() || "",
-          description: department.profile?.description || "",
-          orderIndex: department.profile?.sortOrder ?? 0,
+          name: department.name,
+          slug: department.slug,
+          code: department.code,
+          description: department.description,
+          orderIndex: department.orderIndex,
         }}
       />
     </div>

@@ -9,29 +9,36 @@ export async function getAdminMembers({
   page?: number;
   pageSize?: number;
 } = {}) {
-  const where = periodId ? { periodId } : {};
+  const numPeriod = periodId ? parseInt(periodId, 10) : undefined;
+  const where = numPeriod && !isNaN(numPeriod) ? { idPeriode: numPeriod } : {};
   const skip = (page - 1) * pageSize;
 
   const [members, total] = await Promise.all([
-    prisma.member.findMany({
+    prisma.tKepengurusan.findMany({
       where,
       include: {
-        department: true,
-        period: true,
+        anggota: true,
+        jabatan: true,
+        departemen: true,
+        periode: true,
       },
-      orderBy: [{ period: { startDate: "desc" } }, { sortOrder: "asc" }],
+      orderBy: [{ periode: { tahunMulai: "desc" } }, { urutan: "asc" }],
       skip,
       take: pageSize,
     }),
-    prisma.member.count({ where }),
+    prisma.tKepengurusan.count({ where }),
   ]);
 
   const items = members.map((m) => ({
-    ...m,
-    avatarUrl: m.photoMediaId,
-    roleOrTitle: m.position,
-    orderIndex: m.sortOrder,
-    isActive: Boolean(m.isActive),
+    id: String(m.idKepengurusan),
+    name: m.anggota.namaLengkap,
+    nim: m.anggota.nim,
+    avatarUrl: m.anggota.fotoUrl,
+    roleOrTitle: m.jabatan.namaJabatan,
+    orderIndex: m.urutan,
+    isActive: m.status === "aktif",
+    department: m.departemen ? { id: String(m.departemen.idDepartemen), name: m.departemen.namaDepartemen, nama: m.departemen.namaDepartemen } : null,
+    period: { id: String(m.periode.idPeriode), name: m.periode.namaPeriode },
   }));
 
   return {
@@ -44,21 +51,35 @@ export async function getAdminMembers({
 }
 
 export async function getAdminMemberById(id: string) {
-  const m = await prisma.member.findUnique({
-    where: { id },
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) return null;
+
+  const m = await prisma.tKepengurusan.findUnique({
+    where: { idKepengurusan: numId },
     include: {
-      department: true,
-      period: true,
+      anggota: true,
+      jabatan: true,
+      departemen: true,
+      periode: true,
     },
   });
 
   if (!m) return null;
 
   return {
-    ...m,
-    avatarUrl: m.photoMediaId,
-    roleOrTitle: m.position,
-    orderIndex: m.sortOrder,
-    isActive: Boolean(m.isActive),
+    id: String(m.idKepengurusan),
+    name: m.anggota.namaLengkap,
+    nim: m.anggota.nim,
+    avatarUrl: m.anggota.fotoUrl,
+    roleOrTitle: m.jabatan.namaJabatan,
+    orderIndex: m.urutan,
+    isActive: m.status === "aktif",
+    department: m.departemen ? { id: String(m.departemen.idDepartemen), name: m.departemen.namaDepartemen } : null,
+    period: { id: String(m.periode.idPeriode), name: m.periode.namaPeriode },
+    departmentId: m.idDepartemen ? String(m.idDepartemen) : null,
+    periodId: String(m.idPeriode),
+    position: m.jabatan.namaJabatan,
+    tier: m.tier,
+    linkedinUrl: m.anggota.linkedin,
   };
 }

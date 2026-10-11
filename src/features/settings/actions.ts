@@ -18,10 +18,10 @@ export async function updateSettingsAction(
   try {
     const now = Math.floor(Date.now() / 1000);
     for (const item of settings) {
-      await prisma.setting.upsert({
-        where: { key: item.key },
-        update: { value: item.value, updatedBy: session.user.id, updatedAt: now },
-        create: { key: item.key, value: item.value, updatedBy: session.user.id, updatedAt: now },
+      await prisma.tPengaturan.upsert({
+        where: { kunci: item.key },
+        update: { nilai: item.value, diperbaruiOleh: session.user.id, updatedAt: now },
+        create: { kunci: item.key, nilai: item.value, tipe: "string", diperbaruiOleh: session.user.id, updatedAt: now },
       });
     }
 

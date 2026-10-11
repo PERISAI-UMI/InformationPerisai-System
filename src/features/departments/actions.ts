@@ -23,34 +23,15 @@ export async function createDepartmentAction(data: DepartmentInput): Promise<Act
   const slug = parsed.data.slug ? slugify(parsed.data.slug) : slugify(parsed.data.name);
 
   try {
-    const existingDept = await prisma.department.findFirst({
-      where: { nama: parsed.data.name },
-    });
-
-    if (!existingDept) {
-      return {
-        success: false,
-        message: "Departemen ini tidak terdaftar di database PSDM. Harap hubungi admin PSDM untuk mendaftarkan departemen di sistem utama.",
-      };
-    }
-
     const now = Math.floor(Date.now() / 1000);
-    const profile = await prisma.departmentProfile.upsert({
-      where: { departmentId: existingDept.id },
-      update: {
+    const dept = await prisma.mDepartemen.create({
+      data: {
+        namaDepartemen: parsed.data.name,
+        singkatan: parsed.data.code?.toUpperCase() || parsed.data.name.slice(0, 5).toUpperCase(),
         slug,
-        shortDescription: parsed.data.description?.slice(0, 250) || null,
-        description: parsed.data.description || null,
-        sortOrder: parsed.data.orderIndex ?? 0,
-        isActive: 1,
-        updatedAt: now,
-      },
-      create: {
-        departmentId: existingDept.id,
-        slug,
-        shortDescription: parsed.data.description?.slice(0, 250) || null,
-        description: parsed.data.description || null,
-        sortOrder: parsed.data.orderIndex ?? 0,
+        deskripsiSingkat: parsed.data.description?.slice(0, 250) || null,
+        tupoksiUtama: parsed.data.description || null,
+        urutan: parsed.data.orderIndex ?? 0,
         isActive: 1,
         createdAt: now,
         updatedAt: now,
@@ -59,16 +40,16 @@ export async function createDepartmentAction(data: DepartmentInput): Promise<Act
 
     await writeAuditLog({
       userId: session.user.id,
-      action: "UPDATE_DEPARTMENT_PROFILE",
+      action: "CREATE_DEPARTMENT",
       resource: "departments",
-      resourceId: existingDept.id,
+      resourceId: String(dept.idDepartemen),
     });
 
     revalidatePath("/tentang/sumber-daya");
     revalidatePath("/admin/departments");
-    return { success: true, data: profile };
+    return { success: true, data: { id: String(dept.idDepartemen), slug: dept.slug } };
   } catch (err: unknown) {
-    return { success: false, message: "Gagal menyimpan profil departemen: " + (err instanceof Error ? err.message : String(err)) };
+    return { success: false, message: "Gagal menyimpan departemen: " + (err instanceof Error ? err.message : String(err)) };
   }
 }
 
@@ -83,43 +64,40 @@ export async function updateDepartmentAction(id: string, data: DepartmentInput):
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
+  const idNum = parseInt(id, 10);
+  if (isNaN(idNum)) {
+    return { success: false, message: "ID departemen tidak valid." };
+  }
+
   try {
     const slug = parsed.data.slug ? slugify(parsed.data.slug) : slugify(parsed.data.name);
     const now = Math.floor(Date.now() / 1000);
 
-    const profile = await prisma.departmentProfile.upsert({
-      where: { departmentId: id },
-      update: {
+    const updated = await prisma.mDepartemen.update({
+      where: { idDepartemen: idNum },
+      data: {
+        namaDepartemen: parsed.data.name,
+        singkatan: parsed.data.code?.toUpperCase() || parsed.data.name.slice(0, 5).toUpperCase(),
         slug,
-        shortDescription: parsed.data.description?.slice(0, 250) || null,
-        description: parsed.data.description || null,
-        sortOrder: parsed.data.orderIndex ?? 0,
-        updatedAt: now,
-      },
-      create: {
-        departmentId: id,
-        slug,
-        shortDescription: parsed.data.description?.slice(0, 250) || null,
-        description: parsed.data.description || null,
-        sortOrder: parsed.data.orderIndex ?? 0,
-        isActive: 1,
-        createdAt: now,
+        deskripsiSingkat: parsed.data.description?.slice(0, 250) || null,
+        tupoksiUtama: parsed.data.description || null,
+        urutan: parsed.data.orderIndex ?? 0,
         updatedAt: now,
       },
     });
 
     await writeAuditLog({
       userId: session.user.id,
-      action: "UPDATE_DEPARTMENT_PROFILE",
+      action: "UPDATE_DEPARTMENT",
       resource: "departments",
       resourceId: id,
     });
 
     revalidatePath("/tentang/sumber-daya");
     revalidatePath("/admin/departments");
-    return { success: true, data: profile };
+    return { success: true, data: { id: String(updated.idDepartemen), slug: updated.slug } };
   } catch (err: unknown) {
-    return { success: false, message: "Gagal memperbarui profil departemen: " + (err instanceof Error ? err.message : String(err)) };
+    return { success: false, message: "Gagal memperbarui departemen: " + (err instanceof Error ? err.message : String(err)) };
   }
 }
 
@@ -129,18 +107,22 @@ export async function deleteDepartmentAction(id: string): Promise<ActionResponse
     return { success: false, message: "Akses ditolak." };
   }
 
+  const idNum = parseInt(id, 10);
+  if (isNaN(idNum)) {
+    return { success: false, message: "ID departemen tidak valid." };
+  }
+
   try {
     const now = Math.floor(Date.now() / 1000);
-    // Nonaktifkan profil website daripada menghapus departemen utama PSDM
-    await prisma.departmentProfile.upsert({
-      where: { departmentId: id },
-      update: { isActive: 0, updatedAt: now },
-      create: { departmentId: id, slug: id, isActive: 0, createdAt: now, updatedAt: now },
+    // Nonaktifkan departemen daripada menghapus relasi
+    await prisma.mDepartemen.update({
+      where: { idDepartemen: idNum },
+      data: { isActive: 0, updatedAt: now },
     });
 
     await writeAuditLog({
       userId: session.user.id,
-      action: "DEACTIVATE_DEPARTMENT_PROFILE",
+      action: "DEACTIVATE_DEPARTMENT",
       resource: "departments",
       resourceId: id,
     });

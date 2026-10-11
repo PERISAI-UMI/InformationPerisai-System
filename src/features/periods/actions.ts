@@ -21,20 +21,22 @@ export async function createPeriodAction(data: PeriodInput): Promise<ActionRespo
   }
 
   try {
+    const sYear = new Date(parsed.data.startDate).getFullYear() || 2026;
+    const eYear = parsed.data.endDate ? new Date(parsed.data.endDate).getFullYear() : sYear + 1;
+
     const period = await prisma.$transaction(async (tx: any) => {
       if (parsed.data.isActive) {
-        // Hanya satu periode yang boleh aktif!
-        await tx.period.updateMany({
-          data: { isCurrent: 0 },
+        await tx.mPeriode.updateMany({
+          data: { isActive: 0 },
         });
       }
 
-      return tx.period.create({
+      return tx.mPeriode.create({
         data: {
-          name: parsed.data.name,
-          isCurrent: parsed.data.isActive ? 1 : 0,
-          startDate: Math.floor(new Date(parsed.data.startDate).getTime() / 1000),
-          endDate: parsed.data.endDate ? Math.floor(new Date(parsed.data.endDate).getTime() / 1000) : null,
+          namaPeriode: parsed.data.name,
+          isActive: parsed.data.isActive ? 1 : 0,
+          tahunMulai: sYear,
+          tahunSelesai: eYear,
         },
       });
     });
@@ -43,11 +45,11 @@ export async function createPeriodAction(data: PeriodInput): Promise<ActionRespo
       userId: session.user.id,
       action: "CREATE_PERIOD",
       resource: "periods",
-      resourceId: period.id,
+      resourceId: String(period.idPeriode),
     });
 
     revalidatePath("/admin/periods");
-    return { success: true, data: period };
+    return { success: true, data: { id: String(period.idPeriode), ...period } };
   } catch (err: unknown) {
     return { success: false, message: "Gagal menyimpan periode: " + (err instanceof Error ? err.message : String(err)) };
   }
@@ -64,23 +66,28 @@ export async function updatePeriodAction(id: string, data: PeriodInput): Promise
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) return { success: false, message: "ID periode tidak valid." };
+
   try {
+    const sYear = new Date(parsed.data.startDate).getFullYear() || 2026;
+    const eYear = parsed.data.endDate ? new Date(parsed.data.endDate).getFullYear() : sYear + 1;
+
     const updated = await prisma.$transaction(async (tx: any) => {
       if (parsed.data.isActive) {
-        // Nonaktifkan semua periode lain
-        await tx.period.updateMany({
-          where: { id: { not: id } },
-          data: { isCurrent: 0 },
+        await tx.mPeriode.updateMany({
+          where: { idPeriode: { not: numId } },
+          data: { isActive: 0 },
         });
       }
 
-      return tx.period.update({
-        where: { id },
+      return tx.mPeriode.update({
+        where: { idPeriode: numId },
         data: {
-          name: parsed.data.name,
-          isCurrent: parsed.data.isActive ? 1 : 0,
-          startDate: Math.floor(new Date(parsed.data.startDate).getTime() / 1000),
-          endDate: parsed.data.endDate ? Math.floor(new Date(parsed.data.endDate).getTime() / 1000) : null,
+          namaPeriode: parsed.data.name,
+          isActive: parsed.data.isActive ? 1 : 0,
+          tahunMulai: sYear,
+          tahunSelesai: eYear,
         },
       });
     });
@@ -93,7 +100,7 @@ export async function updatePeriodAction(id: string, data: PeriodInput): Promise
     });
 
     revalidatePath("/admin/periods");
-    return { success: true, data: updated };
+    return { success: true, data: { id: String(updated.idPeriode), ...updated } };
   } catch (err: unknown) {
     return { success: false, message: "Gagal memperbarui periode: " + (err instanceof Error ? err.message : String(err)) };
   }
@@ -105,10 +112,13 @@ export async function setActivePeriodAction(id: string): Promise<ActionResponse>
     return { success: false, message: "Akses ditolak." };
   }
 
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) return { success: false, message: "ID periode tidak valid." };
+
   try {
     await prisma.$transaction([
-      prisma.period.updateMany({ data: { isCurrent: 0 } }),
-      prisma.period.update({ where: { id }, data: { isCurrent: 1 } }),
+      prisma.mPeriode.updateMany({ data: { isActive: 0 } }),
+      prisma.mPeriode.update({ where: { idPeriode: numId }, data: { isActive: 1 } }),
     ]);
 
     await writeAuditLog({

@@ -4,16 +4,9 @@ import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
-import { scryptSync, randomBytes } from "crypto";
 import { userSchema, type UserInput } from "./schema";
 import type { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
-
-function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString("hex");
-  const derivedKey = scryptSync(password, salt, 64);
-  return `${salt}:${derivedKey.toString("hex")}`;
-}
 
 export async function createUserAction(data: UserInput): Promise<ActionResponse> {
   const session = await getSession();
@@ -27,26 +20,32 @@ export async function createUserAction(data: UserInput): Promise<ActionResponse>
   }
 
   try {
-    const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+    const existing = await prisma.mAnggota.findUnique({ where: { email: parsed.data.email } });
     if (!existing) {
       return { success: false, message: "Akun pengurus belum ada di sistem database PSDM. Pastikan email terdaftar di data pengurus." };
     }
 
-    const now = Math.floor(Date.now() / 1000);
-    const cmsRole = parsed.data.role.toLowerCase();
+    const roleName = parsed.data.role.toUpperCase();
+    const roleRecord = await prisma.mRole.findFirst({ where: { namaRole: roleName } });
+    const roleId = roleRecord ? roleRecord.idRole : 4; // default editor
 
-    await prisma.userAccess.upsert({
-      where: { userId: existing.id },
-      update: { cmsRole, updatedAt: now },
-      create: { userId: existing.id, cmsRole, createdAt: now, updatedAt: now },
+    await prisma.mAkun.upsert({
+      where: { idPerisai: existing.idPerisai },
+      update: { idRole: roleId, isActive: 1 },
+      create: {
+        idPerisai: existing.idPerisai,
+        idRole: roleId,
+        passwordHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3", // default perisai2026
+        isActive: 1,
+      },
     });
 
     await writeAuditLog({
       userId: session.user.id,
       action: "ASSIGN_USER_ACCESS",
       resource: "users",
-      resourceId: existing.id,
-      details: { email: existing.email, role: cmsRole },
+      resourceId: existing.idPerisai,
+      details: { email: existing.email, role: roleName },
     });
 
     revalidatePath("/admin/users");
@@ -68,13 +67,13 @@ export async function updateUserAction(id: string, data: UserInput): Promise<Act
   }
 
   try {
-    const now = Math.floor(Date.now() / 1000);
-    const cmsRole = parsed.data.role.toLowerCase();
+    const roleName = parsed.data.role.toUpperCase();
+    const roleRecord = await prisma.mRole.findFirst({ where: { namaRole: roleName } });
+    const roleId = roleRecord ? roleRecord.idRole : 4;
 
-    await prisma.userAccess.upsert({
-      where: { userId: id },
-      update: { cmsRole, updatedAt: now },
-      create: { userId: id, cmsRole, createdAt: now, updatedAt: now },
+    await prisma.mAkun.update({
+      where: { idPerisai: id },
+      data: { idRole: roleId },
     });
 
     await writeAuditLog({
@@ -82,7 +81,7 @@ export async function updateUserAction(id: string, data: UserInput): Promise<Act
       action: "UPDATE_USER_ACCESS",
       resource: "users",
       resourceId: id,
-      details: { role: cmsRole },
+      details: { role: roleName },
     });
 
     revalidatePath("/admin/users");
@@ -99,13 +98,9 @@ export async function toggleUserStatusAction(id: string, isActive: boolean): Pro
   }
 
   try {
-    const now = Math.floor(Date.now() / 1000);
-    const cmsRole = isActive ? "editor" : "none";
-
-    await prisma.userAccess.upsert({
-      where: { userId: id },
-      update: { cmsRole, updatedAt: now },
-      create: { userId: id, cmsRole, createdAt: now, updatedAt: now },
+    await prisma.mAkun.update({
+      where: { idPerisai: id },
+      data: { isActive: isActive ? 1 : 0 },
     });
 
     await writeAuditLog({
@@ -118,6 +113,6 @@ export async function toggleUserStatusAction(id: string, isActive: boolean): Pro
     revalidatePath("/admin/users");
     return { success: true };
   } catch (err: unknown) {
-    return { success: false, message: "Gagal mengubah status: " + (err instanceof Error ? err.message : String(err)) };
+    return { success: false, message: "Gagal mengubah status pengguna: " + (err instanceof Error ? err.message : String(err)) };
   }
 }

@@ -4,19 +4,25 @@ export async function getAdminGallery({ page = 1, pageSize = 24 } = {}) {
   const skip = (page - 1) * pageSize;
 
   const [itemsRaw, total] = await Promise.all([
-    prisma.media.findMany({
+    prisma.tMedia.findMany({
       orderBy: { createdAt: "desc" },
       skip,
       take: pageSize,
     }),
-    prisma.media.count(),
+    prisma.tMedia.count(),
   ]);
 
   const items = itemsRaw.map((m) => ({
-    ...m,
-    url: `/uploads/${m.storageKey}`,
-    filename: m.storageKey,
-    size: m.sizeBytes,
+    id: m.idMedia,
+    storageKey: m.kunciPenyimpanan,
+    originalName: m.namaBerkas,
+    mimeType: m.tipeMime,
+    sizeBytes: m.ukuranByte,
+    altText: m.altText,
+    createdAt: m.createdAt,
+    url: m.url || `/uploads/${m.kunciPenyimpanan}`,
+    filename: m.kunciPenyimpanan,
+    size: m.ukuranByte,
     uploader: { name: "Pengurus" },
   }));
 
@@ -30,17 +36,23 @@ export async function getAdminGallery({ page = 1, pageSize = 24 } = {}) {
 }
 
 export async function getAdminMediaById(id: string) {
-  const m = await prisma.media.findUnique({
-    where: { id },
+  const m = await prisma.tMedia.findUnique({
+    where: { idMedia: id },
   });
 
   if (!m) return null;
 
   return {
-    ...m,
-    url: `/uploads/${m.storageKey}`,
-    filename: m.storageKey,
-    size: m.sizeBytes,
+    id: m.idMedia,
+    storageKey: m.kunciPenyimpanan,
+    originalName: m.namaBerkas,
+    mimeType: m.tipeMime,
+    sizeBytes: m.ukuranByte,
+    altText: m.altText,
+    createdAt: m.createdAt,
+    url: m.url || `/uploads/${m.kunciPenyimpanan}`,
+    filename: m.kunciPenyimpanan,
+    size: m.ukuranByte,
     uploader: { name: "Pengurus" },
   };
 }

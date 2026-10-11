@@ -17,14 +17,14 @@ export async function writeAuditLog(payload: AuditLogPayload): Promise<void> {
         ? JSON.stringify(payload.details)
         : (payload.details as string) || null;
 
-    await prisma.auditLog.create({
+    await prisma.tAuditLog.create({
       data: {
-        userId: payload.userId || null,
-        action: payload.action,
-        entityType: payload.resource,
-        entityId: payload.resourceId || null,
-        changes: detailsString,
-        ipHash: payload.ipAddress || null,
+        aksi: payload.action,
+        entitas: payload.resource,
+        idEntitas: payload.resourceId || null,
+        dataBaru: detailsString,
+        ipAddress: payload.ipAddress || null,
+        userAgent: payload.userAgent || null,
         createdAt: Math.floor(Date.now() / 1000),
       },
     });

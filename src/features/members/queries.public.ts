@@ -1,28 +1,29 @@
 import prisma from "@/lib/db";
 
 export async function getPublicActiveMembers() {
-  // 1. Ambil dewan pembina dari web_extra_people jika ada
+  // 1. Ambil dewan pembina dari M_Pembina
   let pembinaMembers: any[] = [];
   try {
-    const extraPeople = await prisma.extraPerson.findMany({
+    const pembinaList = await prisma.mPembina.findMany({
       where: { isActive: 1 },
-      orderBy: { sortOrder: "asc" },
+      orderBy: { urutan: "asc" },
     });
-    pembinaMembers = extraPeople.map((p, idx) => ({
-      id: p.id,
-      name: p.name,
-      position: p.position,
-      tier: (p.tier || "pembina").toLowerCase(),
-      photoUrl: p.photoMediaId || null,
-      linkedinUrl: p.linkedinUrl || null,
+    pembinaMembers = pembinaList.map((p, idx) => ({
+      id: String(p.idPembina),
+      name: p.nama + (p.gelar ? `, ${p.gelar}` : ""),
+      position: p.jabatan,
+      tier: (p.kategori || "pembina").toLowerCase(),
+      photoUrl: p.fotoUrl || null,
+      linkedinUrl: p.linkedin || null,
       department: null,
-      orderIndex: idx,
+      orderIndex: p.urutan || idx,
     }));
-  } catch {
+  } catch (err) {
+    console.warn("Notice: failed to load M_Pembina:", err);
     pembinaMembers = [];
   }
 
-  // 2. Ambil dari skema baru T_Kepengurusan & M_Anggota untuk Periode Aktif (2026/2027)
+  // 2. Ambil fungsionaris aktif dari T_Kepengurusan & M_Anggota
   try {
     const kepengurusan = await prisma.$queryRaw<Array<{
       id_perisai: string;
@@ -77,62 +78,8 @@ export async function getPublicActiveMembers() {
       return [...pembinaMembers, ...pengurusMembers];
     }
   } catch (err) {
-    console.warn("Notice: T_Kepengurusan query fallback to legacy users:", err);
+    console.error("Gagal mengambil fungsionaris aktif:", err);
   }
 
-  // 3. Fallback ke tabel users lama jika T_Kepengurusan belum tersedia
-  try {
-    const currentGenSetting = await prisma.setting.findUnique({
-      where: { key: "current_generasi" },
-    });
-    const currentGen = currentGenSetting?.value ? parseInt(currentGenSetting.value, 10) : 10;
-
-    const users = await prisma.user.findMany({
-      where: { generasi: currentGen },
-      select: {
-        id: true,
-        namaLengkap: true,
-        jabatan: true,
-        departmentId: true,
-        generasi: true,
-        role: true,
-        avatarUrl: true,
-        linkedinUrl: true,
-        instagramUsername: true,
-        department: {
-          select: {
-            id: true,
-            nama: true,
-          },
-        },
-      },
-    });
-
-    const mapTier = (jabatan: string, role: string): "inti" | "kadep" | "staf" => {
-      const j = jabatan.toLowerCase();
-      if (j.includes("ketua umum") || j.includes("sekretaris") || j.includes("bendahara") || role === "INTI" || role === "SUPER_ADMIN") {
-        return "inti";
-      }
-      if (j.includes("kepala departemen") || j.includes("kadep") || role === "ADMIN") {
-        return "kadep";
-      }
-      return "staf";
-    };
-
-    const pengurusMembers = users.map((u, idx) => ({
-      id: u.id,
-      name: u.namaLengkap,
-      position: u.jabatan,
-      tier: mapTier(u.jabatan, u.role),
-      photoUrl: u.avatarUrl || null,
-      linkedinUrl: u.linkedinUrl || null,
-      instagramUsername: u.instagramUsername || null,
-      department: u.department ? { id: u.department.id, name: u.department.nama } : null,
-      orderIndex: idx + 10,
-    }));
-
-    return [...pembinaMembers, ...pengurusMembers];
-  } catch {
-    return pembinaMembers;
-  }
+  return pembinaMembers;
 }

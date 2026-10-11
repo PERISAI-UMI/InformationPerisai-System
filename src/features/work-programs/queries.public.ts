@@ -3,92 +3,85 @@ import prisma from "@/lib/db";
 export async function getPublicWorkPrograms({ departmentSlug }: { departmentSlug?: string } = {}) {
   const whereClause: {
     status: string;
-    department?: {
-      profile: { is: { slug: string } };
-    };
+    departemen?: { slug: string };
   } = {
     status: "published",
   };
 
   if (departmentSlug) {
-    whereClause.department = {
-      profile: { is: { slug: departmentSlug } },
-    };
+    whereClause.departemen = { slug: departmentSlug };
   }
 
-  const programs = await prisma.workProgram.findMany({
-    where: whereClause,
-    include: {
-      department: {
-        include: { profile: true },
+  try {
+    const programs = await prisma.tProker.findMany({
+      where: whereClause,
+      include: {
+        departemen: true,
       },
-      images: {
-        include: { media: true },
-        orderBy: { sortOrder: "asc" },
-      },
-    },
-    orderBy: { sortOrder: "asc" },
-  });
+      orderBy: { urutan: "asc" },
+    });
 
-  return programs.map((p) => ({
-    id: p.id,
-    name: p.title,
-    title: p.title,
-    slug: p.slug,
-    summary: p.summary,
-    description: p.content || "",
-    status: p.status,
-    coverImageUrl: p.coverMediaId || null,
-    department: {
-      id: p.department.id,
-      name: p.department.nama,
-      slug: p.department.profile?.slug || p.department.id,
-      code: p.department.profile?.slug?.toUpperCase() || "",
-    },
-    period: {
-      name: "Periode Berjalan",
-    },
-  }));
+    return programs.map((p) => ({
+      id: String(p.idProker),
+      name: p.namaProker,
+      title: p.namaProker,
+      slug: p.slug,
+      summary: p.deskripsi,
+      description: p.deskripsi || "",
+      status: p.status,
+      coverImageUrl: p.fotoCover || null,
+      documentationUrl: p.fotoDokumentasi || null,
+      department: {
+        id: String(p.departemen.idDepartemen),
+        name: p.departemen.namaDepartemen,
+        slug: p.departemen.slug,
+        code: p.departemen.singkatan,
+      },
+      period: {
+        name: "Periode Berjalan",
+      },
+    }));
+  } catch (err) {
+    console.warn("Notice: failed to load T_Proker:", err);
+    return [];
+  }
 }
 
 export async function getPublicWorkProgramBySlug(slug: string) {
-  const p = await prisma.workProgram.findFirst({
-    where: { slug, status: "published" },
-    include: {
+  try {
+    const p = await prisma.tProker.findFirst({
+      where: { slug, status: "published" },
+      include: {
+        departemen: true,
+      },
+    });
+
+    if (!p) return null;
+
+    return {
+      id: String(p.idProker),
+      name: p.namaProker,
+      title: p.namaProker,
+      slug: p.slug,
+      summary: p.deskripsi,
+      description: p.deskripsi || "",
+      status: p.status,
+      coverImageUrl: p.fotoCover || null,
       department: {
-        include: { profile: true },
+        id: String(p.departemen.idDepartemen),
+        name: p.departemen.namaDepartemen,
+        slug: p.departemen.slug,
+        code: p.departemen.singkatan,
       },
-      images: {
-        include: { media: true },
-        orderBy: { sortOrder: "asc" },
+      period: {
+        name: "Periode Berjalan",
       },
-    },
-  });
-
-  if (!p) return null;
-
-  return {
-    id: p.id,
-    name: p.title,
-    title: p.title,
-    slug: p.slug,
-    summary: p.summary,
-    description: p.content || "",
-    status: p.status,
-    coverImageUrl: p.coverMediaId || null,
-    department: {
-      id: p.department.id,
-      name: p.department.nama,
-      slug: p.department.profile?.slug || p.department.id,
-      code: p.department.profile?.slug?.toUpperCase() || "",
-    },
-    period: {
-      name: "Periode Berjalan",
-    },
-    images: p.images.map((img) => ({
-      mediaId: img.mediaId,
-      url: `/uploads/${img.media.storageKey}`,
-      caption: img.caption,
-    })),
-  };
+      images: p.fotoDokumentasi
+        ? [{ mediaId: "dok-proker-1", url: p.fotoDokumentasi, caption: p.namaProker }]
+        : [],
+    };
+  } catch (err) {
+    console.error("Gagal mengambil program kerja:", err);
+    return null;
+  }
 }

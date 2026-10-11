@@ -130,7 +130,7 @@ export function MemberForm({ periods, departments, initialData }: MemberFormProp
             value={departmentId}
             onChange={(e) => setDepartmentId(e.target.value)}
             options={[
-              { label: "-- Tanpa Departemen / BPH Inti --", value: "" },
+              { label: "-- Tanpa Departemen / BPH --", value: "" },
               ...departments.map((d) => ({ label: d.name, value: d.id })),
             ]}
           />

@@ -1,36 +1,52 @@
 import prisma from "@/lib/db";
 
 export async function getAdminDepartments() {
-  const depts = await prisma.department.findMany({
-    orderBy: { nama: "asc" },
+  const depts = await prisma.mDepartemen.findMany({
+    orderBy: { urutan: "asc" },
     include: {
-      profile: true,
       _count: {
-        select: { programs: true, users: true },
+        select: { proker: true, kepengurusan: true },
       },
     },
   });
 
   return depts.map((d) => ({
-    id: d.id,
-    name: d.nama,
-    slug: d.profile?.slug || d.id,
-    code: d.profile?.slug?.toUpperCase() || "",
-    description: d.profile?.description || "",
-    orderIndex: d.profile?.sortOrder ?? 0,
-    isActive: Boolean(d.profile?.isActive ?? 1),
+    id: String(d.idDepartemen),
+    name: d.namaDepartemen,
+    slug: d.slug,
+    code: d.singkatan,
+    description: d.deskripsiSingkat || d.tupoksiUtama || "",
+    orderIndex: d.urutan,
+    isActive: Boolean(d.isActive),
     _count: {
-      workPrograms: d._count.programs,
-      members: d._count.users,
+      workPrograms: d._count.proker,
+      members: d._count.kepengurusan,
     },
   }));
 }
 
 export async function getAdminDepartmentById(id: string) {
-  return prisma.department.findUnique({
-    where: { id },
-    include: {
-      profile: true,
+  const numId = parseInt(id, 10);
+  const d = isNaN(numId)
+    ? await prisma.mDepartemen.findUnique({ where: { slug: id } })
+    : await prisma.mDepartemen.findUnique({ where: { idDepartemen: numId } });
+
+  if (!d) return null;
+
+  return {
+    id: String(d.idDepartemen),
+    name: d.namaDepartemen,
+    slug: d.slug,
+    code: d.singkatan,
+    description: d.deskripsiSingkat || d.tupoksiUtama || "",
+    orderIndex: d.urutan,
+    isActive: Boolean(d.isActive),
+    profile: {
+      slug: d.slug,
+      shortDescription: d.deskripsiSingkat,
+      description: d.tupoksiUtama,
+      vision: d.visi,
+      mission: d.misi,
     },
-  });
+  };
 }

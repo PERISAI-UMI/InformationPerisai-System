@@ -13,44 +13,39 @@ export async function getSession(): Promise<Session | null> {
       return null;
     }
 
-    // Cari user berdasarkan ID yang tercatat pada sesi
-    const user = await prisma.user.findUnique({
-      where: { id: sessionId },
-      select: {
-        id: true,
-        namaLengkap: true,
-        email: true,
-        role: true,
-        departmentId: true,
-        cmsAccess: {
-          select: {
-            cmsRole: true,
-            departmentId: true,
-          },
+    const anggota = await prisma.mAnggota.findUnique({
+      where: { idPerisai: sessionId },
+      include: {
+        akun: {
+          include: { role: true },
+        },
+        kepengurusan: {
+          include: { departemen: true },
+          take: 1,
         },
       },
     });
 
-    if (!user) {
+    if (!anggota || !anggota.akun) {
       return null;
     }
 
-    // Tentukan role CMS berdasarkan users.role dan web_user_access
     let cmsRole: AuthUser["role"] = "EDITOR";
-    if (user.role === "SUPER_ADMIN" || user.cmsAccess?.cmsRole === "super_admin") {
+    const roleName = anggota.akun.role.namaRole;
+    if (roleName === "SUPER_ADMIN") {
       cmsRole = "SUPER_ADMIN";
-    } else if (user.role === "ADMIN" || user.cmsAccess?.cmsRole === "editor") {
+    } else if (roleName === "BPH" || roleName === "KADEP") {
       cmsRole = "ADMIN";
     }
 
     return {
       user: {
-        id: user.id,
-        name: user.namaLengkap,
-        email: user.email,
+        id: anggota.idPerisai,
+        name: anggota.namaLengkap,
+        email: anggota.email,
         role: cmsRole,
-        isActive: true,
-        departmentId: user.cmsAccess?.departmentId || user.departmentId || undefined,
+        isActive: Boolean(anggota.akun.isActive),
+        departmentId: anggota.kepengurusan[0]?.departemen?.slug || undefined,
       },
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     };

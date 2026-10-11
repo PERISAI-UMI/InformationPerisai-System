@@ -28,18 +28,20 @@ export async function createOpportunityAction(data: OpportunityInput): Promise<A
       ? Math.floor(new Date(parsed.data.deadlineAt).getTime() / 1000)
       : null;
 
-    const opp = await prisma.opportunity.create({
+    const opp = await prisma.tKompetisi.create({
       data: {
-        title: parsed.data.title,
-        slug,
-        organizer: parsed.data.organizer,
-        description: parsed.data.description,
-        registrationUrl: parsed.data.linkUrl || null,
-        deadlineAt,
-        category: parsed.data.category,
-        posterMediaId: parsed.data.coverImageUrl,
-        createdBy: session.user.id,
-        updatedBy: session.user.id,
+        namaKompetisi: parsed.data.title,
+        slug: `${slug}-${Date.now().toString().slice(-4)}`,
+        penyelenggara: parsed.data.organizer,
+        deskripsi: parsed.data.description,
+        linkPendaftaran: parsed.data.linkUrl || null,
+        deadlinePendaftaran: deadlineAt,
+        kategori: parsed.data.category,
+        tipe: parsed.data.category.toLowerCase(),
+        linkPoster: parsed.data.coverImageUrl || null,
+        status: "published",
+        penulisId: session.user.id,
+        diperbaruiOleh: session.user.id,
         createdAt: now,
         updatedAt: now,
       },
@@ -49,12 +51,12 @@ export async function createOpportunityAction(data: OpportunityInput): Promise<A
       userId: session.user.id,
       action: "CREATE_OPPORTUNITY",
       resource: "opportunities",
-      resourceId: opp.id,
+      resourceId: String(opp.idKompetisi),
     });
 
     revalidatePath("/peluang");
     revalidatePath("/admin/opportunities");
-    return { success: true, data: opp };
+    return { success: true, data: { id: String(opp.idKompetisi), slug: opp.slug } };
   } catch (err: unknown) {
     return { success: false, message: "Gagal menyimpan peluang: " + (err instanceof Error ? err.message : String(err)) };
   }
@@ -71,23 +73,29 @@ export async function updateOpportunityAction(id: string, data: OpportunityInput
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
+  const idNum = parseInt(id, 10);
+  if (isNaN(idNum)) {
+    return { success: false, message: "ID peluang tidak valid." };
+  }
+
   try {
     const now = Math.floor(Date.now() / 1000);
     const deadlineAt = parsed.data.deadlineAt
       ? Math.floor(new Date(parsed.data.deadlineAt).getTime() / 1000)
       : null;
 
-    const updated = await prisma.opportunity.update({
-      where: { id },
+    const updated = await prisma.tKompetisi.update({
+      where: { idKompetisi: idNum },
       data: {
-        title: parsed.data.title,
-        organizer: parsed.data.organizer,
-        description: parsed.data.description,
-        registrationUrl: parsed.data.linkUrl || null,
-        deadlineAt,
-        category: parsed.data.category,
-        posterMediaId: parsed.data.coverImageUrl,
-        updatedBy: session.user.id,
+        namaKompetisi: parsed.data.title,
+        penyelenggara: parsed.data.organizer,
+        deskripsi: parsed.data.description,
+        linkPendaftaran: parsed.data.linkUrl || null,
+        deadlinePendaftaran: deadlineAt,
+        kategori: parsed.data.category,
+        tipe: parsed.data.category.toLowerCase(),
+        linkPoster: parsed.data.coverImageUrl || null,
+        diperbaruiOleh: session.user.id,
         updatedAt: now,
       },
     });
@@ -101,7 +109,7 @@ export async function updateOpportunityAction(id: string, data: OpportunityInput
 
     revalidatePath("/peluang");
     revalidatePath("/admin/opportunities");
-    return { success: true, data: updated };
+    return { success: true, data: { id: String(updated.idKompetisi), slug: updated.slug } };
   } catch (err: unknown) {
     return { success: false, message: "Gagal memperbarui peluang: " + (err instanceof Error ? err.message : String(err)) };
   }
@@ -113,8 +121,13 @@ export async function deleteOpportunityAction(id: string): Promise<ActionRespons
     return { success: false, message: "Akses ditolak." };
   }
 
+  const idNum = parseInt(id, 10);
+  if (isNaN(idNum)) {
+    return { success: false, message: "ID peluang tidak valid." };
+  }
+
   try {
-    await prisma.opportunity.delete({ where: { id } });
+    await prisma.tKompetisi.delete({ where: { idKompetisi: idNum } });
     await writeAuditLog({
       userId: session.user.id,
       action: "DELETE_OPPORTUNITY",

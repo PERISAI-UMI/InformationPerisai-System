@@ -26,7 +26,7 @@ export function OrganogramChart({ members = [] }: OrganogramChartProps) {
 
   const deptTabs = [
     { id: "all", label: "Semua Fungsionaris" },
-    { id: "bph", label: "BPH Inti" },
+    { id: "bph", label: "Badan Pengurus Harian (BPH)" },
     { id: "psdm", label: "PSDM" },
     { id: "media", label: "Media" },
     { id: "kompres", label: "KOMPRES" },

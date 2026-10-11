@@ -19,146 +19,160 @@ export async function getPublicOpportunities({
   };
 
   if (type && type !== "Semua") {
-    where.type = type.toLowerCase();
+    where.tipe = type.toLowerCase();
   }
 
   if (category && category !== "Semua") {
-    where.category = category;
+    where.kategori = category;
   }
 
   if (search && search.trim() !== "") {
     const q = search.trim();
     where.OR = [
-      { title: { contains: q } },
-      { description: { contains: q } },
-      { organizer: { contains: q } },
+      { namaKompetisi: { contains: q } },
+      { deskripsi: { contains: q } },
+      { penyelenggara: { contains: q } },
     ];
   }
 
   if (onlyOpen) {
     where.OR = [
-      { deadlineAt: null },
-      { deadlineAt: { gte: now } },
+      { deadlinePendaftaran: null },
+      { deadlinePendaftaran: { gte: now } },
     ];
   }
 
-  const [items, allOpportunities] = await Promise.all([
-    prisma.opportunity.findMany({
-      where,
-      orderBy: [
-        { deadlineAt: "asc" },
-      ],
-    }),
-    prisma.opportunity.findMany({
-      where: { status: "published" },
-      select: { type: true, category: true, deadlineAt: true },
-    }),
-  ]);
+  try {
+    const [items, allOpportunities] = await Promise.all([
+      prisma.tKompetisi.findMany({
+        where,
+        orderBy: [
+          { deadlinePendaftaran: "asc" },
+        ],
+      }),
+      prisma.tKompetisi.findMany({
+        where: { status: "published" },
+        select: { tipe: true, kategori: true, deadlinePendaftaran: true },
+      }),
+    ]);
 
-  // Hitung jumlah tiap jenis tipe
-  const typeCounts: Record<string, number> = {
-    Semua: allOpportunities.length,
-    lomba: 0,
-    beasiswa: 0,
-    hibah: 0,
-    seminar: 0,
-  };
+    // Hitung jumlah tiap jenis tipe
+    const typeCounts: Record<string, number> = {
+      Semua: allOpportunities.length,
+      lomba: 0,
+      beasiswa: 0,
+      hibah: 0,
+      seminar: 0,
+    };
 
-  for (const op of allOpportunities) {
-    const t = (op.type || "lomba").toLowerCase();
-    typeCounts[t] = (typeCounts[t] || 0) + 1;
+    for (const op of allOpportunities) {
+      const t = (op.tipe || "lomba").toLowerCase();
+      typeCounts[t] = (typeCounts[t] || 0) + 1;
+    }
+
+    return {
+      items: items.map((op) => {
+        const deadlineSec = op.deadlinePendaftaran;
+        const isOpen = deadlineSec === null || deadlineSec >= now;
+        const secondsLeft = deadlineSec ? deadlineSec - now : null;
+        const daysLeft = secondsLeft !== null ? Math.ceil(secondsLeft / 86400) : null;
+        const isUrgent = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
+
+        return {
+          id: String(op.idKompetisi),
+          type: op.tipe || "lomba",
+          title: op.namaKompetisi,
+          slug: op.slug,
+          category: op.kategori || "KOMPETISI",
+          organizer: op.penyelenggara || "PERISAI UMI",
+          description: op.deskripsi || "",
+          deadlineAt: deadlineSec ? new Date(deadlineSec * 1000).toISOString() : null,
+          registrationUrl: op.linkPendaftaran || null,
+          coverImageUrl: op.linkPoster || "/og-default.jpg",
+          status: op.status,
+          isOpen,
+          daysLeft,
+          isUrgent,
+        };
+      }),
+      typeCounts,
+      total: items.length,
+    };
+  } catch (err) {
+    console.warn("Notice: failed to load T_Kompetisi:", err);
+    return {
+      items: [],
+      typeCounts: { Semua: 0, lomba: 0, beasiswa: 0, hibah: 0, seminar: 0 },
+      total: 0,
+    };
   }
-
-  return {
-    items: items.map((op) => {
-      const deadlineSec = op.deadlineAt;
-      const isOpen = deadlineSec === null || deadlineSec >= now;
-      const secondsLeft = deadlineSec ? deadlineSec - now : null;
-      const daysLeft = secondsLeft !== null ? Math.ceil(secondsLeft / 86400) : null;
-      const isUrgent = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
-
-      return {
-        id: op.id,
-        type: op.type || "lomba",
-        title: op.title,
-        slug: op.slug,
-        category: op.category || "KOMPETISI",
-        organizer: op.organizer || "PERISAI UMI",
-        description: op.description || "",
-        deadlineAt: deadlineSec ? new Date(deadlineSec * 1000).toISOString() : null,
-        registrationUrl: op.registrationUrl || null,
-        coverImageUrl: op.posterMediaId || "/og-default.jpg",
-        status: op.status,
-        isOpen,
-        daysLeft,
-        isUrgent,
-      };
-    }),
-    typeCounts,
-    total: items.length,
-  };
 }
 
 export async function getPublicOpportunityBySlug(slug: string) {
   const now = Math.floor(Date.now() / 1000);
-  const op = await prisma.opportunity.findFirst({
-    where: { slug, status: "published" },
-  });
+  try {
+    const op = await prisma.tKompetisi.findFirst({
+      where: { slug, status: "published" },
+    });
 
-  if (!op) return null;
+    if (!op) return null;
 
-  const deadlineSec = op.deadlineAt;
-  const isOpen = deadlineSec === null || deadlineSec >= now;
-  const secondsLeft = deadlineSec ? deadlineSec - now : null;
-  const daysLeft = secondsLeft !== null ? Math.ceil(secondsLeft / 86400) : null;
-  const isUrgent = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
+    const deadlineSec = op.deadlinePendaftaran;
+    const isOpen = deadlineSec === null || deadlineSec >= now;
+    const secondsLeft = deadlineSec ? deadlineSec - now : null;
+    const daysLeft = secondsLeft !== null ? Math.ceil(secondsLeft / 86400) : null;
+    const isUrgent = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
 
-  // Dapatkan peluang serupa
-  const rawRelated = await prisma.opportunity.findMany({
-    where: {
-      status: "published",
-      slug: { not: slug },
-      ...(op.type ? { type: op.type } : {}),
-    },
-    take: 3,
-    orderBy: { deadlineAt: "asc" },
-  });
+    // Dapatkan peluang serupa
+    const rawRelated = await prisma.tKompetisi.findMany({
+      where: {
+        status: "published",
+        slug: { not: slug },
+        ...(op.tipe ? { tipe: op.tipe } : {}),
+      },
+      take: 3,
+      orderBy: { deadlinePendaftaran: "asc" },
+    });
 
-  const relatedOpportunities = rawRelated.map((ro) => {
-    const rDeadline = ro.deadlineAt;
-    const rIsOpen = rDeadline === null || rDeadline >= now;
-    const rSecLeft = rDeadline ? rDeadline - now : null;
-    const rDaysLeft = rSecLeft !== null ? Math.ceil(rSecLeft / 86400) : null;
+    const relatedOpportunities = rawRelated.map((ro) => {
+      const rDeadline = ro.deadlinePendaftaran;
+      const rIsOpen = rDeadline === null || rDeadline >= now;
+      const rSecLeft = rDeadline ? rDeadline - now : null;
+      const rDaysLeft = rSecLeft !== null ? Math.ceil(rSecLeft / 86400) : null;
+
+      return {
+        id: String(ro.idKompetisi),
+        type: ro.tipe || "lomba",
+        title: ro.namaKompetisi,
+        slug: ro.slug,
+        category: ro.kategori || "KOMPETISI",
+        organizer: ro.penyelenggara || "PERISAI UMI",
+        deadlineAt: rDeadline ? new Date(rDeadline * 1000).toISOString() : null,
+        coverImageUrl: ro.linkPoster || "/og-default.jpg",
+        isOpen: rIsOpen,
+        daysLeft: rDaysLeft,
+      };
+    });
 
     return {
-      id: ro.id,
-      type: ro.type || "lomba",
-      title: ro.title,
-      slug: ro.slug,
-      category: ro.category || "KOMPETISI",
-      organizer: ro.organizer || "PERISAI UMI",
-      deadlineAt: rDeadline ? new Date(rDeadline * 1000).toISOString() : null,
-      coverImageUrl: ro.posterMediaId || "/og-default.jpg",
-      isOpen: rIsOpen,
-      daysLeft: rDaysLeft,
+      id: String(op.idKompetisi),
+      type: op.tipe || "lomba",
+      title: op.namaKompetisi,
+      slug: op.slug,
+      category: op.kategori || "KOMPETISI",
+      organizer: op.penyelenggara || "PERISAI UMI",
+      description: op.deskripsi || "",
+      deadlineAt: deadlineSec ? new Date(deadlineSec * 1000).toISOString() : null,
+      registrationUrl: op.linkPendaftaran || null,
+      coverImageUrl: op.linkPoster || "/og-default.jpg",
+      status: op.status,
+      isOpen,
+      daysLeft,
+      isUrgent,
+      relatedOpportunities,
     };
-  });
-
-  return {
-    id: op.id,
-    type: op.type || "lomba",
-    title: op.title,
-    slug: op.slug,
-    category: op.category || "KOMPETISI",
-    organizer: op.organizer || "PERISAI UMI",
-    description: op.description || "",
-    deadlineAt: deadlineSec ? new Date(deadlineSec * 1000).toISOString() : null,
-    registrationUrl: op.registrationUrl || null,
-    coverImageUrl: op.posterMediaId || "/og-default.jpg",
-    status: op.status,
-    isOpen,
-    daysLeft,
-    isUrgent,
-    relatedOpportunities,
-  };
+  } catch (err) {
+    console.error("Gagal mengambil peluang:", err);
+    return null;
+  }
 }

@@ -25,17 +25,17 @@ export async function createPostAction(data: PostInput): Promise<ActionResponse>
   try {
     const now = Math.floor(Date.now() / 1000);
     const isPub = parsed.data.status.toLowerCase() === "published";
-    const post = await prisma.post.create({
+    const post = await prisma.tBerita.create({
       data: {
-        title: parsed.data.title,
+        judul: parsed.data.title,
         slug,
-        content: parsed.data.content,
-        excerpt: parsed.data.excerpt,
-        coverMediaId: parsed.data.coverImageUrl,
+        konten: parsed.data.content,
+        ringkasan: parsed.data.excerpt,
+        fotoCover: parsed.data.coverImageUrl,
         status: parsed.data.status.toLowerCase(),
-        createdBy: session.user.id,
-        updatedBy: session.user.id,
-        publishedAt: isPub ? now : null,
+        penulisId: session.user.id,
+        diperbaruiOleh: session.user.id,
+        tanggalPublish: isPub ? now : null,
         createdAt: now,
         updatedAt: now,
       },
@@ -45,13 +45,13 @@ export async function createPostAction(data: PostInput): Promise<ActionResponse>
       userId: session.user.id,
       action: "CREATE_POST",
       resource: "posts",
-      resourceId: post.id,
-      details: { title: post.title },
+      resourceId: String(post.idBerita),
+      details: { title: post.judul },
     });
 
     revalidatePath("/kabar");
     revalidatePath("/admin/posts");
-    return { success: true, data: post };
+    return { success: true, data: { id: String(post.idBerita), ...post } };
   } catch (err: unknown) {
     return { success: false, message: "Gagal menyimpan postingan: " + (err instanceof Error ? err.message : String(err)) };
   }
@@ -68,26 +68,29 @@ export async function updatePostAction(id: string, data: PostInput): Promise<Act
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) return { success: false, message: "ID postingan tidak valid." };
+
   try {
-    const existing = await prisma.post.findUnique({ where: { id } });
+    const existing = await prisma.tBerita.findUnique({ where: { idBerita: numId } });
     if (!existing) return { success: false, message: "Postingan tidak ditemukan." };
 
     const now = Math.floor(Date.now() / 1000);
     const slug = parsed.data.slug ? slugify(parsed.data.slug) : existing.slug;
     const isPub = parsed.data.status.toLowerCase() === "published";
-    const publishedAt = isPub ? (existing.publishedAt ?? now) : null;
+    const publishedAt = isPub ? (existing.tanggalPublish ?? now) : null;
 
-    const updated = await prisma.post.update({
-      where: { id },
+    const updated = await prisma.tBerita.update({
+      where: { idBerita: numId },
       data: {
-        title: parsed.data.title,
+        judul: parsed.data.title,
         slug,
-        content: parsed.data.content,
-        excerpt: parsed.data.excerpt,
-        coverMediaId: parsed.data.coverImageUrl,
+        konten: parsed.data.content,
+        ringkasan: parsed.data.excerpt,
+        fotoCover: parsed.data.coverImageUrl,
         status: parsed.data.status.toLowerCase(),
-        publishedAt,
-        updatedBy: session.user.id,
+        tanggalPublish: publishedAt,
+        diperbaruiOleh: session.user.id,
         updatedAt: now,
       },
     });
@@ -101,7 +104,7 @@ export async function updatePostAction(id: string, data: PostInput): Promise<Act
 
     revalidatePath("/kabar");
     revalidatePath("/admin/posts");
-    return { success: true, data: updated };
+    return { success: true, data: { id: String(updated.idBerita), ...updated } };
   } catch (err: unknown) {
     return { success: false, message: "Gagal memperbarui postingan: " + (err instanceof Error ? err.message : String(err)) };
   }
@@ -113,8 +116,11 @@ export async function deletePostAction(id: string): Promise<ActionResponse> {
     return { success: false, message: "Akses ditolak: Anda tidak memiliki izin menghapus postingan." };
   }
 
+  const numId = parseInt(id, 10);
+  if (isNaN(numId)) return { success: false, message: "ID postingan tidak valid." };
+
   try {
-    await prisma.post.delete({ where: { id } });
+    await prisma.tBerita.delete({ where: { idBerita: numId } });
     await writeAuditLog({
       userId: session.user.id,
       action: "DELETE_POST",

@@ -394,25 +394,9 @@ async function migrateAndSeedTarget(name, executor) {
     );
   }
 
-  // Step 5: Seed Statistik (T_Statistik)
-  console.log(`5️⃣ Mengisi metrik statistik (T_Statistik)...`);
-  const statsList = [
-    { label: "Pengurus Aktif", value: "42", desc: "Fungsionaris Generasi 11", order: 1 },
-    { label: "Departemen & Badan", value: "7", desc: "Pilar bidang keilmuan dan riset", order: 2 },
-    { label: "Prestasi Ilmiah", value: "50+", desc: "Tingkat nasional & regional", order: 3 },
-    { label: "Karya & Inovasi", value: "25+", desc: "Prototipe, KTI, dan PKM didanai", order: 4 }
-  ];
 
-  for (const st of statsList) {
-    await executor(
-      `INSERT OR IGNORE INTO T_Statistik (label, nilai, deskripsi, urutan, is_active, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 1, ?, ?)`,
-      [st.label, st.value, st.desc, st.order, now, now]
-    );
-  }
-
-  // Step 6: Seed Dewan Pembina (M_Pembina)
-  console.log(`6️⃣ Mengisi data Dewan Pembina (M_Pembina)...`);
+  // Step 5: Seed Dewan Pembina (M_Pembina)
+  console.log(`5️⃣ Mengisi data Dewan Pembina (M_Pembina)...`);
   await executor(
     `INSERT OR IGNORE INTO M_Pembina (nama, gelar, jabatan, kategori, urutan, is_active, created_at, updated_at)
      VALUES ('Dr. Ir. Pembina Riset UMI', 'M.T.', 'Dewan Pembina UKM PERISAI UMI', 'pembina', 1, 1, ?, ?)`,
@@ -438,6 +422,164 @@ async function migrateAndSeedTarget(name, executor) {
      VALUES (?, 'PRN0258', 'Nayla Ananda', 'Anggota Tim', ?)`,
     [prestasiId, now]
   );
+
+  // Step 8: Seed Publikasi Berita, Proker, & Peluang Lomba (T_Berita, T_Kompetisi, T_Proker)
+  console.log(`8️⃣ Mengisi data publikasi berita, program kerja, & kompetisi...`);
+
+  // Berita
+  const sampleBerita = [
+    {
+      deptSlug: "penalaran",
+      judul: "Focus Group Discussion 2026: IPK Tinggi vs Kemampuan Berpikir Kritis",
+      slug: "focus-group-discussion-2026-ipk-vs-berpikir-kritis",
+      kategori: "Diskusi & Riset",
+      ringkasan: "Bedah mendalam mengenai korelasi prestasi akademik dengan ketajaman nalar saintifik mahasiswa bersama akademisi dan praktisi riset.",
+      konten: "<p>Apakah indeks prestasi kumulatif (IPK) yang tinggi selalu berbanding lurus dengan ketajaman berpikir kritis dan kapabilitas memecahkan persoalan kompleks? Pertanyaan mendasar inilah yang menjadi episentrum diskusi ilmiah dalam Focus Group Discussion (FGD) 2026 yang diinisiasi oleh Bidang Penalaran dan Keilmuan UKM PERISAI UMI.</p>",
+      fotoCover: "/og-default.jpg",
+      fotoDokumentasi: JSON.stringify(["/og-default.jpg"]),
+      isFeatured: 1,
+    },
+    {
+      deptSlug: "humas",
+      judul: "PERISAI Humanity: Restorasi Ekosistem Pesisir & Tanam 1.000 Mangrove",
+      slug: "perisai-humanity-konservasi-pesisir-mangrove",
+      kategori: "Pengabdian Masyarakat",
+      ringkasan: "Wujud kontribusi nyata fungsionaris PERISAI UMI dalam melestarikan sabuk hijau pesisir Sulawesi Selatan untuk mitigasi bencana abrasi.",
+      konten: "<p>Sebagai perwujudan Tri Dharma Perguruan Tinggi pilar pengabdian masyarakat, UKM PERISAI UMI menyelenggarakan program aksi lingkungan bertajuk PERISAI Humanity: Satu Mangrove, Seribu Manfaat di kawasan pesisir Maros - Makassar.</p>",
+      fotoCover: "/og-default.jpg",
+      fotoDokumentasi: JSON.stringify(["/og-default.jpg"]),
+      isFeatured: 1,
+    },
+    {
+      deptSlug: "kompres",
+      judul: "Delegasi PERISAI UMI Raih Medali Emas di LKTIN National Research Festival 2026",
+      slug: "delegasi-perisai-raih-medali-emas-lktin-2026",
+      kategori: "Prestasi & Kejuaraan",
+      ringkasan: "Karya inovasi teknologi penjernih air limbah industri berbasis membran selulosa bakteri berhasil mengantarkan tim UMI menjuarai kompetisi tingkat nasional.",
+      konten: "<p>Prestasi membanggakan kembali dipersembahkan oleh fungsionaris UKM PERISAI UMI di kancah nasional. Tim delegasi riset berhasil menyabet Juara 1 (Medali Emas) dan penghargaan Best Presentation pada ajang National Scientific Research Festival 2026.</p>",
+      fotoCover: "/og-default.jpg",
+      fotoDokumentasi: JSON.stringify(["/og-default.jpg"]),
+      isFeatured: 1,
+    },
+  ];
+
+  for (const b of sampleBerita) {
+    const deptRows = await executor(`SELECT id_departemen FROM M_Departemen WHERE slug = ?`, [b.deptSlug]);
+    const deptId = deptRows && deptRows[0] ? deptRows[0].id_departemen : null;
+    await executor(
+      `INSERT OR IGNORE INTO T_Berita (
+        id_departemen, judul, slug, kategori, ringkasan, konten, foto_cover, foto_dokumentasi,
+        penulis_id, status, tanggal_publish, is_featured, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PRN0253', 'published', ?, ?, ?, ?)`,
+      [deptId, b.judul, b.slug, b.kategori, b.ringkasan, b.konten, b.fotoCover, b.fotoDokumentasi, now, b.isFeatured, now, now]
+    );
+  }
+
+  // Peluang Kompetisi
+  const sampleKompetisi = [
+    {
+      nama: "Pekan Ilmiah Mahasiswa Nasional (PIMNAS) ke-39",
+      slug: "pimnas-39-dikti-2026",
+      tipe: "lomba",
+      kategori: "PKM",
+      tingkat: "Nasional",
+      penyelenggara: "Kemendikbudristek & Balai Pengembangan Talenta Indonesia",
+      deskripsi: "Ajang kompetisi puncak riset dan inovasi mahasiswa se-Indonesia. Menampilkan karya PKM terbaik dari seluruh perguruan tinggi.",
+      deadline: now + 30 * 86400,
+      linkDaftar: "https://simbelmawa.kemdikbud.go.id",
+      linkPoster: "/og-default.jpg",
+    },
+    {
+      nama: "LKTIN PERISAI Youth Innovation Summit 2026",
+      slug: "perisai-youth-innovation-summit-2026",
+      tipe: "lomba",
+      kategori: "KTI",
+      tingkat: "Nasional",
+      penyelenggara: "UKM PERISAI Universitas Muslim Indonesia",
+      deskripsi: "Lomba Karya Tulis Ilmiah Nasional mengangkat tema Green Technology and Sustainable Development Goals Menuju Indonesia Emas 2045.",
+      deadline: now + 45 * 86400,
+      linkDaftar: "https://perisai.umi.ac.id/peluang",
+      linkPoster: "/og-default.jpg",
+    },
+    {
+      nama: "Beasiswa Riset & Inovasi Talenta Muda 2026",
+      slug: "beasiswa-riset-talenta-muda-2026",
+      tipe: "beasiswa",
+      kategori: "Beasiswa",
+      tingkat: "Nasional",
+      penyelenggara: "Badan Riset dan Inovasi Nasional (BRIN)",
+      deskripsi: "Bantuan pendanaan riset tugas akhir dan penelitian terapan untuk mahasiswa berprestasi yang aktif dalam organisasi penalaran.",
+      deadline: now + 60 * 86400,
+      linkDaftar: "https://pendanaan-risnov.brin.go.id",
+      linkPoster: "/og-default.jpg",
+    },
+  ];
+
+  for (const k of sampleKompetisi) {
+    await executor(
+      `INSERT OR IGNORE INTO T_Kompetisi (
+        nama_kompetisi, slug, tipe, kategori, tingkat, penyelenggara, deskripsi,
+        deadline_pendaftaran, link_pendaftaran, link_poster, status, tanggal_publish, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?, ?)`,
+      [k.nama, k.slug, k.tipe, k.kategori, k.tingkat, k.penyelenggara, k.deskripsi, k.deadline, k.linkDaftar, k.linkPoster, now, now, now]
+    );
+  }
+
+  // Program Kerja (T_Proker)
+  const sampleProker = [
+    {
+      deptSlug: "psdm",
+      nama: "Latihan Kepemimpinan & Manajemen Riset (LKMR)",
+      slug: "lkmr-kaderisasi-riset-2026",
+      deskripsi: "Kaderisasi berjenjang untuk membina fungsionaris baru UKM PERISAI dengan fokus metodologi penelitian, kepemimpinan etis, dan manajerial organisasi.",
+      fotoCover: "/og-default.jpg",
+      fotoDokumentasi: JSON.stringify(["/og-default.jpg"]),
+      status: "published",
+      urutan: 1,
+    },
+    {
+      deptSlug: "penalaran",
+      nama: "PERISAI Scientific Writing Bootcamp & Clinic",
+      slug: "scientific-writing-bootcamp-clinic",
+      deskripsi: "Pendampingan intensif penulisan Karya Tulis Ilmiah (KTI) dan proposal Program Kreativitas Mahasiswa (PKM) dari perumusan ide hingga submisi.",
+      fotoCover: "/og-default.jpg",
+      fotoDokumentasi: JSON.stringify(["/og-default.jpg"]),
+      status: "published",
+      urutan: 2,
+    },
+    {
+      deptSlug: "ristek",
+      nama: "Inkubasi Prototipe & Karya Inovasi Teknologi Tepat Guna",
+      slug: "inkubasi-prototipe-inovasi-teknologi",
+      deskripsi: "Laboratorium inkubasi rekayasa perangkat lunak dan hardware ramah lingkungan untuk memfasilitasi riset aplikatif fungsionaris.",
+      fotoCover: "/og-default.jpg",
+      fotoDokumentasi: JSON.stringify(["/og-default.jpg"]),
+      status: "published",
+      urutan: 3,
+    },
+    {
+      deptSlug: "media",
+      nama: "Penerbitan Majalah Ilmiah & Portal Jurnalistik Riset PERISAI",
+      slug: "majalah-ilmiah-jurnalistik-riset",
+      deskripsi: "Publikasi berkala majalah digital, buletin riset, serta dokumentasi seluruh kiprah inovasi civitas akademika UKM PERISAI UMI.",
+      fotoCover: "/og-default.jpg",
+      fotoDokumentasi: JSON.stringify(["/og-default.jpg"]),
+      status: "published",
+      urutan: 4,
+    },
+  ];
+
+  for (const p of sampleProker) {
+    const deptRows = await executor(`SELECT id_departemen FROM M_Departemen WHERE slug = ?`, [p.deptSlug]);
+    const deptId = deptRows && deptRows[0] ? deptRows[0].id_departemen : 1;
+    await executor(
+      `INSERT OR IGNORE INTO T_Proker (
+        id_departemen, id_periode, nama_proker, slug, deskripsi, foto_cover, foto_dokumentasi,
+        status, urutan, diperbarui_oleh, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PRN0253', ?, ?)`,
+      [deptId, periodeId, p.nama, p.slug, p.deskripsi, p.fotoCover, p.fotoDokumentasi, p.status, p.urutan, now, now]
+    );
+  }
 
   console.log(`✨ [${name}] SELESAI DENGAN SUKSES! ✨`);
 }
