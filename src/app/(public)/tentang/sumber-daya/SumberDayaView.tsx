@@ -869,7 +869,7 @@ export function SumberDayaView() {
 
   return (
     <div
-      className="relative min-h-screen text-white selection:bg-[#FFB22C] selection:text-[#1b1b1f] pb-24 overflow-x-hidden w-full max-w-[100vw]"
+      className="relative text-white selection:bg-[#FFB22C] selection:text-[#1b1b1f] pb-10 sm:pb-14 overflow-x-hidden w-full max-w-[100vw]"
       style={{ background: BG }}
     >
       {/* Keyframes Animasi */}
@@ -1139,7 +1139,7 @@ export function SumberDayaView() {
         {/* ======================================================== */}
         {/* 3. SECTION DEPARTEMEN (3 CARD PER BARIS - MAKSIMAL RUANG)*/}
         {/* ======================================================== */}
-        <section className="relative my-8">
+        <section className="relative mt-8 mb-2">
           <Sparkle className="top-[-20px] left-[15%]" size={24} delay={0.4} float />
           <Sparkle className="top-[-10px] right-[15%]" size={20} delay={1.7} />
 

@@ -24,7 +24,7 @@ export default async function TentangPage() {
     "PERISAI UMI merupakan Unit Kegiatan Mahasiswa (UKM) resmi Universitas Muslim Indonesia yang berfokus pada pengembangan penalaran, riset, inovasi, dan kompetisi ilmiah. UKM ini lahir sebagai respon atas meningkatnya kebutuhan mahasiswa UMI untuk memiliki wadah pembinaan yang terarah dalam karya tulis ilmiah, PKM, penelitian, dan pengembangan teknologi.";
 
   return (
-    <div className="min-h-screen bg-[#1b1b1f] text-[#ECECEC] pb-24">
+    <div className="bg-[#1b1b1f] text-[#ECECEC] pb-10 sm:pb-14">
       {/* Hero Header */}
       <section className="relative overflow-hidden pt-12 pb-16 sm:pt-16 sm:pb-24 border-b border-[#FFB22C]/20">
         <div className="absolute inset-0 -z-10 overflow-hidden">

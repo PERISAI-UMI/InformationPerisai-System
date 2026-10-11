@@ -75,7 +75,7 @@ export default function StrukturPage() {
 
   return (
     <div
-      className="relative min-h-screen text-white selection:bg-[#FFB22C] selection:text-[#1b1b1f] pb-24 overflow-x-hidden w-full max-w-[100vw]"
+      className="relative text-white selection:bg-[#FFB22C] selection:text-[#1b1b1f] pb-10 sm:pb-14 overflow-x-hidden w-full max-w-[100vw]"
       style={{ background: BG }}
     >
       {/* Keyframes Animasi */}
