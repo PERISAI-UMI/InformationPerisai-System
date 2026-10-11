@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
           </Link>
 
           <h1 className="mt-4 text-xl font-bold tracking-tight text-white">
-            Masuk ke Panel Pengurus
+            Login
           </h1>
           <p className="mt-1 text-xs text-zinc-400">
             Sistem Informasi UKM PERISAI UMI
@@ -159,7 +159,7 @@ export default function AdminLoginPage() {
             className="w-full mt-6 bg-[#FFB22C] text-[#141417] font-bold hover:bg-[#ffa71a] transition duration-150"
             isLoading={isLoading}
           >
-            {isLoading ? "Memverifikasi..." : "Masuk ke Panel Pengurus"}
+            {isLoading ? "Memverifikasi..." : "Login"}
           </Button>
         </form>
 
