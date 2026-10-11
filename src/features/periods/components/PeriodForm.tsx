@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
+import { toast } from "@/components/ui/Toast";
 import { createPeriodAction, updatePeriodAction } from "../actions";
 
 export interface PeriodFormProps {
@@ -54,83 +57,82 @@ export function PeriodForm({ initialData }: PeriodFormProps) {
     setIsLoading(false);
 
     if (res.success) {
+      toast.success(initialData?.id ? "Periode berhasil diperbarui!" : "Periode baru berhasil dibuat!");
       router.push("/admin/periods");
       router.refresh();
     } else {
-      setErrorMessage(res.message || "Gagal menyimpan periode.");
+      const msg = res.message || "Gagal menyimpan periode.";
+      setErrorMessage(msg);
+      toast.error(msg);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {errorMessage && (
-        <div className="rounded-lg bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-          {errorMessage}
+        <div className="animate-shake">
+          <Alert variant="error" title="Gagal Menyimpan" onClose={() => setErrorMessage("")}>
+            {errorMessage}
+          </Alert>
         </div>
       )}
 
-      <Input
-        label="Nama Periode Kepengurusan *"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-        placeholder="contoh: Periode 2025/2026"
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="rounded-2xl border border-white/10 bg-[#202026] p-6 shadow-lg space-y-4">
         <Input
-          type="date"
-          label="Tanggal Mulai Periode *"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
+          label="Nama Periode Kepengurusan *"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           required
+          placeholder="contoh: Periode 2025/2026"
         />
-        <Input
-          type="date"
-          label="Tanggal Selesai (Opsional)"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-        />
-      </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="isActive"
-          checked={isActive}
-          onChange={(e) => setIsActive(e.target.checked)}
-          className="h-4 w-4 rounded border-zinc-300 text-[#E6AF2E] focus:ring-[#E6AF2E]"
-        />
-        <label htmlFor="isActive" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Jadikan Sebagai Periode Aktif Saat Ini (Menonaktifkan periode lainnya)
-        </label>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            type="date"
+            label="Tanggal Mulai Periode *"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
+          <Input
+            type="date"
+            label="Tanggal Selesai (Opsional)"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Visi Kepengurusan
-        </label>
-        <textarea
+        <div className="flex items-center gap-2 pt-1">
+          <input
+            type="checkbox"
+            id="isActive"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="h-4 w-4 rounded border-white/20 bg-[#16161a] text-[#FFB22C] accent-[#FFB22C] focus:ring-[#FFB22C]"
+          />
+          <label htmlFor="isActive" className="text-xs font-semibold text-zinc-300 cursor-pointer">
+            Jadikan Sebagai Periode Aktif Saat Ini (Menonaktifkan periode lainnya)
+          </label>
+        </div>
+
+        <Textarea
+          label="Visi Kepengurusan"
           value={vision}
           onChange={(e) => setVision(e.target.value)}
           rows={3}
-          className="w-full rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          placeholder="Visi utama kepengurusan periode ini..."
         />
-      </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Misi Kepengurusan
-        </label>
-        <textarea
+        <Textarea
+          label="Misi Kepengurusan"
           value={mission}
           onChange={(e) => setMission(e.target.value)}
           rows={3}
-          className="w-full rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          placeholder="Misi-misi strategis kepengurusan periode ini..."
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Batal
         </Button>

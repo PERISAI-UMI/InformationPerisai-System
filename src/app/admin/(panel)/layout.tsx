@@ -17,11 +17,18 @@ export default async function AdminPanelLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex h-screen w-full overflow-hidden bg-[#16161a] text-white selection:bg-[#FFB22C] selection:text-[#1b1b1f]">
+      {/* Sidebar Nav (Fixed) */}
       <AdminSidebar userRole={session.user.role} />
-      <div className="flex flex-1 flex-col overflow-x-hidden">
+
+      {/* Main Content Viewport */}
+      <div className="flex flex-1 flex-col min-w-0 h-screen overflow-hidden">
         <AdminTopbar user={session.user} />
-        <main className="flex-1 p-6 md:p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-5 sm:p-8 lg:p-10">
+          <div className="max-w-7xl w-full mx-auto pb-16">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

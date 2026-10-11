@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/common/EmptyState";
+import { toast } from "@/components/ui/Toast";
 import { formatDateIndonesian } from "@/lib/dates";
 import { toggleUserStatusAction } from "../actions";
 import { useRouter } from "next/navigation";
@@ -27,11 +29,20 @@ export function UserTable({ users }: UserTableProps) {
   const router = useRouter();
 
   const handleToggle = async (id: string, currentStatus: boolean) => {
-    const res = await toggleUserStatusAction(id, !currentStatus);
-    if (res.success) {
-      router.refresh();
-    } else {
-      alert(res.message || "Gagal mengubah status akun.");
+    try {
+      const res = await toggleUserStatusAction(id, !currentStatus);
+      if (res.success) {
+        toast.success(
+          !currentStatus
+            ? "Akun pengurus berhasil diaktifkan kembali."
+            : "Akun pengurus berhasil dinonaktifkan."
+        );
+        router.refresh();
+      } else {
+        toast.error(res.message || "Gagal mengubah status akun.");
+      }
+    } catch {
+      toast.error("Terjadi galat jaringan saat mengubah status akun.");
     }
   };
 
@@ -47,6 +58,20 @@ export function UserTable({ users }: UserTableProps) {
         return <Badge>{role}</Badge>;
     }
   };
+
+  if (!users || users.length === 0) {
+    return (
+      <EmptyState
+        type="empty"
+        title="Belum Ada Pengguna Terdaftar"
+        description="Belum ada akun pengurus atau administrator yang terdaftar di dalam sistem."
+        action={{
+          label: "Tambah Akun Pengurus",
+          href: "/admin/users/new",
+        }}
+      />
+    );
+  }
 
   return (
     <Table>
@@ -64,8 +89,8 @@ export function UserTable({ users }: UserTableProps) {
       <TableBody>
         {users.map((u) => (
           <TableRow key={u.id}>
-            <TableCell className="font-semibold text-zinc-900 dark:text-zinc-100">{u.name}</TableCell>
-            <TableCell>{u.email}</TableCell>
+            <TableCell className="font-semibold text-white">{u.name}</TableCell>
+            <TableCell className="text-zinc-300">{u.email}</TableCell>
             <TableCell>{getRoleBadge(u.role)}</TableCell>
             <TableCell>
               {u.isActive ? (
@@ -74,10 +99,10 @@ export function UserTable({ users }: UserTableProps) {
                 <Badge variant="danger">Nonaktif</Badge>
               )}
             </TableCell>
-            <TableCell className="text-xs text-zinc-500">
+            <TableCell className="text-xs text-zinc-400">
               {u._count?.posts ?? 0} artikel / {u._count?.uploadedMedia ?? 0} media
             </TableCell>
-            <TableCell className="text-xs">{formatDateIndonesian(u.createdAt)}</TableCell>
+            <TableCell className="text-xs text-zinc-400">{formatDateIndonesian(u.createdAt)}</TableCell>
             <TableCell className="text-right space-x-2">
               <Button
                 size="sm"
@@ -88,7 +113,7 @@ export function UserTable({ users }: UserTableProps) {
               </Button>
               <Link
                 href={`/admin/users/${u.id}`}
-                className="text-xs font-bold text-[#E6AF2E] hover:text-[#b8861b]"
+                className="text-xs font-semibold text-[#FFB22C] hover:text-[#FFA000] transition-colors"
               >
                 Ubah
               </Link>

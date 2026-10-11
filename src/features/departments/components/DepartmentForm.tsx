@@ -3,8 +3,11 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { MediaPicker } from "@/components/common/MediaPicker";
+import { Alert } from "@/components/ui/Alert";
+import { toast } from "@/components/ui/Toast";
 import { createDepartmentAction, updateDepartmentAction } from "../actions";
 
 export interface DepartmentFormProps {
@@ -51,71 +54,73 @@ export function DepartmentForm({ initialData }: DepartmentFormProps) {
     setIsLoading(false);
 
     if (res.success) {
+      toast.success(initialData?.id ? "Departemen berhasil diperbarui!" : "Departemen baru berhasil dibuat!");
       router.push("/admin/departments");
       router.refresh();
     } else {
-      setErrorMessage(res.message || "Gagal menyimpan departemen.");
+      const msg = res.message || "Gagal menyimpan departemen.";
+      setErrorMessage(msg);
+      toast.error(msg);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {errorMessage && (
-        <div className="rounded-lg bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-          {errorMessage}
+        <div className="animate-shake">
+          <Alert variant="error" title="Gagal Menyimpan" onClose={() => setErrorMessage("")}>
+            {errorMessage}
+          </Alert>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Nama Departemen *"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          placeholder="contoh: Riset dan Teknologi"
-        />
-        <Input
-          label="Kode Singkatan"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="contoh: RISTEK"
-        />
-      </div>
+      <div className="rounded-2xl border border-white/10 bg-[#202026] p-6 shadow-lg space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Nama Departemen *"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            placeholder="contoh: Riset dan Teknologi"
+          />
+          <Input
+            label="Kode Singkatan"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="contoh: RISTEK"
+          />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Slug Kustom (Opsional)"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-        />
-        <Input
-          type="number"
-          label="Urutan Tampilan (Order Index)"
-          value={orderIndex}
-          onChange={(e) => setOrderIndex(Number(e.target.value))}
-        />
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Slug Kustom (Opsional)"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+          />
+          <Input
+            type="number"
+            label="Urutan Tampilan (Order Index)"
+            value={orderIndex}
+            onChange={(e) => setOrderIndex(Number(e.target.value))}
+          />
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Deskripsi Departemen
-        </label>
-        <textarea
+        <Textarea
+          label="Deskripsi Departemen"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={4}
-          className="w-full rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="Tugas pokok, fungsi, dan fokus bidang departemen..."
+        />
+
+        <MediaPicker
+          label="Logo / Lambang Departemen"
+          value={logoUrl}
+          onChange={setLogoUrl}
         />
       </div>
 
-      <MediaPicker
-        label="Logo / Lambang Departemen"
-        value={logoUrl}
-        onChange={setLogoUrl}
-      />
-
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Batal
         </Button>

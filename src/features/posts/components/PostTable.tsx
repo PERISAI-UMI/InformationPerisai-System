@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EmptyState } from "@/components/common/EmptyState";
+import { toast } from "@/components/ui/Toast";
 import { formatDateIndonesian } from "@/lib/dates";
 import { deletePostAction } from "../actions";
 import { useRouter } from "next/navigation";
@@ -36,19 +38,30 @@ export function PostTable({ posts }: PostTableProps) {
   };
 
   const handleDelete = async (id: string) => {
-    const res = await deletePostAction(id);
-    if (res.success) {
-      router.refresh();
-    } else {
-      alert(res.message || "Gagal menghapus postingan.");
+    try {
+      const res = await deletePostAction(id);
+      if (res.success) {
+        toast.success("Postingan berhasil dihapus dari sistem.");
+        router.refresh();
+      } else {
+        toast.error(res.message || "Gagal menghapus postingan.");
+      }
+    } catch {
+      toast.error("Terjadi galat jaringan saat menghapus postingan.");
     }
   };
 
   if (!posts || posts.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-        Belum ada postingan berita. Klik &ldquo;Tambah Postingan Baru&rdquo; untuk memulai.
-      </div>
+      <EmptyState
+        type="empty"
+        title="Belum Ada Postingan Berita"
+        description="Belum ada artikel atau rilis berita yang dibuat. Tambahkan postingan pertama untuk dipublikasikan."
+        action={{
+          label: "Tambah Postingan Baru",
+          href: "/admin/posts/new",
+        }}
+      />
     );
   }
 
@@ -66,16 +79,16 @@ export function PostTable({ posts }: PostTableProps) {
       <TableBody>
         {posts.map((post) => (
           <TableRow key={post.id}>
-            <TableCell className="font-medium text-zinc-900 dark:text-zinc-100 max-w-xs truncate">
+            <TableCell className="font-bold text-white max-w-xs truncate">
               {post.title}
             </TableCell>
-            <TableCell>{post.author?.name || "-"}</TableCell>
+            <TableCell className="text-zinc-300">{post.author?.name || "-"}</TableCell>
             <TableCell>{getStatusBadge(post.status)}</TableCell>
-            <TableCell>{formatDateIndonesian(post.createdAt)}</TableCell>
-            <TableCell className="text-right space-x-2">
+            <TableCell className="text-zinc-400 font-light">{formatDateIndonesian(post.createdAt)}</TableCell>
+            <TableCell className="text-right space-x-3">
               <Link
                 href={`/admin/posts/${post.id}`}
-                className="text-xs font-semibold text-[#282F44] hover:text-[#E6AF2E] dark:text-[#F5D061] transition-colors"
+                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
               >
                 Ubah
               </Link>

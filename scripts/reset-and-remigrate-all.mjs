@@ -381,7 +381,7 @@ async function migrateAndSeedTarget(name, executor) {
     { key: "current_generasi", value: "11" },
     { key: "contact_email", value: "ukmperisai@umi.ac.id" },
     { key: "contact_phone", value: "+62 812-4489-9985" },
-    { key: "address", value: "Gedung Menara UMI Lt. 4, Kampus II UMI, Jl. Urip Sumoharjo Km. 5, Makassar" },
+    { key: "address", value: "GOR UMI Ruangan No. 10, Kampus II UMI, Jl. Urip Sumoharjo Km. 5, Makassar" },
     { key: "instagram_url", value: "https://instagram.com/ukmperisai_umi" },
     { key: "history_content", value: "UKM PERISAI UMI didirikan sebagai wadah mahasiswa penggerak riset dan keilmiahan di Universitas Muslim Indonesia." }
   ];

@@ -12,26 +12,26 @@ export function Pagination({ currentPage, totalPages, createPageUrl }: Paginatio
   if (totalPages <= 1) return null;
 
   return (
-    <nav className="flex items-center justify-center gap-2 py-6">
+    <nav className="flex items-center justify-center gap-3 py-6">
       <Link
         href={createPageUrl(Math.max(1, currentPage - 1))}
         className={cn(
-          "rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800",
+          "rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-bold text-zinc-300 hover:border-[#FFB22C]/40 hover:text-white hover:bg-[#FFB22C]/10 transition-all",
           currentPage <= 1 && "pointer-events-none opacity-40"
         )}
       >
         ← Sebelumnya
       </Link>
 
-      <span className="text-xs text-zinc-500">
-        Halaman <strong className="text-zinc-900 dark:text-zinc-100">{currentPage}</strong> dari{" "}
-        <strong className="text-zinc-900 dark:text-zinc-100">{totalPages}</strong>
+      <span className="text-xs text-zinc-400">
+        Halaman <strong className="text-[#FFB22C] font-bold">{currentPage}</strong> dari{" "}
+        <strong className="text-white font-bold">{totalPages}</strong>
       </span>
 
       <Link
         href={createPageUrl(Math.min(totalPages, currentPage + 1))}
         className={cn(
-          "rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800",
+          "rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-bold text-zinc-300 hover:border-[#FFB22C]/40 hover:text-white hover:bg-[#FFB22C]/10 transition-all",
           currentPage >= totalPages && "pointer-events-none opacity-40"
         )}
       >

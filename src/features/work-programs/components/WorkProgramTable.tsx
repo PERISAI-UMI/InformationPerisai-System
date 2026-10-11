@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EmptyState } from "@/components/common/EmptyState";
+import { toast } from "@/components/ui/Toast";
 import { deleteWorkProgramAction } from "../actions";
 import { useRouter } from "next/navigation";
 
@@ -35,19 +37,30 @@ export function WorkProgramTable({ programs }: WorkProgramTableProps) {
   };
 
   const handleDelete = async (id: string) => {
-    const res = await deleteWorkProgramAction(id);
-    if (res.success) {
-      router.refresh();
-    } else {
-      alert(res.message || "Gagal menghapus program kerja.");
+    try {
+      const res = await deleteWorkProgramAction(id);
+      if (res.success) {
+        toast.success("Program kerja berhasil dihapus.");
+        router.refresh();
+      } else {
+        toast.error(res.message || "Gagal menghapus program kerja.");
+      }
+    } catch {
+      toast.error("Terjadi galat jaringan saat menghapus program kerja.");
     }
   };
 
   if (!programs || programs.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-        Belum ada program kerja terdaftar.
-      </div>
+      <EmptyState
+        type="empty"
+        title="Belum Ada Program Kerja"
+        description="Belum ada program kerja terdaftar untuk periode ini. Silakan tambahkan program kerja baru."
+        action={{
+          label: "Tambah Program Kerja",
+          href: "/admin/work-programs/new",
+        }}
+      />
     );
   }
 
@@ -65,14 +78,14 @@ export function WorkProgramTable({ programs }: WorkProgramTableProps) {
       <TableBody>
         {programs.map((p) => (
           <TableRow key={p.id}>
-            <TableCell className="font-medium text-zinc-900 dark:text-zinc-100">{p.name}</TableCell>
-            <TableCell>{p.department?.name || "-"}</TableCell>
-            <TableCell>{p.period?.name || "-"}</TableCell>
+            <TableCell className="font-bold text-white">{p.name}</TableCell>
+            <TableCell className="text-zinc-300">{p.department?.name || "-"}</TableCell>
+            <TableCell className="text-zinc-400 font-light">{p.period?.name || "-"}</TableCell>
             <TableCell>{getBadge(p.status)}</TableCell>
-            <TableCell className="text-right space-x-2">
+            <TableCell className="text-right space-x-3">
               <Link
                 href={`/admin/work-programs/${p.id}`}
-                className="text-xs font-bold text-[#E6AF2E] hover:text-[#b8861b]"
+                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
               >
                 Ubah
               </Link>

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EmptyState } from "@/components/common/EmptyState";
+import { toast } from "@/components/ui/Toast";
 import { deleteStatisticAction } from "../actions";
 import { useRouter } from "next/navigation";
 
@@ -23,19 +25,30 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
-    const res = await deleteStatisticAction(id);
-    if (res.success) {
-      router.refresh();
-    } else {
-      alert(res.message || "Gagal menghapus statistik.");
+    try {
+      const res = await deleteStatisticAction(id);
+      if (res.success) {
+        toast.success("Indikator statistik berhasil dihapus.");
+        router.refresh();
+      } else {
+        toast.error(res.message || "Gagal menghapus statistik.");
+      }
+    } catch {
+      toast.error("Terjadi galat jaringan saat menghapus statistik.");
     }
   };
 
   if (!statistics || statistics.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-        Belum ada indikator statistik terdaftar.
-      </div>
+      <EmptyState
+        type="empty"
+        title="Belum Ada Indikator Statistik"
+        description="Belum ada data capaian atau statistik lembaga yang ditampilkan di beranda publik."
+        action={{
+          label: "Tambah Statistik",
+          href: "/admin/statistics/new",
+        }}
+      />
     );
   }
 
@@ -54,10 +67,20 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
       <TableBody>
         {statistics.map((s) => (
           <TableRow key={s.id}>
-            <TableCell className="w-16 font-mono text-xs">{s.orderIndex}</TableCell>
-            <TableCell className="text-xl">{s.icon || "📊"}</TableCell>
-            <TableCell className="font-semibold text-zinc-900 dark:text-zinc-100">{s.label}</TableCell>
-            <TableCell className="font-mono font-bold text-[#E6AF2E]">
+            <TableCell className="w-16 font-mono text-xs text-zinc-400">{s.orderIndex}</TableCell>
+            <TableCell className="text-xl">
+              {s.icon ? (
+                <span>{s.icon}</span>
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFB22C]/10 text-[#FFB22C]">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+              )}
+            </TableCell>
+            <TableCell className="font-semibold text-white">{s.label}</TableCell>
+            <TableCell className="font-mono font-bold text-[#FFB22C]">
               {s.value} {s.suffix || ""}
             </TableCell>
             <TableCell>
@@ -66,7 +89,7 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
             <TableCell className="text-right space-x-2">
               <Link
                 href={`/admin/statistics/${s.id}`}
-                className="text-xs font-bold text-[#E6AF2E] hover:text-[#b8861b]"
+                className="text-xs font-semibold text-[#FFB22C] hover:text-[#FFA000] transition-colors"
               >
                 Ubah
               </Link>

@@ -4,8 +4,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { MediaPicker } from "@/components/common/MediaPicker";
+import { Alert } from "@/components/ui/Alert";
+import { toast } from "@/components/ui/Toast";
 import { createOpportunityAction, updateOpportunityAction } from "../actions";
 
 export interface OpportunityFormProps {
@@ -65,101 +68,98 @@ export function OpportunityForm({ initialData }: OpportunityFormProps) {
     setIsLoading(false);
 
     if (res.success) {
+      toast.success(initialData?.id ? "Peluang / kompetisi berhasil diperbarui!" : "Peluang baru berhasil ditambahkan!");
       router.push("/admin/opportunities");
       router.refresh();
     } else {
-      setErrorMessage(res.message || "Gagal menyimpan peluang.");
+      const msg = res.message || "Gagal menyimpan peluang.";
+      setErrorMessage(msg);
+      toast.error(msg);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
       {errorMessage && (
-        <div className="rounded-lg bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-          {errorMessage}
+        <div className="animate-shake">
+          <Alert variant="error" title="Gagal Menyimpan" onClose={() => setErrorMessage("")}>
+            {errorMessage}
+          </Alert>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Input
-          label="Judul Lomba / Peluang *"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-        <Input
-          label="Slug Kustom (Opsional)"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-          placeholder="otomatis-dari-judul"
-        />
-        <Input
-          label="Penyelenggara *"
-          value={organizer}
-          onChange={(e) => setOrganizer(e.target.value)}
-          required
-        />
-      </div>
+      <div className="rounded-2xl border border-white/10 bg-[#202026] p-6 shadow-lg space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Input
+            label="Judul Lomba / Peluang *"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+          <Input
+            label="Slug Kustom (Opsional)"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="otomatis-dari-judul"
+          />
+          <Input
+            label="Penyelenggara *"
+            value={organizer}
+            onChange={(e) => setOrganizer(e.target.value)}
+            required
+          />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Select
-          label="Kategori *"
-          value={category}
-          onChange={(e) => setCategory(e.target.value as "LOMBA" | "BEASISWA" | "SEMINAR" | "MAGANG")}
-          options={[
-            { label: "Lomba / Kompetisi", value: "LOMBA" },
-            { label: "Beasiswa", value: "BEASISWA" },
-            { label: "Seminar & Workshop", value: "SEMINAR" },
-            { label: "Magang / Riset", value: "MAGANG" },
-          ]}
-        />
-        <Input
-          type="date"
-          label="Batas Pendaftaran (Deadline) *"
-          value={deadlineAt}
-          onChange={(e) => setDeadlineAt(e.target.value)}
-          required
-        />
-        <Input
-          label="Tautan Pendaftaran (URL)"
-          value={linkUrl}
-          onChange={(e) => setLinkUrl(e.target.value)}
-          placeholder="https://..."
-        />
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Select
+            label="Kategori *"
+            value={category}
+            onChange={(e) => setCategory(e.target.value as "LOMBA" | "BEASISWA" | "SEMINAR" | "MAGANG")}
+            options={[
+              { label: "Lomba / Kompetisi", value: "LOMBA" },
+              { label: "Beasiswa", value: "BEASISWA" },
+              { label: "Seminar & Workshop", value: "SEMINAR" },
+              { label: "Magang / Riset", value: "MAGANG" },
+            ]}
+          />
+          <Input
+            type="date"
+            label="Batas Pendaftaran (Deadline) *"
+            value={deadlineAt}
+            onChange={(e) => setDeadlineAt(e.target.value)}
+            required
+          />
+          <Input
+            label="Tautan Pendaftaran (URL)"
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            placeholder="https://..."
+          />
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Deskripsi & Gambaran Acara *
-        </label>
-        <textarea
+        <Textarea
+          label="Deskripsi & Gambaran Acara *"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={4}
           required
-          className="w-full rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
-      </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Syarat & Ketentuan Partisipasi
-        </label>
-        <textarea
+        <Textarea
+          label="Syarat & Ketentuan Partisipasi"
           value={requirements}
           onChange={(e) => setRequirements(e.target.value)}
           rows={3}
-          className="w-full rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        />
+
+        <MediaPicker
+          label="Poster / Banner Peluang"
+          value={coverImageUrl}
+          onChange={setCoverImageUrl}
         />
       </div>
 
-      <MediaPicker
-        label="Poster / Banner Peluang"
-        value={coverImageUrl}
-        onChange={setCoverImageUrl}
-      />
-
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Batal
         </Button>

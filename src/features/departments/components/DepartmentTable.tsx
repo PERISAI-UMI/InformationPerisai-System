@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EmptyState } from "@/components/common/EmptyState";
+import { toast } from "@/components/ui/Toast";
 import { deleteDepartmentAction } from "../actions";
 import { useRouter } from "next/navigation";
 
@@ -24,19 +26,30 @@ export function DepartmentTable({ departments }: DepartmentTableProps) {
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
-    const res = await deleteDepartmentAction(id);
-    if (res.success) {
-      router.refresh();
-    } else {
-      alert(res.message || "Gagal menghapus departemen.");
+    try {
+      const res = await deleteDepartmentAction(id);
+      if (res.success) {
+        toast.success("Departemen berhasil dihapus.");
+        router.refresh();
+      } else {
+        toast.error(res.message || "Gagal menghapus departemen.");
+      }
+    } catch {
+      toast.error("Terjadi galat jaringan saat menghapus departemen.");
     }
   };
 
   if (!departments || departments.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-        Belum ada departemen terdaftar.
-      </div>
+      <EmptyState
+        type="empty"
+        title="Belum Ada Departemen"
+        description="Belum ada divisi atau departemen bidang riset yang ditambahkan ke sistem."
+        action={{
+          label: "Tambah Departemen Baru",
+          href: "/admin/departments/new",
+        }}
+      />
     );
   }
 
@@ -55,15 +68,15 @@ export function DepartmentTable({ departments }: DepartmentTableProps) {
       <TableBody>
         {departments.map((dept) => (
           <TableRow key={dept.id}>
-            <TableCell className="w-16 font-mono text-xs">{dept.orderIndex}</TableCell>
-            <TableCell className="font-medium text-zinc-900 dark:text-zinc-100">{dept.name}</TableCell>
-            <TableCell>{dept.code || "-"}</TableCell>
-            <TableCell>{dept._count?.members ?? 0} orang</TableCell>
-            <TableCell>{dept._count?.workPrograms ?? 0} program</TableCell>
-            <TableCell className="text-right space-x-2">
+            <TableCell className="w-16 font-mono text-xs text-zinc-400">{dept.orderIndex}</TableCell>
+            <TableCell className="font-bold text-white">{dept.name}</TableCell>
+            <TableCell className="text-zinc-300 font-mono text-xs">{dept.code || "-"}</TableCell>
+            <TableCell className="text-zinc-300">{dept._count?.members ?? 0} orang</TableCell>
+            <TableCell className="text-zinc-300">{dept._count?.workPrograms ?? 0} program</TableCell>
+            <TableCell className="text-right space-x-3">
               <Link
                 href={`/admin/departments/${dept.id}`}
-                className="text-xs font-semibold text-[#282F44] hover:text-[#E6AF2E] dark:text-[#F5D061] transition-colors"
+                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
               >
                 Ubah
               </Link>

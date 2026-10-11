@@ -34,10 +34,10 @@ export default async function AdminEditOpportunityPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Ubah Peluang Lomba
         </h1>
-        <p className="text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-zinc-400">
           Perbarui rincian, perpanjang batas tenggat, atau tautan pendaftaran.
         </p>
       </div>

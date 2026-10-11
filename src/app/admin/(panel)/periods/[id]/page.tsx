@@ -13,22 +13,32 @@ export default async function AdminEditPeriodPage({
   if (!period) {
     notFound();
   }
+ 
+  const safeDate = (ts: number | null | undefined) => {
+    if (!ts || isNaN(ts)) return "";
+    try {
+      const d = new Date(ts * 1000);
+      return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
+  };
 
   const initialData = {
     id: period.id,
     name: period.name,
     isActive: Boolean(period.isCurrent),
-    startDate: new Date(period.startDate * 1000).toISOString().split("T")[0],
-    endDate: period.endDate ? new Date(period.endDate * 1000).toISOString().split("T")[0] : null,
+    startDate: safeDate(period.startDate),
+    endDate: period.endDate ? safeDate(period.endDate) : null,
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Ubah Periode Kepengurusan
         </h1>
-        <p className="text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-zinc-400">
           Perbarui nama periode, rentang tanggal, visi, atau misi kepengurusan.
         </p>
       </div>

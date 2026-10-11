@@ -7,19 +7,19 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 export function Badge({ className, variant = "neutral", children, ...props }: BadgeProps) {
   const variantStyles = {
-    primary: "bg-[#E6AF2E]/15 text-[#9c7112] border border-[#E6AF2E]/30 dark:bg-[#E6AF2E]/25 dark:text-[#F5D061] dark:border-[#E6AF2E]/40",
-    secondary: "bg-[#282F44]/10 text-[#282F44] border border-[#282F44]/20 dark:bg-[#282F44] dark:text-[#ECECEC] dark:border-[#3d4663]",
-    success: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
-    warning: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
-    danger: "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300",
-    info: "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300",
-    neutral: "bg-[#ECECEC] text-[#282F44] border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700",
+    primary: "bg-[#FFB22C]/15 text-[#FFB22C] border border-[#FFB22C]/40 shadow-[0_0_12px_rgba(255,178,44,0.15)]",
+    secondary: "bg-white/10 text-zinc-200 border border-white/15",
+    success: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]",
+    warning: "bg-amber-500/15 text-amber-300 border border-amber-500/30",
+    danger: "bg-red-500/15 text-red-400 border border-red-500/30",
+    info: "bg-sky-500/15 text-sky-400 border border-sky-500/30",
+    neutral: "bg-white/5 text-zinc-300 border border-white/10",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wide",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wide",
         variantStyles[variant],
         className
       )}

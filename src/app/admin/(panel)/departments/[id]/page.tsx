@@ -17,10 +17,10 @@ export default async function AdminEditDepartmentPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Ubah Departemen
         </h1>
-        <p className="text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-zinc-400">
           Ubah deskripsi, urutan tampilan, atau lambang departemen.
         </p>
       </div>
@@ -29,6 +29,10 @@ export default async function AdminEditDepartmentPage({
         initialData={{
           id: department.id,
           name: department.nama,
+          slug: department.profile?.slug || "",
+          code: department.profile?.slug?.toUpperCase() || "",
+          description: department.profile?.description || "",
+          orderIndex: department.profile?.sortOrder ?? 0,
         }}
       />
     </div>

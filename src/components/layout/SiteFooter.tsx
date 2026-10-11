@@ -112,7 +112,7 @@ export function SiteFooter() {
               <p className="font-bold text-white text-sm">
                 Pusat Pengembangan Riset Mahasiswa Universitas Muslim Indonesia
               </p>
-              <p>Gedung Menara UMI Lt. 4 / Sekretariat PKM UMI Kampus II</p>
+              <p>GOR UMI Ruangan No. 10 / Kampus II UMI</p>
               <p>Jl. Urip Sumoharjo KM 5, Panaikang, Panakkukang, Makassar, Sulawesi Selatan 90231</p>
               <p className="pt-1 font-semibold" style={{ color: "#FFC85A" }}>
                 Email: ukmperisai@umi.ac.id | Narahubung: +62 812-3456-7890

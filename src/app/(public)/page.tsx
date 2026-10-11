@@ -15,10 +15,6 @@ const GOLD_SOFT = "#FFC85A";
 const BG = "#1b1b1f";
 const CARD = "#2b2b31";
 
-/* Ganti path gambar ini dengan foto asli kegiatan kamu */
-const IMG_VIDEO = "/og-default.jpg";
-const IMG_HUMANITY = "/og-default.jpg";
-const IMG_PRESTASI = "/og-default.jpg";
 
 /* ------------------------------------------------------------------ */
 /* Bintang 4 sudut + animasi                                           */
@@ -110,7 +106,7 @@ function Connector({
 }
 
 export default async function HomePage() {
-  const [postsData, workPrograms, statistics, activeMembers, opportunities] = await Promise.all([
+  const [postsData, workPrograms, statistics, activeMembers, opportunitiesData] = await Promise.all([
     getPublishedPosts({ pageSize: 6 }),
     getPublicWorkPrograms(),
     getPublicStatistics(),
@@ -128,7 +124,7 @@ export default async function HomePage() {
     slug: "focus-group-discussion",
     summary: "",
     status: "published",
-    coverImageUrl: "/og-default.jpg",
+    coverImageUrl: null,
   };
 
   const prokerDescription =
@@ -137,49 +133,49 @@ export default async function HomePage() {
 
   const defaultNews = [
     {
-      href: "/activity",
-      img: IMG_HUMANITY,
+      href: "/activity/perisai-humanity-konservasi-pesisir-mangrove",
       title: "PERISAI HUMANITY",
-      caption: "1 Mangrove, Seribu Manfaat - Konservasi Pesisir",
-      tag: "Kegiatan",
+      caption: "Aksi Restorasi Sabuk Hijau & Konservasi Pesisir Maros - Makassar",
+      tag: "Pengabdian",
+      date: "Pengabdian",
     },
     {
-      href: "/competition",
-      img: IMG_PRESTASI,
-      title: "PRESTASI PERISAI",
-      caption: "Inovator Berhasil Meraih Medali Emas & Penghargaan",
+      href: "/activity/delegasi-perisai-raih-medali-emas-lktin-2025",
+      title: "PRESTASI EMAS PERISAI",
+      caption: "Delegasi Peneliti Muda UMI Raih Medali Emas LKTIN Nasional 2025",
       tag: "Prestasi",
+      date: "Juara 1 Nasional",
     },
     {
-      href: "/activity",
-      img: "/og-default.jpg",
-      title: "INOVASI RISET UMI",
-      caption: "Pengembangan Prototipe Teknologi Ramah Lingkungan",
-      tag: "Penelitian",
+      href: "/activity/kolaborasi-riset-multidisiplin-biosensor-2025",
+      title: "INOVASI BIOSENSOR UMI",
+      caption: "Riset Multidisiplin Prototipe Sensor Diagnostik Terjangkau",
+      tag: "Riset",
+      date: "Riset FTI & FK",
     },
     {
-      href: "/activity",
-      img: "/og-default.jpg",
-      title: "WORKSHOP KARYA TULIS",
-      caption: "Pelatihan Penulisan Proposal & Publikasi Ilmiah",
-      tag: "Edukasi",
+      href: "/activity/bootcamp-penulisan-proposal-riset-kti-2025",
+      title: "BOOTCAMP KARYA TULIS",
+      caption: "Pelatihan Penulisan Proposal & Metodologi KTI Saintifik 2025",
+      tag: "Pelatihan",
+      date: "Klinik KTI",
     },
     {
-      href: "/activity",
-      img: "/og-default.jpg",
-      title: "STUDI KOLABORASI",
-      caption: "Kunjungan Studi Riset ke Laboratorium Terpadu",
+      href: "/activity/kunjungan-studi-benchmarking-brida-sulsel",
+      title: "BENCHMARKING BRIDA",
+      caption: "Kunjungan Studi Saintifik & Hilirisasi Riset Daerah Sulsel",
       tag: "Kolaborasi",
+      date: "Studi Ekskursi",
     },
   ];
 
   const newsBaseList = [
     ...postsData.items.map((p) => ({
       href: `/activity/${p.slug}`,
-      img: p.coverImageUrl || "/og-default.jpg",
       title: p.title,
       caption: p.excerpt || (p.publishedAt ? formatDateIndonesian(p.publishedAt) : "Berita Terbaru"),
-      tag: "Berita",
+      tag: p.category || "Berita",
+      date: p.publishedAt ? formatDateIndonesian(p.publishedAt) : "Terbaru",
     })),
     ...defaultNews,
   ];
@@ -194,49 +190,55 @@ export default async function HomePage() {
 
   const defaultOpportunities = [
     {
-      href: "/competition",
-      img: "/og-default.jpg",
+      href: "/competition/pkm-8-bidang-kemendikbudristek-2025",
       title: "PKM 8 BIDANG 2025",
       caption: "Pendanaan Riset & Inovasi Belmawa Kemendikbudristek",
       tag: "KEMENDIKBUD",
+      date: "Sisa 24 Hari",
+      organizer: "Ditjen Diktiristek",
     },
     {
-      href: "/competition",
-      img: "/og-default.jpg",
+      href: "/competition/pimnas-38-pekan-ilmiah-nasional-2025",
       title: "PIMNAS 38",
       caption: "Pekan Ilmiah Mahasiswa Nasional Tingkat Perguruan Tinggi",
       tag: "NASIONAL",
+      date: "Sisa 45 Hari",
+      organizer: "Puspresnas Kemdikbud",
     },
     {
-      href: "/competition",
-      img: "/og-default.jpg",
-      title: "LKTIN RESEARCH FESTIVAL",
-      caption: "Lomba Karya Tulis Ilmiah Nasional & Expo Inovasi",
+      href: "/competition/perisai-national-research-fair-lktin-2025",
+      title: "PERISAI RESEARCH FAIR",
+      caption: "Lomba Karya Tulis Ilmiah Nasional & Expo Inovasi UMI 2025",
       tag: "KARYA TULIS",
+      date: "Sisa 18 Hari",
+      organizer: "UKM PERISAI UMI",
     },
     {
-      href: "/competition",
-      img: "/og-default.jpg",
+      href: "/competition/innovillage-2025-social-project-telkom",
       title: "INNOVILLAGE 2025",
-      caption: "Kompetisi Social Project & Digital Village Solution",
+      caption: "Kompetisi Social Project & Digital Village Solution Telkom",
       tag: "INOVASI",
+      date: "Sisa 12 Hari",
+      organizer: "Telkom Indonesia",
     },
     {
-      href: "/competition",
-      img: "/og-default.jpg",
-      title: "KIBM WIRAUSAHA",
-      caption: "Inkubasi & Pendanaan Ide Bisnis Mahasiswa Berprestasi",
-      tag: "BISNIS",
+      href: "/competition/djarum-beasiswa-plus-2025",
+      title: "DJARUM BEASISWA PLUS",
+      caption: "Beasiswa Kepemimpinan & Academic Development Program",
+      tag: "BEASISWA",
+      date: "Sisa 8 Hari",
+      organizer: "Djarum Foundation",
     },
   ];
 
   const opportunityBaseList = [
-    ...opportunities.map((op) => ({
+    ...opportunitiesData.items.map((op) => ({
       href: `/competition/${op.slug}`,
-      img: op.coverImageUrl || "/og-default.jpg",
       title: op.title,
-      caption: op.description || op.organizer || "Kompetisi Mahasiswa",
+      caption: op.description?.replace(/<[^>]*>/g, "") || op.organizer || "Kompetisi Mahasiswa",
       tag: op.category || "LOMBA",
+      date: op.deadlineAt ? `Tenggat: ${formatDateIndonesian(op.deadlineAt)}` : "Terbuka",
+      organizer: op.organizer || "PERISAI UMI",
     })),
     ...defaultOpportunities,
   ];
@@ -275,10 +277,14 @@ export default async function HomePage() {
           0% { transform: translateX(0%); }
           100% { transform: translateX(-50%); }
         }
+        @keyframes pr-shimmer {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(250%); }
+        }
         .pr-marquee-track {
           display: flex;
           width: max-content;
-          animation: pr-marquee 28s linear infinite;
+          animation: pr-marquee 70s linear infinite;
           will-change: transform;
         }
         .pr-marquee-track:hover {
@@ -287,7 +293,7 @@ export default async function HomePage() {
         .pr-marquee-track-alt {
           display: flex;
           width: max-content;
-          animation: pr-marquee 32s linear infinite;
+          animation: pr-marquee 80s linear infinite;
           will-change: transform;
         }
         .pr-marquee-track-alt:hover {
@@ -408,20 +414,37 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-12 lg:gap-14">
             {/* Video Player */}
             <div className="md:col-span-7">
-              <div className="group relative aspect-video w-full overflow-hidden rounded-3xl border border-white/10 bg-zinc-900 shadow-2xl">
-                <Image
-                  src={IMG_VIDEO}
-                  alt="Video Profile PERISAI UMI"
-                  fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+              <div className="group relative aspect-video w-full overflow-hidden rounded-3xl border border-[#FFB22C]/40 bg-gradient-to-br from-[#292931] via-[#202026] to-[#161619] shadow-2xl transition duration-500 hover:border-[#FFB22C] hover:shadow-[0_0_35px_rgba(255,178,44,0.22)]">
+                {/* Ambient Glows */}
+                <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#FFB22C]/15 blur-3xl" />
+                <div className="pointer-events-none absolute -left-16 -bottom-16 h-56 w-56 rounded-full bg-[#FFA000]/10 blur-3xl" />
+
+                {/* Cinematic Obsidian Video Cover */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center select-none">
+                  <div className="mb-3 flex items-center gap-3 rounded-full border border-[#FFB22C]/30 bg-black/40 px-4 py-1.5 backdrop-blur-md">
+                    <Image
+                      src="/logoperisaii.png"
+                      alt="Logo UKM PERISAI UMI"
+                      width={28}
+                      height={28}
+                      className="h-6 w-6 object-contain"
+                    />
+                    <span className="text-xs font-bold tracking-widest uppercase text-[#FFB22C]">
+                      Video Profil Resmi UKM PERISAI UMI
+                    </span>
+                  </div>
+                  <p className="max-w-md text-xs sm:text-sm text-zinc-300 font-light">
+                    Kiprah Riset, Inovasi, & Prestasi Mahasiswa Universitas Muslim Indonesia
+                  </p>
+                </div>
+
+                <div className="absolute inset-0 flex items-center justify-center bg-black/25 backdrop-blur-[1px]">
                   <a
                     href="https://youtube.com/@perisaiumi"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Tonton Video Profile di YouTube"
-                    className="flex h-16 w-24 items-center justify-center rounded-2xl bg-red-600 text-white shadow-xl transition hover:scale-110 sm:h-20 sm:w-28"
+                    className="flex h-16 w-24 items-center justify-center rounded-2xl bg-red-600 text-white shadow-xl transition hover:scale-110 sm:h-20 sm:w-28 hover:bg-red-500"
                   >
                     <svg className="h-9 w-9 sm:h-11 sm:w-11" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
@@ -490,25 +513,84 @@ export default async function HomePage() {
                       className="absolute inset-y-0 w-full rounded-2xl border-2"
                       style={{
                         left: `-${offset}px`,
-                        borderColor: GOLD,
-                        background: "#25695a",
-                        opacity: 0.45 + i * 0.2,
+                        borderColor: `${GOLD}77`,
+                        background: "#202026",
+                        opacity: 0.5 + i * 0.2,
                       }}
                     />
                   ))}
 
-                  {/* Poster utama */}
-                  <div
-                    className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border-[3px] shadow-2xl"
-                    style={{ borderColor: GOLD }}
-                  >
-                    <Image
-                      src={featuredProker.coverImageUrl || "/og-default.jpg"}
-                      alt={featuredProker.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
+                  {/* Poster utama: Default Obsidian Gold Card jika tidak ada cover khusus */}
+                  {featuredProker.coverImageUrl && !featuredProker.coverImageUrl.includes("og-default") ? (
+                    <div
+                      className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border-[3px] shadow-2xl"
+                      style={{ borderColor: GOLD }}
+                    >
+                      <Image
+                        src={featuredProker.coverImageUrl}
+                        alt={featuredProker.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border-[3px] p-6 sm:p-7 shadow-2xl flex flex-col justify-between text-center bg-gradient-to-br from-[#292931] via-[#202026] to-[#161619]"
+                      style={{ borderColor: GOLD }}
+                    >
+                      {/* Ambient Glows */}
+                      <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#FFB22C]/15 blur-2xl" />
+                      <div className="pointer-events-none absolute -left-12 -bottom-12 h-36 w-36 rounded-full bg-[#FFA000]/10 blur-2xl" />
+
+                      {/* Header Tag */}
+                      <div className="relative z-10 flex items-center justify-between">
+                        <span
+                          className="rounded-full px-3 py-1 text-[10px] sm:text-xs font-extrabold uppercase tracking-widest backdrop-blur-md"
+                          style={{
+                            background: "rgba(27, 27, 31, 0.85)",
+                            color: GOLD,
+                            border: `1px solid ${GOLD}66`,
+                          }}
+                        >
+                          ✦ PROGRAM UNGGULAN ✦
+                        </span>
+                        <span className="text-xs text-[#FFB22C] font-bold">2026</span>
+                      </div>
+
+                      {/* Center Emblem: Futuristic Gold Shield Box & Title */}
+                      <div className="relative z-10 my-auto flex flex-col items-center justify-center py-2">
+                        <div className="relative mb-3 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-3xl border border-[#FFB22C]/40 bg-[#FFB22C]/10 shadow-[0_0_25px_rgba(255,178,44,0.25)] backdrop-blur-md transition-transform duration-300 hover:scale-105">
+                          <Image
+                            src="/logoperisaii.png"
+                            alt="Logo PERISAI UMI"
+                            width={64}
+                            height={64}
+                            className="h-14 w-14 sm:h-16 sm:w-16 object-contain drop-shadow"
+                          />
+                        </div>
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#FFB22C]">
+                          UKM PERISAI UMI
+                        </span>
+                        <h4 className="mt-1 text-lg sm:text-xl font-black text-white line-clamp-2 leading-tight">
+                          {featuredProker.name}
+                        </h4>
+                      </div>
+
+                      {/* Bottom Footer Info */}
+                      <div className="relative z-10 border-t border-white/10 pt-3">
+                        <p className="text-[10px] sm:text-xs text-zinc-300 font-medium">
+                          Pusat Pengembangan Riset Mahasiswa
+                        </p>
+                        <div className="mt-1 flex items-center justify-center gap-2 text-[10px] font-bold text-[#FFB22C]">
+                          <span>Inovasi</span>
+                          <span>•</span>
+                          <span>Penelitian</span>
+                          <span>•</span>
+                          <span>Prestasi</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Tombol panah di sisi kiri poster utama */}
                   <button
@@ -549,7 +631,7 @@ export default async function HomePage() {
                 {featuredProker.name}
               </h3>
               <p className="mt-3 text-xl sm:text-2xl font-semibold">
-                Salam Inovator <span className="ml-1">✊</span>
+                Salam Inovator
               </p>
               <p className="mt-6 whitespace-pre-line text-base sm:text-lg leading-relaxed text-zinc-100">
                 {prokerDescription}
@@ -712,46 +794,63 @@ export default async function HomePage() {
                 <div key={`news-${idx}`} className="shrink-0 pr-4 sm:pr-6 lg:pr-8">
                   <Link
                     href={card.href}
-                    className="group relative flex w-48 sm:w-60 md:w-68 lg:w-76 xl:w-80 aspect-[4/5] flex-col justify-end overflow-hidden rounded-2xl sm:rounded-3xl border-2 shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
-                    style={{ borderColor: GOLD }}
+                    className="group relative flex w-52 sm:w-64 md:w-72 lg:w-80 aspect-[4/5] flex-col justify-between overflow-hidden rounded-2xl sm:rounded-3xl border border-[#FFB22C]/40 bg-gradient-to-br from-[#292931] via-[#202026] to-[#161619] p-5 sm:p-6 shadow-xl transition-all duration-300 hover:-translate-y-2 hover:border-[#FFB22C] hover:shadow-[0_0_35px_rgba(255,178,44,0.22)]"
                   >
-                    <Image
-                      src={card.img}
-                      alt={card.title}
-                      fill
-                      className="object-cover transition duration-500 group-hover:scale-105"
-                    />
+                    {/* Ambient Corner Glow */}
+                    <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#FFB22C]/10 blur-2xl group-hover:bg-[#FFB22C]/20 transition-all duration-500" />
+                    <div className="pointer-events-none absolute -left-12 -bottom-12 h-36 w-36 rounded-full bg-[#FFA000]/5 blur-2xl" />
 
-                    {/* Badge kategori */}
-                    <div className="absolute left-3 top-3 z-10 sm:left-4 sm:top-4">
+                    {/* Watermark Icon in background */}
+                    <div className="pointer-events-none absolute right-3 bottom-10 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity select-none text-zinc-100">
+                      <svg className="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                      </svg>
+                    </div>
+
+                    {/* Top Row: Category Tag & Sparkle */}
+                    <div className="relative z-10 flex items-center justify-between">
                       <span
-                        className="inline-block rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md"
+                        className="inline-block rounded-full px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md"
                         style={{
-                          background: "rgba(27, 27, 31, 0.8)",
+                          background: "rgba(27, 27, 31, 0.85)",
                           color: GOLD_SOFT,
                           border: `1px solid ${GOLD}55`,
                         }}
                       >
                         {card.tag}
                       </span>
+                      <span className="text-xs text-[#FFB22C] opacity-80 group-hover:scale-125 transition-transform">
+                        ✦
+                      </span>
                     </div>
 
-                    {/* Gradien gold di bagian bawah */}
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background: `linear-gradient(to top, ${GOLD} 0%, ${GOLD}f0 20%, ${GOLD}77 40%, transparent 68%)`,
-                      }}
-                    />
+                    {/* Center Emblem: Minimalist Obsidian Gold Vector Icon Box */}
+                    <div className="relative z-10 my-auto flex flex-col items-center justify-center py-2">
+                      <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl sm:rounded-3xl border border-[#FFB22C]/30 bg-[#FFB22C]/10 text-[#FFB22C] shadow-lg backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:border-[#FFB22C]/60 group-hover:bg-[#FFB22C]/20 group-hover:shadow-[0_0_20px_rgba(255,178,44,0.25)]">
+                        <svg className="h-7 w-7 sm:h-9 sm:w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                      </div>
+                      {card.date && (
+                        <span className="mt-2.5 text-[10px] sm:text-[11px] font-semibold text-zinc-400">
+                          {card.date}
+                        </span>
+                      )}
+                    </div>
 
-                    {/* Teks di atas overlay gold */}
-                    <div className="relative z-10 p-3.5 sm:p-5 lg:p-6 text-[#1b1b1f]">
-                      <h3 className="line-clamp-1 text-sm sm:text-base lg:text-lg font-bold uppercase tracking-tight">
+                    {/* Bottom Info: Title, Caption & Action Link */}
+                    <div className="relative z-10 border-t border-white/10 pt-3">
+                      <h3 className="line-clamp-2 text-sm sm:text-base font-bold text-white transition-colors duration-200 group-hover:text-[#FFB22C] leading-snug">
                         {card.title}
                       </h3>
-                      <p className="mt-0.5 line-clamp-2 text-[11px] sm:text-xs lg:text-sm font-semibold leading-snug opacity-90">
+                      <p className="mt-1 line-clamp-2 text-[11px] sm:text-xs text-zinc-400 leading-relaxed font-normal">
                         {card.caption}
                       </p>
+
+                      <div className="mt-3 flex items-center justify-between text-[11px] sm:text-xs font-bold text-[#FFB22C]">
+                        <span>Eksplorasi Warta</span>
+                        <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">→</span>
+                      </div>
                     </div>
                   </Link>
                 </div>
@@ -795,7 +894,7 @@ export default async function HomePage() {
       {/* ======================================================== */}
       {/* 6. INFO LOMBA & KOMPETISI                                */}
       {/* ======================================================== */}
-      <section className="relative pb-24 pt-4">
+      <section className="relative pb-16 pt-4">
         <Sparkle className="left-[8%] top-8 hidden md:block" size={24} delay={0.8} float />
         <Sparkle className="right-[6%] top-12 hidden md:block" size={22} delay={1.1} />
 
@@ -807,7 +906,7 @@ export default async function HomePage() {
             Info Lomba
           </h2>
 
-          {/* Marquee Ticker Loop ke Kiri dengan Card Ringkas */}
+          {/* Marquee Ticker Loop ke Kiri dengan Card Default Obsidian */}
           <div className="relative w-full overflow-hidden py-4">
             {/* Gradien fade samping kiri & kanan */}
             <div
@@ -828,46 +927,63 @@ export default async function HomePage() {
                 <div key={`opp-${idx}`} className="shrink-0 pr-4 sm:pr-6 lg:pr-8">
                   <Link
                     href={card.href}
-                    className="group relative flex w-48 sm:w-60 md:w-68 lg:w-76 xl:w-80 aspect-[4/5] flex-col justify-end overflow-hidden rounded-2xl sm:rounded-3xl border-2 shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
-                    style={{ borderColor: GOLD }}
+                    className="group relative flex w-52 sm:w-64 md:w-72 lg:w-80 aspect-[4/5] flex-col justify-between overflow-hidden rounded-2xl sm:rounded-3xl border border-[#FFB22C]/40 bg-gradient-to-br from-[#292931] via-[#202026] to-[#161619] p-5 sm:p-6 shadow-xl transition-all duration-300 hover:-translate-y-2 hover:border-[#FFB22C] hover:shadow-[0_0_35px_rgba(255,178,44,0.22)]"
                   >
-                    <Image
-                      src={card.img}
-                      alt={card.title}
-                      fill
-                      className="object-cover transition duration-500 group-hover:scale-105"
-                    />
+                    {/* Ambient Corner Glow */}
+                    <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#FFB22C]/10 blur-2xl group-hover:bg-[#FFB22C]/20 transition-all duration-500" />
+                    <div className="pointer-events-none absolute -left-12 -bottom-12 h-36 w-36 rounded-full bg-[#FFA000]/5 blur-2xl" />
 
-                    {/* Badge kategori / tipe lomba */}
-                    <div className="absolute left-3 top-3 z-10 sm:left-4 sm:top-4">
+                    {/* Watermark Icon in background */}
+                    <div className="pointer-events-none absolute right-3 bottom-10 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity select-none text-zinc-100">
+                      <svg className="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-6.75a1.125 1.125 0 01-1.125-1.125V18.75m12.75-9.75v-1.5a3 3 0 00-3-3h-1.5m-9 0H7.5a3 3 0 00-3 3v1.5m0 0a3 3 0 003 3h9a3 3 0 003-3m-15 0v3a6 6 0 006 6h3a6 6 0 006-6v-3" />
+                      </svg>
+                    </div>
+
+                    {/* Top Row: Category Tag & Status Tag */}
+                    <div className="relative z-10 flex items-center justify-between">
                       <span
-                        className="inline-block rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md"
+                        className="inline-block rounded-full px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md"
                         style={{
-                          background: "rgba(27, 27, 31, 0.8)",
+                          background: "rgba(27, 27, 31, 0.85)",
                           color: GOLD_SOFT,
                           border: `1px solid ${GOLD}55`,
                         }}
                       >
                         {card.tag}
                       </span>
+                      <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                        {card.date || "Terbuka"}
+                      </span>
                     </div>
 
-                    {/* Gradien gold di bagian bawah */}
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background: `linear-gradient(to top, ${GOLD} 0%, ${GOLD}f0 20%, ${GOLD}77 40%, transparent 68%)`,
-                      }}
-                    />
+                    {/* Center Emblem: Minimalist Trophy / Award Vector Icon Box */}
+                    <div className="relative z-10 my-auto flex flex-col items-center justify-center py-2">
+                      <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl sm:rounded-3xl border border-[#FFB22C]/30 bg-[#FFB22C]/10 text-[#FFB22C] shadow-lg backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:border-[#FFB22C]/60 group-hover:bg-[#FFB22C]/20 group-hover:shadow-[0_0_20px_rgba(255,178,44,0.25)]">
+                        <svg className="h-7 w-7 sm:h-9 sm:w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-6.75a1.125 1.125 0 01-1.125-1.125V18.75m12.75-9.75v-1.5a3 3 0 00-3-3h-1.5m-9 0H7.5a3 3 0 00-3 3v1.5m0 0a3 3 0 003 3h9a3 3 0 003-3m-15 0v3a6 6 0 006 6h3a6 6 0 006-6v-3" />
+                        </svg>
+                      </div>
+                      {card.organizer && (
+                        <span className="mt-2.5 text-[10px] sm:text-[11px] font-semibold text-zinc-400 truncate max-w-[170px]">
+                          {card.organizer}
+                        </span>
+                      )}
+                    </div>
 
-                    {/* Teks di atas overlay gold */}
-                    <div className="relative z-10 p-3.5 sm:p-5 lg:p-6 text-[#1b1b1f]">
-                      <h3 className="line-clamp-1 text-sm sm:text-base lg:text-lg font-bold uppercase tracking-tight">
+                    {/* Bottom Info: Title, Caption & Action Link */}
+                    <div className="relative z-10 border-t border-white/10 pt-3">
+                      <h3 className="line-clamp-2 text-sm sm:text-base font-bold text-white transition-colors duration-200 group-hover:text-[#FFB22C] leading-snug">
                         {card.title}
                       </h3>
-                      <p className="mt-0.5 line-clamp-2 text-[11px] sm:text-xs lg:text-sm font-semibold leading-snug opacity-90">
+                      <p className="mt-1 line-clamp-2 text-[11px] sm:text-xs text-zinc-400 leading-relaxed font-normal">
                         {card.caption}
                       </p>
+
+                      <div className="mt-3 flex items-center justify-between text-[11px] sm:text-xs font-bold text-[#FFB22C]">
+                        <span>Detail Kompetisi</span>
+                        <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">↗</span>
+                      </div>
                     </div>
                   </Link>
                 </div>
@@ -893,6 +1009,65 @@ export default async function HomePage() {
                 <span>Lihat Semua Lomba</span>
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Garis: Info Lomba -> Perisai Merchant */}
+      <Connector
+        paths={[
+          "M300 0 C 300 100, 500 100, 500 200",
+          "M700 0 C 700 100, 500 100, 500 200",
+        ]}
+      >
+        <Sparkle className="left-[50%] top-[45%] -translate-x-1/2" size={30} delay={0.6} />
+      </Connector>
+
+      {/* ======================================================== */}
+      {/* 7. PERISAI MERCHANT                                      */}
+      {/* ======================================================== */}
+      <section className="relative pb-24 pt-4">
+        <Sparkle className="left-[5%] top-12 hidden md:block" size={26} delay={0.5} float />
+        <Sparkle className="right-[5%] top-20 hidden md:block" size={22} delay={1.2} />
+
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-12 xl:px-16">
+          <div className="mx-auto max-w-2xl relative overflow-hidden rounded-3xl border border-[#FFB22C]/40 bg-gradient-to-b from-[#26262e] via-[#1f1f25] to-[#161619] p-8 sm:p-10 text-center shadow-2xl">
+            {/* Ambient Radiant Lights */}
+            <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[#FFB22C]/15 blur-3xl" />
+            <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-[#FFA000]/10 blur-3xl" />
+
+            <div className="relative z-10 flex flex-col items-center space-y-4">
+              {/* Badge Atas */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#FFB22C]/40 bg-[#FFB22C]/10 px-4 py-1 text-xs font-bold text-[#FFB22C] shadow-[0_0_15px_rgba(255,178,44,0.15)]">
+                <span>✦</span>
+                <span className="tracking-widest uppercase">OFFICIAL STORE & MERCHANDISE</span>
+                <span>✦</span>
+              </div>
+
+              {/* Judul Emas */}
+              <h2
+                className="text-3xl font-extrabold uppercase sm:text-4xl lg:text-5xl"
+                style={{ color: GOLD }}
+              >
+                Perisai Merchant
+              </h2>
+
+              {/* Tombol CTA Elegan */}
+              <div className="pt-2">
+                <a
+                  href="https://wa.me/6281234567890?text=Halo%20Admin%20PERISAI%20Merchant,%20saya%20tertarik%20dengan%20katalog%20merchandise%20resmi!"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex items-center gap-2 rounded-full px-8 py-3 text-xs sm:text-sm font-bold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/25 transition-all duration-300 hover:scale-105 hover:brightness-110 active:scale-95"
+                  style={{
+                    background: "linear-gradient(135deg, #FFC85A 0%, #FFB22C 50%, #FFA000 100%)",
+                  }}
+                >
+                  <span>Kunjungi PERISAI Merchant</span>
+                  <span className="transition-transform duration-300 group-hover:translate-x-1 font-bold">↗</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>

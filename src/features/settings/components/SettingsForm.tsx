@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
+import { toast } from "@/components/ui/Toast";
 import { updateSettingsAction } from "../actions";
 
 export interface SettingsFormProps {
@@ -40,47 +42,49 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
     setIsLoading(false);
 
     if (res.success) {
-      setStatusMessage({ type: "success", text: "Pengaturan sistem berhasil diperbarui!" });
+      const msg = "Pengaturan sistem berhasil diperbarui!";
+      setStatusMessage({ type: "success", text: msg });
+      toast.success(msg);
     } else {
-      setStatusMessage({ type: "error", text: res.message || "Gagal menyimpan pengaturan." });
+      const msg = res.message || "Gagal menyimpan pengaturan.";
+      setStatusMessage({ type: "error", text: msg });
+      toast.error(msg);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
       {statusMessage && (
-        <div
-          className={`rounded-lg p-4 text-sm ${
-            statusMessage.type === "success"
-              ? "bg-[#E6AF2E]/15 text-[#282F44] border border-[#E6AF2E]/30 dark:bg-[#E6AF2E]/20 dark:text-[#F5D061]"
-              : "bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
-          }`}
+        <Alert
+          variant={statusMessage.type === "success" ? "success" : "error"}
+          title={statusMessage.type === "success" ? "Pembaruan Berhasil" : "Gagal Memperbarui"}
+          onClose={() => setStatusMessage(null)}
         >
           {statusMessage.text}
-        </div>
+        </Alert>
       )}
 
       <div className="space-y-4">
         {settings.map((item) => (
           <div
             key={item.key}
-            className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 space-y-2"
+            className="rounded-2xl border border-white/10 bg-[#202026] p-5 space-y-3 shadow-lg"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                <p className="font-mono text-xs font-bold text-white tracking-wide">
                   {item.key}
                 </p>
                 {item.description && (
-                  <p className="text-xs text-zinc-500">{item.description}</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">{item.description}</p>
                 )}
               </div>
-              <label className="flex items-center gap-1.5 text-xs text-zinc-500 cursor-pointer">
+              <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={item.isPublic}
                   onChange={(e) => handleTogglePublic(item.key, e.target.checked)}
-                  className="rounded border-zinc-300 text-[#E6AF2E] focus:ring-[#E6AF2E]"
+                  className="rounded border-white/20 bg-[#16161a] text-[#FFB22C] accent-[#FFB22C] focus:ring-[#FFB22C] h-4 w-4"
                 />
                 Publik
               </label>
@@ -93,7 +97,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
         ))}
       </div>
 
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-2">
         <Button type="submit" variant="primary" isLoading={isLoading}>
           Simpan Semua Pengaturan
         </Button>

@@ -16,15 +16,15 @@ export default async function AdminAuditLogPage({
 
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
-  const data = await getAdminAuditLogs({ page, pageSize: 30 });
+  const data = await getAdminAuditLogs({ page, pageSize: 10 });
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Catatan Jejak Audit Sistem
         </h1>
-        <p className="text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-zinc-400">
           Khusus Admin Utama: rekam jejak aktivitas penambahan, pembaruan, dan penghapusan data.
         </p>
       </div>

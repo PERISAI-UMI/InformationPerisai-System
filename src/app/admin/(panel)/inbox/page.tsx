@@ -15,15 +15,16 @@ export default async function AdminInboxPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
             Kotak Masuk (Inbox)
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-400">
             Pesan masuk dan pertanyaan dari pengunjung portal UKM PERISAI UMI.
           </p>
         </div>
         {data.unreadCount > 0 && (
-          <span className="rounded-full bg-[#E6AF2E]/15 px-3 py-1 text-xs font-bold text-[#282F44] border border-[#E6AF2E]/30 dark:bg-[#E6AF2E]/25 dark:text-[#F5D061]">
+          <span className="rounded-full bg-[#FFB22C]/10 px-3.5 py-1 text-xs font-bold text-[#FFB22C] border border-[#FFB22C]/20 shadow-sm flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[#FFB22C] animate-pulse" />
             {data.unreadCount} pesan belum dibaca
           </span>
         )}

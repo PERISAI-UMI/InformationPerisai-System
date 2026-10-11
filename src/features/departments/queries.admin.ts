@@ -29,5 +29,8 @@ export async function getAdminDepartments() {
 export async function getAdminDepartmentById(id: string) {
   return prisma.department.findUnique({
     where: { id },
+    include: {
+      profile: true,
+    },
   });
 }

@@ -132,9 +132,10 @@ export async function deleteDepartmentAction(id: string): Promise<ActionResponse
   try {
     const now = Math.floor(Date.now() / 1000);
     // Nonaktifkan profil website daripada menghapus departemen utama PSDM
-    await prisma.departmentProfile.update({
+    await prisma.departmentProfile.upsert({
       where: { departmentId: id },
-      data: { isActive: 0, updatedAt: now },
+      update: { isActive: 0, updatedAt: now },
+      create: { departmentId: id, slug: id, isActive: 0, createdAt: now, updatedAt: now },
     });
 
     await writeAuditLog({

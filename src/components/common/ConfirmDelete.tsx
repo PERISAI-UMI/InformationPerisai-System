@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 
+import { toast } from "@/components/ui/Toast";
+
 export interface ConfirmDeleteProps {
   title?: string;
   description?: string;
@@ -27,6 +29,9 @@ export function ConfirmDelete({
     try {
       await onConfirm();
       setIsOpen(false);
+    } catch (err) {
+      console.error("Gagal saat konfirmasi:", err);
+      toast.error("Terjadi galat saat memproses penghapusan.");
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 import prisma from "@/lib/db";
 
-export async function getAdminOpportunities({ page = 1, pageSize = 15 } = {}) {
+export async function getAdminOpportunities({ page = 1, pageSize = 8 } = {}) {
   const skip = (page - 1) * pageSize;
 
   const [items, total] = await Promise.all([

@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { MediaPicker } from "@/components/common/MediaPicker";
+import { Alert } from "@/components/ui/Alert";
+import { toast } from "@/components/ui/Toast";
 import { createPostAction, updatePostAction } from "../actions";
 
 export interface PostFormProps {
@@ -55,18 +58,23 @@ export function PostForm({ initialData }: PostFormProps) {
     setIsLoading(false);
 
     if (res.success) {
+      toast.success(initialData?.id ? "Postingan berhasil diperbarui!" : "Postingan baru berhasil dibuat!");
       router.push("/admin/posts");
       router.refresh();
     } else {
-      setErrorMessage(res.message || "Gagal menyimpan postingan.");
+      const msg = res.message || "Gagal menyimpan postingan.";
+      setErrorMessage(msg);
+      toast.error(msg);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
       {errorMessage && (
-        <div className="rounded-lg bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-          {errorMessage}
+        <div className="animate-shake">
+          <Alert variant="error" title="Gagal Menyimpan" onClose={() => setErrorMessage("")}>
+            {errorMessage}
+          </Alert>
         </div>
       )}
 
@@ -87,18 +95,13 @@ export function PostForm({ initialData }: PostFormProps) {
             placeholder="biarkan kosong untuk membuat otomatis dari judul"
           />
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Ringkasan Singkat (Excerpt)
-            </label>
-            <textarea
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              rows={3}
-              className="w-full rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-              placeholder="Deskripsi singkat untuk cuplikan kartu dan SEO..."
-            />
-          </div>
+          <Textarea
+            label="Ringkasan Singkat (Excerpt)"
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            rows={3}
+            placeholder="Deskripsi singkat untuk cuplikan kartu dan SEO..."
+          />
 
           <RichTextEditor
             label="Isi Konten *"
@@ -108,8 +111,8 @@ export function PostForm({ initialData }: PostFormProps) {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+          <div className="rounded-2xl border border-white/10 bg-[#202026] p-5 shadow-lg space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
               Pengaturan Publikasi
             </h4>
 

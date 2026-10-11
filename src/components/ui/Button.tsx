@@ -10,14 +10,19 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", isLoading, children, disabled, ...props }, ref) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
+      "inline-flex items-center justify-center font-bold transition-all rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1b1b1f] disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
 
     const variantStyles = {
-      primary: "bg-[#E6AF2E] text-[#282F44] font-semibold hover:bg-[#F5D061] focus:ring-[#E6AF2E] shadow-sm",
-      secondary: "bg-[#282F44] text-white hover:bg-[#1b2030] focus:ring-[#282F44] shadow-sm",
-      outline: "border border-zinc-300 bg-white text-zinc-700 hover:bg-[#ECECEC]/60 hover:border-[#E6AF2E] focus:ring-[#E6AF2E] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800",
-      danger: "bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500 shadow-sm",
-      ghost: "text-zinc-700 hover:bg-[#ECECEC]/60 dark:text-zinc-300 dark:hover:bg-zinc-800",
+      primary:
+        "bg-gradient-to-r from-[#FFB22C] to-[#FFA000] text-[#1b1b1f] font-extrabold shadow-lg shadow-[#FFB22C]/20 hover:brightness-110 hover:shadow-[#FFB22C]/35 focus:ring-[#FFB22C]",
+      secondary:
+        "bg-white/10 text-white hover:bg-white/15 border border-white/10 focus:ring-white/20",
+      outline:
+        "border border-white/15 bg-white/5 text-zinc-200 hover:border-[#FFB22C] hover:text-[#FFB22C] hover:bg-[#FFB22C]/10 focus:ring-[#FFB22C]",
+      danger:
+        "bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 focus:ring-red-500",
+      ghost:
+        "text-zinc-300 hover:text-white hover:bg-white/5 focus:ring-white/10",
     };
 
     const sizeStyles = {

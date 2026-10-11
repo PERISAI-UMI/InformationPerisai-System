@@ -4,8 +4,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { MediaPicker } from "@/components/common/MediaPicker";
+import { Alert } from "@/components/ui/Alert";
+import { toast } from "@/components/ui/Toast";
 import { createWorkProgramAction, updateWorkProgramAction } from "../actions";
 
 export interface WorkProgramFormProps {
@@ -65,99 +68,96 @@ export function WorkProgramForm({ departments, periods, initialData }: WorkProgr
     setIsLoading(false);
 
     if (res.success) {
+      toast.success(initialData?.id ? "Program kerja berhasil diperbarui!" : "Program kerja baru berhasil dibuat!");
       router.push("/admin/work-programs");
       router.refresh();
     } else {
-      setErrorMessage(res.message || "Gagal menyimpan program kerja.");
+      const msg = res.message || "Gagal menyimpan program kerja.";
+      setErrorMessage(msg);
+      toast.error(msg);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
       {errorMessage && (
-        <div className="rounded-lg bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-          {errorMessage}
+        <div className="animate-shake">
+          <Alert variant="error" title="Gagal Menyimpan" onClose={() => setErrorMessage("")}>
+            {errorMessage}
+          </Alert>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Nama Program Kerja *"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <Input
-          label="Slug Kustom (Opsional)"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-        />
-      </div>
+      <div className="rounded-2xl border border-white/10 bg-[#202026] p-6 shadow-lg space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Nama Program Kerja *"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <Input
+            label="Slug Kustom (Opsional)"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+          />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Select
-          label="Departemen Pelaksana *"
-          value={departmentId}
-          onChange={(e) => setDepartmentId(e.target.value)}
-          options={departments.map((d) => ({ label: d.name, value: d.id }))}
-        />
-        <Select
-          label="Periode Kepengurusan *"
-          value={periodId}
-          onChange={(e) => setPeriodId(e.target.value)}
-          options={periods.map((p) => ({ label: p.name, value: p.id }))}
-        />
-        <Select
-          label="Status Pelaksanaan *"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as "PLANNED" | "ONGOING" | "COMPLETED" | "CANCELLED")}
-          options={[
-            { label: "Direncanakan (Planned)", value: "PLANNED" },
-            { label: "Sedang Berjalan (Ongoing)", value: "ONGOING" },
-            { label: "Selesai (Completed)", value: "COMPLETED" },
-            { label: "Dibatalkan (Cancelled)", value: "CANCELLED" },
-          ]}
-        />
-        <Input
-          label="Target Pelaksanaan"
-          placeholder="Contoh: November 2026"
-          value={targetDate}
-          onChange={(e) => setTargetDate(e.target.value)}
-        />
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Select
+            label="Departemen Pelaksana *"
+            value={departmentId}
+            onChange={(e) => setDepartmentId(e.target.value)}
+            options={departments.map((d) => ({ label: d.name, value: d.id }))}
+          />
+          <Select
+            label="Periode Kepengurusan *"
+            value={periodId}
+            onChange={(e) => setPeriodId(e.target.value)}
+            options={periods.map((p) => ({ label: p.name, value: p.id }))}
+          />
+          <Select
+            label="Status Pelaksanaan *"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as "PLANNED" | "ONGOING" | "COMPLETED" | "CANCELLED")}
+            options={[
+              { label: "Direncanakan (Planned)", value: "PLANNED" },
+              { label: "Sedang Berjalan (Ongoing)", value: "ONGOING" },
+              { label: "Selesai (Completed)", value: "COMPLETED" },
+              { label: "Dibatalkan (Cancelled)", value: "CANCELLED" },
+            ]}
+          />
+          <Input
+            label="Target Pelaksanaan"
+            placeholder="Contoh: November 2026"
+            value={targetDate}
+            onChange={(e) => setTargetDate(e.target.value)}
+          />
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Deskripsi Program Kerja *
-        </label>
-        <textarea
+        <Textarea
+          label="Deskripsi Program Kerja *"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={4}
           required
-          className="w-full rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
-      </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Tujuan & Indikator Keberhasilan (Objectives)
-        </label>
-        <textarea
+        <Textarea
+          label="Tujuan & Indikator Keberhasilan (Objectives)"
           value={objectives}
           onChange={(e) => setObjectives(e.target.value)}
           rows={3}
-          className="w-full rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        />
+
+        <MediaPicker
+          label="Foto / Banner Dokumentasi Proker"
+          value={coverImageUrl}
+          onChange={setCoverImageUrl}
         />
       </div>
 
-      <MediaPicker
-        label="Foto / Banner Dokumentasi Proker"
-        value={coverImageUrl}
-        onChange={setCoverImageUrl}
-      />
-
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Batal
         </Button>

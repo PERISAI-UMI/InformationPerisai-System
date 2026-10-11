@@ -1,17 +1,30 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { SESSION_COOKIE_NAME } from "@/lib/auth";
-import { scryptSync, timingSafeEqual } from "crypto";
+import { scryptSync, timingSafeEqual, createHash } from "crypto";
 
 export const dynamic = "force-dynamic";
 
 function verifyPassword(password: string, storedHash: string): boolean {
   try {
-    const [salt, key] = storedHash.split(":");
-    if (!salt || !key) return false;
-    const keyBuffer = Buffer.from(key, "hex");
-    const derivedKey = scryptSync(password, salt, keyBuffer.length);
-    return timingSafeEqual(keyBuffer, derivedKey);
+    if (!storedHash) return false;
+
+    // 1. Format scrypt (salt:key)
+    if (storedHash.includes(":")) {
+      const [salt, key] = storedHash.split(":");
+      if (!salt || !key) return false;
+      const keyBuffer = Buffer.from(key, "hex");
+      const derivedKey = scryptSync(password, salt, keyBuffer.length);
+      return timingSafeEqual(keyBuffer, derivedKey);
+    }
+
+    // 2. Format SHA-256 hex (default seed database: "perisai2026")
+    const sha256Hex = createHash("sha256").update(password).digest("hex");
+    if (storedHash.length === sha256Hex.length) {
+      return timingSafeEqual(Buffer.from(storedHash), Buffer.from(sha256Hex));
+    }
+
+    return false;
   } catch {
     return false;
   }

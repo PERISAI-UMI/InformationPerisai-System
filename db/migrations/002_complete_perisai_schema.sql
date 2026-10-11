@@ -541,3 +541,59 @@ CREATE VIEW IF NOT EXISTS web_media AS
 SELECT id_media AS id, kunci_penyimpanan AS storage_key, nama_berkas AS original_name, tipe_mime AS mime_type,
        ukuran_byte AS size_bytes, lebar AS width, tinggi AS height, alt_text, diunggah_oleh AS uploaded_by, created_at
 FROM T_Media;
+
+-- Triggers untuk Updatable Views (web_posts & web_opportunities)
+CREATE TRIGGER IF NOT EXISTS trg_web_posts_insert
+INSTEAD OF INSERT ON web_posts
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_Berita (
+    id_departemen, judul, slug, kategori, ringkasan, konten, foto_cover, status, tanggal_publish, is_featured, created_at, updated_at
+  ) VALUES (
+    (SELECT id_departemen FROM M_Departemen WHERE slug = NEW.department_id LIMIT 1),
+    NEW.title, NEW.slug, NEW.category, NEW.excerpt, NEW.content, NEW.cover_media_id, NEW.status, NEW.published_at, NEW.is_featured, NEW.created_at, NEW.updated_at
+  );
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_web_opportunities_insert
+INSTEAD OF INSERT ON web_opportunities
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_Kompetisi (
+    tipe, nama_kompetisi, slug, kategori, penyelenggara, deskripsi, deadline_pendaftaran, link_pendaftaran, link_poster, status, tanggal_publish, created_at, updated_at
+  ) VALUES (
+    NEW.type, NEW.title, NEW.slug, NEW.category, NEW.organizer, NEW.description, NEW.deadline_at, NEW.registration_url, NEW.poster_media_id, NEW.status, NEW.published_at, NEW.created_at, NEW.updated_at
+  );
+END;
+
+-- Triggers untuk Updatable View web_inbox_messages
+CREATE TRIGGER IF NOT EXISTS trg_web_inbox_messages_insert
+INSTEAD OF INSERT ON web_inbox_messages
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_Pesan_Masuk (
+    nama_pengirim, email, no_wa, tujuan, subjek, isi_pesan, is_read, ip_address, created_at
+  ) VALUES (
+    NEW.name, NEW.email, NEW.phone, COALESCE(NEW.purpose, 'pertanyaan'), NEW.subject, NEW.message, COALESCE(NEW.is_read, 0), NEW.ip_hash, COALESCE(NEW.created_at, unixepoch())
+  );
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_web_inbox_messages_update
+INSTEAD OF UPDATE ON web_inbox_messages
+FOR EACH ROW
+BEGIN
+  UPDATE T_Pesan_Masuk
+  SET is_read = NEW.is_read,
+      dibalas_pada = NEW.handled_at,
+      dibalas_oleh = NEW.handled_by
+  WHERE id_pesan = CAST(OLD.id AS INTEGER);
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_web_inbox_messages_delete
+INSTEAD OF DELETE ON web_inbox_messages
+FOR EACH ROW
+BEGIN
+  DELETE FROM T_Pesan_Masuk WHERE id_pesan = CAST(OLD.id AS INTEGER);
+END;
+
+

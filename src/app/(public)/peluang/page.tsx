@@ -1,36 +1,65 @@
 import { getPublicOpportunities } from "@/features/opportunities/queries.public";
-import { OpportunityCard } from "@/features/opportunities/components/OpportunityCard";
+import { CompetitionExplorer } from "@/features/opportunities/components/CompetitionExplorer";
+import type { Metadata } from "next";
 
-export default async function PeluangPage() {
-  const opportunities = await getPublicOpportunities();
+export const metadata: Metadata = {
+  title: "Competition & Peluang Riset Mahasiswa — UKM PERISAI UMI",
+  description:
+    "Direktori informasi perlombaan karya tulis ilmiah, PKM Kemendikbudristek, PIMNAS, hibah inovasi, konferensi internasional, dan beasiswa mahasiswa berprestasi.",
+};
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function PeluangPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tipe?: string; kategori?: string; cari?: string }>;
+}) {
+  const { tipe, kategori, cari } = await searchParams;
+
+  const oppsData = await getPublicOpportunities({
+    type: tipe,
+    category: kategori,
+    search: cari,
+  });
 
   return (
-    <div className="py-16 sm:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#E6AF2E]">
-            Kompetisi, Beasiswa, & Riset
-          </span>
-          <h1 className="mt-2 text-3xl sm:text-5xl font-black text-[#282F44] dark:text-zinc-100">
-            Peluang Prestasi Mahasiswa
+    <div className="relative min-h-screen bg-[#1b1b1f] text-white selection:bg-[#FFB22C] selection:text-[#1b1b1f]">
+      {/* Ambient Radial Glow Top */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-0 h-96 w-full -translate-x-1/2 blur-3xl opacity-30"
+        style={{
+          background: "radial-gradient(circle at 50% 0%, #FFB22C 0%, transparent 70%)",
+        }}
+      />
+
+      {/* Hero Header Section */}
+      <section className="relative overflow-hidden border-b border-white/10 pt-16 pb-12 sm:pt-20 sm:pb-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          {/* Headline */}
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+            COMPETITION &{" "}
+            <span className="bg-gradient-to-r from-[#FFB22C] via-[#FFD700] to-[#FFA000] bg-clip-text text-transparent">
+              PELUANG MAHASISWA
+            </span>
           </h1>
-          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-            Kumpulan informasi lomba ilmiah, pendanaan inovasi, seminar, dan beasiswa untuk seluruh mahasiswa.
+
+          {/* Subtitle */}
+          <p className="mx-auto mt-5 max-w-2xl text-sm sm:text-base text-zinc-300 leading-relaxed font-light">
+            Jembatan prestasi bagi civitas akademika untuk meraih pendanaan riset PKM, medali PIMNAS,
+            kejuaraan karya tulis ilmiah nasional, serta beasiswa kepemimpinan unggulan.
           </p>
         </div>
+      </section>
 
-        {opportunities.length === 0 ? (
-          <div className="text-center text-zinc-500 py-12">
-            Belum ada peluang yang terdaftar saat ini.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {opportunities.map((opp) => (
-              <OpportunityCard key={opp.id} opportunity={opp} />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Main Content Area */}
+      <main className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 sm:py-16">
+        <CompetitionExplorer
+          initialItems={oppsData.items}
+          typeCounts={oppsData.typeCounts}
+        />
+      </main>
     </div>
   );
 }

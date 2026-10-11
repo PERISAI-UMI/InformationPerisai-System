@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Lightbox } from "./Lightbox";
 
+import { EmptyState } from "@/components/common/EmptyState";
+
 export interface GalleryGridProps {
   items: Array<{
     id: string;
@@ -18,9 +20,11 @@ export function GalleryGrid({ items }: GalleryGridProps) {
 
   if (!items || items.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-        Belum ada dokumentasi galeri.
-      </div>
+      <EmptyState
+        type="empty"
+        title="Belum Ada Dokumentasi Galeri"
+        description="Belum ada foto atau berkas media yang diunggah ke arsip visual UKM PERISAI UMI."
+      />
     );
   }
 

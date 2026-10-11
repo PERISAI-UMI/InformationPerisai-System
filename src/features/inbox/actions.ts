@@ -35,6 +35,8 @@ export async function sendContactMessageAction(data: ContactInput): Promise<Acti
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
+        phone: parsed.data.phone || null,
+        purpose: parsed.data.purpose || "pertanyaan",
         subject: parsed.data.subject,
         message: parsed.data.message,
         createdAt: Math.floor(Date.now() / 1000),

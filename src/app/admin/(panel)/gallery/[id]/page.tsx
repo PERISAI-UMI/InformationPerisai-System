@@ -21,17 +21,17 @@ export default async function AdminMediaDetailPage({
       <div>
         <Link
           href="/admin/gallery"
-          className="text-xs font-bold text-[#E6AF2E] hover:text-[#b8861b]"
+          className="text-xs font-semibold text-[#FFB22C] hover:text-[#FFA000] transition-colors"
         >
           ← Kembali ke Galeri
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-white">
           Rincian Berkas Media
         </h1>
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 space-y-6">
-        <div className="relative aspect-video max-h-96 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+      <div className="rounded-2xl border border-white/10 bg-[#202026] p-6 shadow-xl space-y-6">
+        <div className="relative aspect-video max-h-96 overflow-hidden rounded-xl bg-[#16161a] border border-white/5">
           <Image
             src={media.url}
             alt={media.originalName || "Media"}
@@ -42,26 +42,26 @@ export default async function AdminMediaDetailPage({
 
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div>
-            <dt className="text-xs text-zinc-400">Nama Asli Berkas</dt>
-            <dd className="font-semibold text-zinc-900 dark:text-zinc-100">{media.originalName || "-"}</dd>
+            <dt className="text-xs font-bold uppercase tracking-wider text-zinc-400">Nama Asli Berkas</dt>
+            <dd className="mt-1 font-semibold text-white">{media.originalName || "-"}</dd>
           </div>
           <div>
-            <dt className="text-xs text-zinc-400">Ukuran Berkas</dt>
-            <dd className="font-mono text-zinc-700 dark:text-zinc-300">
+            <dt className="text-xs font-bold uppercase tracking-wider text-zinc-400">Ukuran Berkas</dt>
+            <dd className="mt-1 font-mono text-zinc-300">
               {(media.size / 1024).toFixed(1)} KB
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-zinc-400">Tipe MIME</dt>
-            <dd className="font-mono text-zinc-700 dark:text-zinc-300">{media.mimeType}</dd>
+            <dt className="text-xs font-bold uppercase tracking-wider text-zinc-400">Tipe MIME</dt>
+            <dd className="mt-1 font-mono text-zinc-300">{media.mimeType}</dd>
           </div>
           <div>
-            <dt className="text-xs text-zinc-400">Waktu Diunggah</dt>
-            <dd className="text-zinc-700 dark:text-zinc-300">{formatDateTimeWITA(new Date(media.createdAt * 1000))}</dd>
+            <dt className="text-xs font-bold uppercase tracking-wider text-zinc-400">Waktu Diunggah</dt>
+            <dd className="mt-1 text-zinc-300">{formatDateTimeWITA(new Date(media.createdAt * 1000))}</dd>
           </div>
           <div className="sm:col-span-2">
-            <dt className="text-xs text-zinc-400">URL Akses Publik</dt>
-            <dd className="font-mono text-xs text-[#E6AF2E] font-medium break-all select-all mt-0.5">
+            <dt className="text-xs font-bold uppercase tracking-wider text-zinc-400">URL Akses Publik</dt>
+            <dd className="mt-1 font-mono text-xs text-[#FFB22C] font-semibold break-all select-all p-2.5 rounded-lg bg-[#16161a] border border-white/10">
               {media.url}
             </dd>
           </div>

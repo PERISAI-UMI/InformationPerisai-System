@@ -9,76 +9,114 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-100">
-          Dasbor Pengurus
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Selamat datang kembali di panel administrasi UKM PERISAI UMI.
-        </p>
+      {/* Welcome Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-white/10">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="h-2 w-2 rounded-full bg-[#FFB22C] shadow-[0_0_8px_#FFB22C]" />
+            <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#FFB22C]">
+              Pusat Kontrol Sistem
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+            Dasbor Pengurus
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-zinc-400 font-light">
+            Selamat datang kembali di panel administrasi UKM PERISAI Universitas Muslim Indonesia.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-semibold text-zinc-300">
+            <svg className="h-4 w-4 text-[#FFB22C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>{formatDateIndonesian(new Date())}</span>
+          </div>
+        </div>
       </div>
 
       {/* Grid Kartu Statistik */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard
           title="Total Postingan"
           value={stats.totalPosts}
-          icon="📰"
+          iconType="posts"
           description="Artikel & rilis berita"
         />
         <StatCard
           title="Program Kerja"
           value={stats.totalWorkPrograms}
-          icon="📋"
+          iconType="programs"
           description="Seluruh proker terdaftar"
         />
         <StatCard
           title="Peluang Lomba"
           value={stats.totalOpportunities}
-          icon="🏆"
-          description="Lomba & beasiswa"
+          iconType="opportunities"
+          description="Lomba & beasiswa aktif"
         />
         <StatCard
-          title="Pesan Masuk Baru"
+          title="Pesan Masuk"
           value={stats.unreadMessages}
-          icon="✉️"
+          iconType="inbox"
           description="Pesan belum dibaca"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Content Grid: Recent Posts & Deadlines */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Kolom Kiri: Postingan Terbaru */}
-        <div className="lg:col-span-2 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-              Postingan Berita Terkini
-            </h3>
+        <div className="lg:col-span-2 rounded-2xl sm:rounded-3xl border border-white/10 bg-[#202026] p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-5 pb-3 border-b border-white/10">
+            <div className="flex items-center gap-2.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#FFB22C]" />
+              <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white">
+                Postingan Berita Terkini
+              </h3>
+            </div>
             <Link
               href="/admin/posts"
-              className="text-xs font-bold text-[#E6AF2E] hover:text-[#b8861b]"
+              className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition flex items-center gap-1"
             >
-              Semua Postingan →
+              <span>Semua Postingan</span>
+              <span>→</span>
             </Link>
           </div>
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {recentPosts.map((post) => (
-              <div key={post.id} className="py-3 flex items-center justify-between">
-                <div>
-                  <Link
-                    href={`/admin/posts/${post.id}`}
-                    className="text-sm font-semibold text-zinc-900 hover:text-[#E6AF2E] dark:text-zinc-100"
+
+          <div className="divide-y divide-white/5">
+            {recentPosts.length === 0 ? (
+              <p className="py-6 text-xs text-zinc-500 text-center">Belum ada postingan terbaru.</p>
+            ) : (
+              recentPosts.map((post) => (
+                <div key={post.id} className="py-3.5 flex items-center justify-between gap-4 group">
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/admin/posts/${post.id}`}
+                      className="text-xs sm:text-sm font-bold text-white hover:text-[#FFB22C] line-clamp-1 transition-colors"
+                    >
+                      {post.title}
+                    </Link>
+                    <p className="text-[11px] text-zinc-400 mt-0.5 truncate font-light">
+                      {formatDateIndonesian(new Date(post.createdAt * 1000))} • Oleh:{" "}
+                      <strong className="text-zinc-300 font-medium">{post.author.name}</strong>
+                    </p>
+                  </div>
+
+                  <span
+                    className={`shrink-0 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full border ${
+                      post.status === "PUBLISHED"
+                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                        : post.status === "DRAFT"
+                        ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
+                        : "bg-white/10 border-white/20 text-zinc-200"
+                    }`}
                   >
-                    {post.title}
-                  </Link>
-                  <p className="text-xs text-zinc-400">
-                    {formatDateIndonesian(new Date(post.createdAt * 1000))} • Penulis: {post.author.name}
-                  </p>
+                    {post.status === "PUBLISHED" ? "Terbit" : post.status === "DRAFT" ? "Draf" : "Arsip"}
+                  </span>
                 </div>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
-                  {post.status === "PUBLISHED" ? "Terbit" : post.status === "DRAFT" ? "Draf" : "Arsip"}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

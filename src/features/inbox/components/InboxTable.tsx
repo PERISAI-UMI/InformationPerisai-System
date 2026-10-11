@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EmptyState } from "@/components/common/EmptyState";
+import { toast } from "@/components/ui/Toast";
 import { formatDateIndonesian } from "@/lib/dates";
 import { deleteMessageAction, markAsReadAction } from "../actions";
 import { useRouter } from "next/navigation";
@@ -23,24 +25,36 @@ export function InboxTable({ messages }: InboxTableProps) {
   const router = useRouter();
 
   const handleMarkRead = async (id: string) => {
-    await markAsReadAction(id);
-    router.refresh();
+    try {
+      await markAsReadAction(id);
+      toast.info("Pesan ditandai telah dibaca.");
+      router.refresh();
+    } catch {
+      toast.error("Gagal memperbarui status pesan.");
+    }
   };
 
   const handleDelete = async (id: string) => {
-    const res = await deleteMessageAction(id);
-    if (res.success) {
-      router.refresh();
-    } else {
-      alert(res.message || "Gagal menghapus pesan.");
+    try {
+      const res = await deleteMessageAction(id);
+      if (res.success) {
+        toast.success("Pesan masuk berhasil dihapus.");
+        router.refresh();
+      } else {
+        toast.error(res.message || "Gagal menghapus pesan.");
+      }
+    } catch {
+      toast.error("Terjadi galat jaringan saat menghapus pesan.");
     }
   };
 
   if (!messages || messages.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-        Kotak masuk kosong. Belum ada pesan dari pengunjung.
-      </div>
+      <EmptyState
+        type="empty"
+        title="Kotak Masuk Kosong"
+        description="Belum ada pesan, pertanyaan, atau konsultasi baru yang dikirim melalui formulir kontak publik."
+      />
     );
   }
 
@@ -57,19 +71,19 @@ export function InboxTable({ messages }: InboxTableProps) {
       </TableHeader>
       <TableBody>
         {messages.map((msg) => (
-          <TableRow key={msg.id} className={!msg.isRead ? "font-semibold bg-[#E6AF2E]/10" : ""}>
+          <TableRow key={msg.id} className={!msg.isRead ? "bg-[#FFB22C]/[0.04]" : ""}>
             <TableCell>
               <div>
-                <p className="text-zinc-900 dark:text-zinc-100">{msg.name}</p>
-                <p className="text-xs text-zinc-500 font-normal">{msg.email}</p>
+                <p className="font-semibold text-white">{msg.name}</p>
+                <p className="text-xs text-zinc-400 font-normal">{msg.email}</p>
               </div>
             </TableCell>
-            <TableCell className="max-w-xs truncate text-zinc-800 dark:text-zinc-200">
-              <Link href={`/admin/inbox/${msg.id}`} className="hover:underline">
+            <TableCell className="max-w-xs truncate text-zinc-200">
+              <Link href={`/admin/inbox/${msg.id}`} className="hover:text-[#FFB22C] transition-colors">
                 {msg.subject}
               </Link>
             </TableCell>
-            <TableCell className="font-normal text-xs">{formatDateIndonesian(msg.createdAt)}</TableCell>
+            <TableCell className="font-normal text-xs text-zinc-400">{formatDateIndonesian(msg.createdAt)}</TableCell>
             <TableCell>
               {msg.isRead ? (
                 <Badge variant="neutral">Dibaca</Badge>
@@ -80,14 +94,14 @@ export function InboxTable({ messages }: InboxTableProps) {
             <TableCell className="text-right space-x-2">
               <Link
                 href={`/admin/inbox/${msg.id}`}
-                className="text-xs font-semibold text-[#282F44] hover:text-[#E6AF2E] dark:text-[#F5D061] transition-colors"
+                className="text-xs font-semibold text-[#FFB22C] hover:text-[#FFA000] transition-colors"
               >
                 Buka
               </Link>
               {!msg.isRead && (
                 <button
                   onClick={() => handleMarkRead(msg.id)}
-                  className="text-xs text-zinc-500 hover:text-zinc-800 cursor-pointer"
+                  className="text-xs text-zinc-400 hover:text-white cursor-pointer transition-colors"
                 >
                   Tandai Dibaca
                 </button>

@@ -1,6 +1,6 @@
 import prisma from "@/lib/db";
 
-export async function getAdminPosts({ page = 1, pageSize = 15, search = "" } = {}) {
+export async function getAdminPosts({ page = 1, pageSize = 8, search = "" } = {}) {
   const skip = (page - 1) * pageSize;
   const where = search
     ? {

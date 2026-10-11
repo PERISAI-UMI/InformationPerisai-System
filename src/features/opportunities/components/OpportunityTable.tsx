@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EmptyState } from "@/components/common/EmptyState";
+import { toast } from "@/components/ui/Toast";
 import { formatDateIndonesian } from "@/lib/dates";
 import { getOpportunityStatusLabel } from "../status";
 import { deleteOpportunityAction } from "../actions";
@@ -24,19 +26,30 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
-    const res = await deleteOpportunityAction(id);
-    if (res.success) {
-      router.refresh();
-    } else {
-      alert(res.message || "Gagal menghapus peluang.");
+    try {
+      const res = await deleteOpportunityAction(id);
+      if (res.success) {
+        toast.success("Peluang / kompetisi berhasil dihapus.");
+        router.refresh();
+      } else {
+        toast.error(res.message || "Gagal menghapus peluang.");
+      }
+    } catch {
+      toast.error("Terjadi galat jaringan saat menghapus peluang.");
     }
   };
 
   if (!opportunities || opportunities.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-        Belum ada peluang terdaftar.
-      </div>
+      <EmptyState
+        type="empty"
+        title="Belum Ada Peluang & Lomba"
+        description="Belum ada informasi lomba ilmiah, hibah riset, atau beasiswa yang terdaftar."
+        action={{
+          label: "Tambah Peluang Baru",
+          href: "/admin/opportunities/new",
+        }}
+      />
     );
   }
 
@@ -58,17 +71,17 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
 
           return (
             <TableRow key={opp.id}>
-              <TableCell className="font-medium text-zinc-900 dark:text-zinc-100 max-w-xs truncate">
+              <TableCell className="font-bold text-white max-w-xs truncate">
                 {opp.title}
               </TableCell>
-              <TableCell>{opp.organizer}</TableCell>
+              <TableCell className="text-zinc-300">{opp.organizer}</TableCell>
               <TableCell><Badge variant="neutral">{opp.category}</Badge></TableCell>
-              <TableCell>{formatDateIndonesian(opp.deadlineAt)}</TableCell>
+              <TableCell className="text-zinc-400 font-light">{formatDateIndonesian(opp.deadlineAt)}</TableCell>
               <TableCell><Badge variant={statusInfo.variant}>{statusInfo.label}</Badge></TableCell>
-              <TableCell className="text-right space-x-2">
+              <TableCell className="text-right space-x-3">
                 <Link
                   href={`/admin/opportunities/${opp.id}`}
-                  className="text-xs font-bold text-[#E6AF2E] hover:text-[#b8861b]"
+                  className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
                 >
                   Ubah
                 </Link>

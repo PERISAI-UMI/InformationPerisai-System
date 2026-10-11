@@ -15,12 +15,16 @@ export interface AuditTableProps {
   }>;
 }
 
+import { EmptyState } from "@/components/common/EmptyState";
+
 export function AuditTable({ logs }: AuditTableProps) {
   if (!logs || logs.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-        Belum ada riwayat aktivitas yang tercatat.
-      </div>
+      <EmptyState
+        type="empty"
+        title="Belum Ada Riwayat Aktivitas"
+        description="Belum ada catatan log aktivitas pengurus atau sistem yang terekam pada basis data audit."
+      />
     );
   }
 
@@ -38,18 +42,18 @@ export function AuditTable({ logs }: AuditTableProps) {
       <TableBody>
         {logs.map((log) => (
           <TableRow key={log.id}>
-            <TableCell className="text-xs font-mono">{formatDateTimeWITA(log.createdAt)}</TableCell>
+            <TableCell className="text-xs font-mono text-zinc-400">{formatDateTimeWITA(log.createdAt)}</TableCell>
             <TableCell className="text-xs">
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+              <span className="font-semibold text-white">
                 {log.user?.name || "Sistem"}
               </span>
-              {log.user && <span className="block text-zinc-400">{log.user.email}</span>}
+              {log.user && <span className="block text-zinc-500 font-normal">{log.user.email}</span>}
             </TableCell>
             <TableCell>
               <Badge variant="primary">{log.action}</Badge>
             </TableCell>
-            <TableCell className="text-xs font-mono">{log.resource}</TableCell>
-            <TableCell className="text-xs text-zinc-600 dark:text-zinc-400 max-w-sm truncate">
+            <TableCell className="text-xs font-mono text-zinc-300">{log.resource}</TableCell>
+            <TableCell className="text-xs text-zinc-400 max-w-sm truncate">
               {log.details || "-"}
             </TableCell>
           </TableRow>
