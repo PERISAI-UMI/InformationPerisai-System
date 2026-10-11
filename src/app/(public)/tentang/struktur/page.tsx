@@ -75,7 +75,7 @@ export default function StrukturPage() {
 
   return (
     <div
-      className="relative text-white selection:bg-[#FFB22C] selection:text-[#1b1b1f] pb-10 sm:pb-14 overflow-x-hidden w-full max-w-[100vw]"
+      className="relative text-white selection:bg-[#FFB22C] selection:text-[#1b1b1f] pb-6 sm:pb-8 overflow-hidden w-full max-w-[100vw]"
       style={{ background: BG }}
     >
       {/* Keyframes Animasi */}
@@ -98,24 +98,23 @@ export default function StrukturPage() {
       `}</style>
 
       {/* Ambient Glow di Latar Belakang (Dibatasi agar tidak melebar ke luar layar) */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-[-60px] left-1/2 -translate-x-1/2 h-[460px] w-[800px] max-w-[90vw] rounded-full blur-[140px] -z-10"
-        style={{
-          background: "radial-gradient(circle, rgba(255,178,44,0.18) 0%, transparent 70%)",
-          animation: "pr-glow 8s ease-in-out infinite",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-[700px] right-0 h-[400px] w-[400px] rounded-full blur-[130px] -z-10"
-        style={{ background: "radial-gradient(circle, rgba(255,200,90,0.08) 0%, transparent 70%)" }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-[1100px] left-0 h-[400px] w-[400px] rounded-full blur-[130px] -z-10"
-        style={{ background: "radial-gradient(circle, rgba(255,178,44,0.08) 0%, transparent 70%)" }}
-      />
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
+        <div
+          className="absolute top-[-60px] left-1/2 -translate-x-1/2 h-[460px] w-[800px] max-w-[90vw] rounded-full blur-[140px]"
+          style={{
+            background: "radial-gradient(circle, rgba(255,178,44,0.18) 0%, transparent 70%)",
+            animation: "pr-glow 8s ease-in-out infinite",
+          }}
+        />
+        <div
+          className="absolute top-[700px] right-0 h-[400px] w-[400px] rounded-full blur-[130px]"
+          style={{ background: "radial-gradient(circle, rgba(255,200,90,0.08) 0%, transparent 70%)" }}
+        />
+        <div
+          className="absolute top-[1100px] left-0 h-[400px] w-[400px] rounded-full blur-[130px]"
+          style={{ background: "radial-gradient(circle, rgba(255,178,44,0.08) 0%, transparent 70%)" }}
+        />
+      </div>
 
       {/* ======================================================== */}
       {/* 1. HERO HEADER                                           */}
