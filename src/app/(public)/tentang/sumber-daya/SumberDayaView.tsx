@@ -497,8 +497,9 @@ const STAF_AHLI_LIST = [
 /* Efek Animasi: Scroll Horizontal (Track Sliding Reel)                */
 /* ------------------------------------------------------------------ */
 /* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
 /* Carousel Slider Komponen untuk Kepala Departemen                   */
-/* Fitur: Auto-scroll Halus, Drag/Touch Swipe, Infinite Loop,         */
+/* Fitur: Auto-scroll Halus, Drag/Touch Swipe, Looping Kembali ke Awal*/
 /* dan Sorotan Kartu Aktif di Tengah                                 */
 /* ------------------------------------------------------------------ */
 function KadepCarouselSection({
@@ -507,11 +508,8 @@ function KadepCarouselSection({
   items: typeof KADEP_LIST;
 }) {
   const N = items.length;
-  // Gandakan array 3x untuk putaran infinite yang mulus tanpa henti
-  const repeatedItems = [...items, ...items, ...items];
-  const [activeIndex, setActiveIndex] = useState(N); // Mulai dari set tengah
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [trackOffset, setTrackOffset] = useState(0);
-  const [enableTransition, setEnableTransition] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -522,7 +520,7 @@ function KadepCarouselSection({
   // Hitung offset agar kartu aktif tepat berada di tengah kontainer
   const updateOffset = useCallback(() => {
     if (!containerRef.current) return;
-    const targetCard = cardRefs.current[activeIndex];
+    const targetCard = cardRefs.current[currentIndex];
     if (!targetCard) return;
 
     const containerWidth = containerRef.current.clientWidth;
@@ -531,7 +529,7 @@ function KadepCarouselSection({
 
     const newOffset = containerWidth / 2 - (cardLeft + cardWidth / 2);
     setTrackOffset(newOffset);
-  }, [activeIndex]);
+  }, [currentIndex]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -547,50 +545,28 @@ function KadepCarouselSection({
     return () => window.removeEventListener("resize", handleResize);
   }, [updateOffset]);
 
-  // Timer auto-scroll (berputar halus tiap 3.2 detik)
+  // Timer auto-scroll (berputar halus tiap 3.2 detik, loop kembali ke awal secara otomatis)
   useEffect(() => {
     if (isPaused) return;
 
     const interval = setInterval(() => {
-      setActiveIndex((prev) => prev + 1);
+      setCurrentIndex((prev) => (prev + 1) % N);
     }, 3200);
 
     return () => clearInterval(interval);
   }, [isPaused, N]);
 
-  // Reset posisi silent ketika track mencapai batas pengulangan
-  const handleTransitionEnd = () => {
-    if (activeIndex >= 2 * N) {
-      setEnableTransition(false);
-      setActiveIndex((prev) => prev - N);
-    } else if (activeIndex < N) {
-      setEnableTransition(false);
-      setActiveIndex((prev) => prev + N);
-    }
-  };
-
-  useEffect(() => {
-    if (!enableTransition) {
-      const frame = requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setEnableTransition(true);
-        });
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-  }, [enableTransition]);
-
+  // Looping navigasi: jika sudah di akhir (N - 1), kembali lagi ke awal (0)
   const prevSlide = () => {
-    setActiveIndex((prev) => prev - 1);
+    setCurrentIndex((prev) => (prev === 0 ? N - 1 : prev - 1));
   };
 
   const nextSlide = () => {
-    setActiveIndex((prev) => prev + 1);
+    setCurrentIndex((prev) => (prev + 1) % N);
   };
 
   const goToSlide = (dotIndex: number) => {
-    const currentRep = Math.floor(activeIndex / N);
-    setActiveIndex(currentRep * N + dotIndex);
+    setCurrentIndex(dotIndex);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -602,16 +578,14 @@ function KadepCarouselSection({
     if (touchStartX.current !== null) {
       const diff = e.changedTouches[0].clientX - touchStartX.current;
       if (diff > 40) {
-        setActiveIndex((prev) => prev - 1);
+        prevSlide();
       } else if (diff < -40) {
-        setActiveIndex((prev) => prev + 1);
+        nextSlide();
       }
     }
     touchStartX.current = null;
     setTimeout(() => setIsPaused(false), 2000);
   };
-
-  const activeRealIndex = ((activeIndex % N) + N) % N;
 
   return (
     <div
@@ -661,21 +635,20 @@ function KadepCarouselSection({
           ref={containerRef}
           className="relative overflow-hidden w-full max-w-[290px] sm:max-w-xl md:max-w-3xl lg:max-w-4xl py-4 px-1"
         >
-          {/* Subtle Side Fade Gradients for infinite illusion */}
+          {/* Subtle Side Fade Gradients */}
           <div className="pointer-events-none absolute inset-y-0 left-0 w-6 sm:w-12 bg-gradient-to-r from-[#17171a] to-transparent z-25" />
           <div className="pointer-events-none absolute inset-y-0 right-0 w-6 sm:w-12 bg-gradient-to-l from-[#17171a] to-transparent z-25" />
 
-          {/* Continuous Sliding Track */}
+          {/* Continuous Sliding Track dengan Loop Kembali ke Awal */}
           <div
-            onTransitionEnd={handleTransitionEnd}
             className="flex items-center gap-2 sm:gap-6 md:gap-8 will-change-transform"
             style={{
               transform: `translateX(${trackOffset}px)`,
-              transition: enableTransition ? "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+              transition: "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           >
-            {repeatedItems.map((item, idx) => {
-              const distance = Math.abs(idx - activeIndex);
+            {items.map((item, idx) => {
+              const distance = Math.abs(idx - currentIndex);
               const isCenter = distance === 0;
               const isNeighbor = distance === 1;
 
@@ -685,7 +658,7 @@ function KadepCarouselSection({
                   ref={(el) => {
                     cardRefs.current[idx] = el;
                   }}
-                  onClick={() => setActiveIndex(idx)}
+                  onClick={() => setCurrentIndex(idx)}
                   className={`relative shrink-0 cursor-pointer transition-all duration-700 ease-out ${
                     isCenter
                       ? "z-30 scale-105 sm:scale-110 opacity-100 drop-shadow-[0_12px_28px_rgba(255,178,44,0.45)] ring-1.5 ring-[#FFB22C] rounded-2xl"
@@ -721,7 +694,7 @@ function KadepCarouselSection({
             onClick={() => goToSlide(i)}
             aria-label={`Ke slide ${i + 1}`}
             className={`h-1.5 sm:h-2 rounded-full transition-all duration-400 ${
-              i === activeRealIndex
+              i === currentIndex
                 ? "w-6 sm:w-8 bg-[#FFB22C] shadow-[0_0_10px_rgba(255,178,44,0.7)]"
                 : "w-1.5 sm:w-2 bg-zinc-600 hover:bg-zinc-400"
             }`}
@@ -734,7 +707,7 @@ function KadepCarouselSection({
 
 /* ------------------------------------------------------------------ */
 /* Carousel Slider Komponen untuk Staf Ahli                           */
-/* Fitur: Auto-scroll Halus, Drag/Touch Swipe, Infinite Loop,         */
+/* Fitur: Auto-scroll Halus, Drag/Touch Swipe, Looping Kembali ke Awal*/
 /* dan Formasi Multi-Card Berjenjang Estetik                         */
 /* ------------------------------------------------------------------ */
 function StafAhliCarouselSection({
@@ -743,10 +716,8 @@ function StafAhliCarouselSection({
   items: typeof STAF_AHLI_LIST;
 }) {
   const N = items.length;
-  const repeatedItems = [...items, ...items, ...items];
-  const [activeIndex, setActiveIndex] = useState(N);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [trackOffset, setTrackOffset] = useState(0);
-  const [enableTransition, setEnableTransition] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -756,7 +727,7 @@ function StafAhliCarouselSection({
 
   const updateOffset = useCallback(() => {
     if (!containerRef.current) return;
-    const targetCard = cardRefs.current[activeIndex];
+    const targetCard = cardRefs.current[currentIndex];
     if (!targetCard) return;
 
     const containerWidth = containerRef.current.clientWidth;
@@ -765,7 +736,7 @@ function StafAhliCarouselSection({
 
     const newOffset = containerWidth / 2 - (cardLeft + cardWidth / 2);
     setTrackOffset(newOffset);
-  }, [activeIndex]);
+  }, [currentIndex]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -781,49 +752,27 @@ function StafAhliCarouselSection({
     return () => window.removeEventListener("resize", handleResize);
   }, [updateOffset]);
 
-  // Auto-scroll interval 3.2 detik
+  // Auto-scroll interval 3.2 detik, loop kembali ke awal
   useEffect(() => {
     if (isPaused) return;
 
     const interval = setInterval(() => {
-      setActiveIndex((prev) => prev + 1);
+      setCurrentIndex((prev) => (prev + 1) % N);
     }, 3200);
 
     return () => clearInterval(interval);
   }, [isPaused, N]);
 
-  const handleTransitionEnd = () => {
-    if (activeIndex >= 2 * N) {
-      setEnableTransition(false);
-      setActiveIndex((prev) => prev - N);
-    } else if (activeIndex < N) {
-      setEnableTransition(false);
-      setActiveIndex((prev) => prev + N);
-    }
-  };
-
-  useEffect(() => {
-    if (!enableTransition) {
-      const frame = requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setEnableTransition(true);
-        });
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-  }, [enableTransition]);
-
   const prevSlide = () => {
-    setActiveIndex((prev) => prev - 1);
+    setCurrentIndex((prev) => (prev === 0 ? N - 1 : prev - 1));
   };
 
   const nextSlide = () => {
-    setActiveIndex((prev) => prev + 1);
+    setCurrentIndex((prev) => (prev + 1) % N);
   };
 
   const goToSlide = (dotIndex: number) => {
-    const currentRep = Math.floor(activeIndex / N);
-    setActiveIndex(currentRep * N + dotIndex);
+    setCurrentIndex(dotIndex);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -835,16 +784,14 @@ function StafAhliCarouselSection({
     if (touchStartX.current !== null) {
       const diff = e.changedTouches[0].clientX - touchStartX.current;
       if (diff > 40) {
-        setActiveIndex((prev) => prev - 1);
+        prevSlide();
       } else if (diff < -40) {
-        setActiveIndex((prev) => prev + 1);
+        nextSlide();
       }
     }
     touchStartX.current = null;
     setTimeout(() => setIsPaused(false), 2000);
   };
-
-  const activeRealIndex = ((activeIndex % N) + N) % N;
 
   return (
     <div
@@ -902,17 +849,16 @@ function StafAhliCarouselSection({
           <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-[#17171a] to-transparent z-25" />
           <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-[#17171a] to-transparent z-25" />
 
-          {/* Continuous Sliding Track */}
+          {/* Continuous Sliding Track dengan Loop Kembali ke Awal */}
           <div
-            onTransitionEnd={handleTransitionEnd}
             className="flex items-center gap-1.5 sm:gap-4 md:gap-5 lg:gap-6 will-change-transform"
             style={{
               transform: `translateX(${trackOffset}px)`,
-              transition: enableTransition ? "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+              transition: "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           >
-            {repeatedItems.map((item, idx) => {
-              const distance = Math.abs(idx - activeIndex);
+            {items.map((item, idx) => {
+              const distance = Math.abs(idx - currentIndex);
               const isCenter = distance === 0;
               const isInner = distance === 1;
               const isOuter = distance === 2;
@@ -926,7 +872,7 @@ function StafAhliCarouselSection({
                   ref={(el) => {
                     cardRefs.current[idx] = el;
                   }}
-                  onClick={() => setActiveIndex(idx)}
+                  onClick={() => setCurrentIndex(idx)}
                   className={`relative shrink-0 cursor-pointer transition-all duration-700 ease-out ${stepClass} ${
                     isCenter
                       ? "z-30 scale-105 sm:scale-110 opacity-100 drop-shadow-[0_12px_28px_rgba(255,178,44,0.45)] ring-1.5 ring-[#FFB22C] rounded-2xl"
@@ -964,7 +910,7 @@ function StafAhliCarouselSection({
             onClick={() => goToSlide(i)}
             aria-label={`Ke slide ${i + 1}`}
             className={`h-1.5 sm:h-2 rounded-full transition-all duration-400 ${
-              i === activeRealIndex
+              i === currentIndex
                 ? "w-6 sm:w-8 bg-[#FFB22C] shadow-[0_0_10px_rgba(255,178,44,0.7)]"
                 : "w-1.5 sm:w-2 bg-zinc-600 hover:bg-zinc-400"
             }`}
