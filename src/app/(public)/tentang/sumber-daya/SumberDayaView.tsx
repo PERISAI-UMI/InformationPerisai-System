@@ -311,7 +311,7 @@ function PersonCard({
 
       {/* Bottom Nameplate Overlay: Hanya Nama & Jabatan */}
       <div
-        className={`absolute bottom-0 inset-x-0 z-20 bg-gradient-to-t from-black via-black/80 to-transparent ${isMini
+        className={`absolute bottom-0 inset-x-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent ${isMini
             ? "pt-3 sm:pt-4 pb-1 sm:pb-2 px-1"
             : "pt-4 sm:pt-6 pb-1.5 sm:pb-2.5 px-1.5 sm:px-2.5"
           } text-center`}
@@ -332,49 +332,6 @@ function PersonCard({
         >
           {role}
         </p>
-      </div>
-
-      {/* Efek Api Halus & Partikel Bara Api (Subtle Flame Aura & Embers - Tampil Hidup di Depan) */}
-      <div className="pointer-events-none absolute bottom-0 inset-x-0 h-20 sm:h-28 overflow-hidden z-25">
-        {/* Glow hangat dasar api */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-16 sm:h-24 opacity-60 group-hover:opacity-90 transition-opacity duration-500"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 100%, rgba(255,178,44,0.55) 0%, rgba(255,107,0,0.28) 48%, transparent 75%)",
-            animation: "pr-flame-pulse 2.8s ease-in-out infinite alternate",
-          }}
-        />
-
-        {/* Lidah api vektor bergelombang halus */}
-        <svg
-          viewBox="0 0 120 40"
-          preserveAspectRatio="none"
-          className="absolute inset-x-0 bottom-0 w-full h-8 sm:h-12 opacity-60 group-hover:opacity-90 transition-opacity duration-300"
-        >
-          <path
-            d="M0 40 Q 15 20, 28 30 T 55 16 T 85 28 T 120 22 L 120 40 Z"
-            fill="rgba(255,107,0,0.45)"
-            style={{ animation: "pr-flame-tongue-1 2.6s ease-in-out infinite alternate" }}
-          />
-          <path
-            d="M0 40 Q 20 24, 38 32 T 70 18 T 95 30 T 120 24 L 120 40 Z"
-            fill="rgba(255,178,44,0.55)"
-            style={{ animation: "pr-flame-tongue-2 2.1s ease-in-out infinite alternate" }}
-          />
-          <path
-            d="M0 40 Q 28 26, 45 34 T 80 22 T 110 32 T 120 28 L 120 40 Z"
-            fill="rgba(255,234,167,0.4)"
-            style={{ animation: "pr-flame-tongue-3 1.8s ease-in-out infinite alternate" }}
-          />
-        </svg>
-
-        {/* Partikel bara api kecil yang melayang naik perlahan */}
-        <span className="pr-ember ember-1" />
-        <span className="pr-ember ember-2" />
-        <span className="pr-ember ember-3" />
-        <span className="pr-ember ember-4" />
-        <span className="pr-ember ember-5" />
       </div>
     </div>
   );
@@ -1162,106 +1119,6 @@ export function SumberDayaView() {
         @keyframes fadeIn {
           from { opacity: 0; transform: scale(0.97); }
           to   { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes pr-flame-pulse {
-          0% {
-            opacity: 0.45;
-            transform: scaleY(0.92);
-          }
-          50% {
-            opacity: 0.78;
-            transform: scaleY(1.08);
-          }
-          100% {
-            opacity: 0.52;
-            transform: scaleY(0.96);
-          }
-        }
-        @keyframes pr-flame-tongue-1 {
-          0% {
-            transform: scaleX(1) translateY(0);
-          }
-          50% {
-            transform: scaleX(1.04) translateY(-2px);
-          }
-          100% {
-            transform: scaleX(0.98) translateY(1px);
-          }
-        }
-        @keyframes pr-flame-tongue-2 {
-          0% {
-            transform: scaleX(1) translateY(0);
-          }
-          50% {
-            transform: scaleX(0.97) translateY(-3px);
-          }
-          100% {
-            transform: scaleX(1.03) translateY(-1px);
-          }
-        }
-        @keyframes pr-flame-tongue-3 {
-          0% {
-            transform: scaleX(1) translateY(0);
-          }
-          50% {
-            transform: scaleX(1.02) translateY(-2px);
-          }
-          100% {
-            transform: scaleX(0.96) translateY(1px);
-          }
-        }
-        @keyframes pr-ember-rise {
-          0% {
-            transform: translateY(0) scale(0.6);
-            opacity: 0;
-          }
-          25% {
-            opacity: 0.85;
-          }
-          75% {
-            opacity: 0.55;
-          }
-          100% {
-            transform: translateY(-28px) scale(0.2);
-            opacity: 0;
-          }
-        }
-        .pr-ember {
-          position: absolute;
-          bottom: 4px;
-          width: 2.5px;
-          height: 2.5px;
-          border-radius: 50%;
-          background-color: #ffeaa7;
-          box-shadow: 0 0 5px #ffb22c;
-          pointer-events: none;
-          animation: pr-ember-rise 2.6s ease-out infinite;
-        }
-        .ember-1 {
-          left: 24%;
-          animation-delay: 0.2s;
-          animation-duration: 2.3s;
-        }
-        .ember-2 {
-          left: 50%;
-          animation-delay: 1.1s;
-          animation-duration: 2.8s;
-        }
-        .ember-3 {
-          left: 76%;
-          animation-delay: 1.7s;
-          animation-duration: 2.4s;
-        }
-        .ember-4 {
-          left: 36%;
-          animation-delay: 0.7s;
-          animation-duration: 2.9s;
-        }
-        .ember-5 {
-          left: 64%;
-          animation-delay: 1.4s;
-          animation-duration: 2.2s;
         }
       `}</style>
 
