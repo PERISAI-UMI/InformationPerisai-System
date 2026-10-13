@@ -12,10 +12,10 @@ export interface StorageDriver {
 
 export function getStorageDriver(): StorageDriver {
   const driver = (process.env.STORAGE_DRIVER || "").toLowerCase();
-  if (driver === "s3" || driver === "r2") {
-    return new S3StorageDriver();
+  if (driver === "local") {
+    return new LocalStorageDriver();
   }
-  return new LocalStorageDriver();
+  return new S3StorageDriver();
 }
 
 export const storage = getStorageDriver();

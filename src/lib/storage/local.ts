@@ -5,9 +5,13 @@ export class LocalStorageDriver {
   private uploadDir: string;
 
   constructor() {
-    this.uploadDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
+    try {
+      this.uploadDir = path.join(process.cwd(), "public", "uploads");
+      if (!fs.existsSync(this.uploadDir)) {
+        fs.mkdirSync(this.uploadDir, { recursive: true });
+      }
+    } catch {
+      this.uploadDir = "/tmp";
     }
   }
 
