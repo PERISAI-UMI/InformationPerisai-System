@@ -14,7 +14,10 @@ function createPrismaClient(): PrismaClient {
   const tursoAuthToken = process.env.TURSO_AUTH_TOKEN;
 
   let adapter;
-  if (tursoUrl && tursoAuthToken) {
+  if (tursoUrl) {
+    if (!tursoAuthToken && tursoUrl.includes(".turso.io")) {
+      console.warn("⚠️ TURSO_DATABASE_URL terdeteksi untuk Turso Cloud tetapi TURSO_AUTH_TOKEN belum diatur.");
+    }
     adapter = new PrismaLibSql({
       url: tursoUrl,
       authToken: tursoAuthToken,
