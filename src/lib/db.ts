@@ -1,35 +1,32 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import path from "node:path";
+import { createClient } from "@libsql/client/web";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient(): PrismaClient {
-  const tursoUrl =
+  const url =
     process.env.TURSO_DATABASE_URL ||
-    (process.env.DATABASE_URL?.startsWith("libsql://") ? process.env.DATABASE_URL : undefined);
-  const tursoAuthToken = process.env.TURSO_AUTH_TOKEN;
+    (process.env.DATABASE_URL?.startsWith("libsql://") ? process.env.DATABASE_URL : "");
+  const authToken = process.env.TURSO_AUTH_TOKEN;
 
-  let adapter;
-  if (tursoUrl) {
-    if (!tursoAuthToken && tursoUrl.includes(".turso.io")) {
-      console.warn("⚠️ TURSO_DATABASE_URL terdeteksi untuk Turso Cloud tetapi TURSO_AUTH_TOKEN belum diatur.");
-    }
-    adapter = new PrismaLibSql({
-      url: tursoUrl,
-      authToken: tursoAuthToken,
-    });
-  } else {
-    const dbPath = path.resolve(process.cwd(), "psdm-db.db");
-    adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
-  }
+  // Konfigurasi @libsql/client/web untuk Cloudflare Edge Runtime
+  const client = createClient({
+    url: url || "file:./psdm-db.db",
+    authToken: authToken || undefined,
+  });
+
+  // Bind adapter PrismaLibSql
+  const adapter = new PrismaLibSql({
+    url: url || "file:./psdm-db.db",
+    authToken: authToken || undefined,
+  });
 
   return new PrismaClient({
     adapter,
-    log: ["error", "warn"],
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 }
 
@@ -38,3 +35,4 @@ export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export default prisma;
+
