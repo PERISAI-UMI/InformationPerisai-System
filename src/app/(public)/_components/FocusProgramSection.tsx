@@ -98,7 +98,7 @@ export function FocusProgramSection({
                     <div className="relative z-10 my-auto flex flex-col items-center justify-center py-2">
                       <div className="relative mb-3 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-3xl border border-[#FFB22C]/40 bg-[#FFB22C]/10 shadow-[0_0_25px_rgba(255,178,44,0.25)] backdrop-blur-md transition-transform duration-300 hover:scale-105">
                         <Image
-                          src="/logoperisaii.png"
+                          src="/logoperisaii.webp"
                           alt="Logo PERISAI UMI"
                           width={64}
                           height={64}

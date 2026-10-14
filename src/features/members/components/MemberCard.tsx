@@ -17,7 +17,7 @@ export function MemberCard({ member }: MemberCardProps) {
     <div className="flex flex-col items-center rounded-xl border border-zinc-200 bg-white p-5 text-center shadow-xs transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
       <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-[#E6AF2E] shadow-sm bg-zinc-100 dark:bg-zinc-800">
         <Image
-          src={member.avatarUrl || "/og-default.jpg"}
+          src={member.avatarUrl || "/og-default.webp"}
           alt={member.name}
           width={96}
           height={96}

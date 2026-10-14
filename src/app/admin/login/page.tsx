@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
           <h1 className="sr-only">Login Pengurus UKM PERISAI UMI</h1>
           <Link href="/" className="inline-block">
             <Image
-              src="/logoperisaidengantulisan.png"
+              src="/logoperisaidengantulisan.webp"
               alt="Logo UKM PERISAI UMI"
               width={200}
               height={50}

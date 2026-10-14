@@ -294,7 +294,7 @@ export function OrganogramChart({ members = [] }: OrganogramChartProps) {
                 <div className="flex flex-col items-center text-center my-4">
                   <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-[#FFB22C] bg-[#1b1b1f] shadow-md group-hover:scale-105 transition-transform duration-300">
                     <Image
-                      src={m.photoUrl || "/maskot.png"}
+                      src={m.photoUrl || "/maskot.webp"}
                       alt={m.name}
                       fill
                       sizes="80px"

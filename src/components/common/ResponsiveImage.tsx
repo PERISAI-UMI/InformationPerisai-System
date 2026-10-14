@@ -21,7 +21,7 @@ export function ResponsiveImage({
   aspectRatio = "video",
   priority = false,
 }: ResponsiveImageProps) {
-  const fallback = "/og-default.jpg";
+  const fallback = "/og-default.webp";
   const imageSrc = src || fallback;
 
   const aspectStyles = {

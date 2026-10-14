@@ -94,7 +94,7 @@ export const getPublishedPosts = cache(async function getPublishedPosts({
       category: p.kategori || "Berita",
       excerpt: p.ringkasan,
       content: p.ringkasan, // Menggunakan ringkasan untuk listing untuk menghemat transfer data
-      coverImageUrl: p.fotoCover || "/og-default.jpg",
+      coverImageUrl: p.fotoCover || "/og-default.webp",
       status: p.status,
       publishedAt: p.tanggalPublish ? new Date(p.tanggalPublish * 1000).toISOString() : null,
       isFeatured: Boolean(p.isFeatured),
@@ -184,7 +184,7 @@ export const getPublishedPostBySlug = cache(async function getPublishedPostBySlu
       category: p.kategori || "Berita",
       excerpt: p.ringkasan,
       content: p.konten,
-      coverImageUrl: p.fotoCover || "/og-default.jpg",
+      coverImageUrl: p.fotoCover || "/og-default.webp",
       status: p.status,
       publishedAt: p.tanggalPublish ? new Date(p.tanggalPublish * 1000).toISOString() : null,
       isFeatured: Boolean(p.isFeatured),

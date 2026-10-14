@@ -18,7 +18,7 @@ export function SiteFooter() {
           {/* Logo */}
           <Link href="/" className="inline-block shrink-0 transition hover:brightness-110">
             <Image
-              src="/logoperisaidengantulisan.png"
+              src="/logoperisaidengantulisan.webp"
               alt="Logo UKM PERISAI UMI"
               width={180}
               height={48}

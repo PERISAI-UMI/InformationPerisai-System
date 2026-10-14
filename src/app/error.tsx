@@ -36,7 +36,7 @@ export default function GlobalError({
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <Image
-              src="/logoperisaii.png"
+              src="/logoperisaii.webp"
               alt="UKM PERISAI UMI"
               width={34}
               height={34}

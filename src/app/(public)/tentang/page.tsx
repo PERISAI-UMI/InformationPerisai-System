@@ -38,7 +38,7 @@ export default async function TentangPage() {
       <section className="relative overflow-hidden pt-12 pb-16 sm:pt-16 sm:pb-24 border-b border-[#FFB22C]/20">
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <Image
-            src="/og-default.jpg"
+            src="/og-default.webp"
             alt="Universitas Muslim Indonesia"
             fill
             priority
@@ -99,7 +99,7 @@ export default async function TentangPage() {
           <div className="lg:col-span-4 flex justify-center">
             <div className="relative h-44 w-full max-w-[240px]">
               <Image
-                src="/logoperisaidengantulisan.png"
+                src="/logoperisaidengantulisan.webp"
                 alt="Logo PERISAI UMI"
                 fill
                 sizes="240px"

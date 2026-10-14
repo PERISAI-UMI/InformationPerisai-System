@@ -1098,7 +1098,7 @@ export function SumberDayaView() {
         {/* Backing Image Kampus UMI Halus */}
         <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
           <Image
-            src="/og-default.jpg"
+            src="/og-default.webp"
             alt="Universitas Muslim Indonesia"
             fill
             priority

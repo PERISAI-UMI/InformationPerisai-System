@@ -51,7 +51,7 @@ export function SiteHeader() {
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 shrink-0">
           <Image
-            src="/logoperisaidengantulisan.png"
+            src="/logoperisaidengantulisan.webp"
             alt="Logo UKM PERISAI UMI"
             width={180}
             height={48}

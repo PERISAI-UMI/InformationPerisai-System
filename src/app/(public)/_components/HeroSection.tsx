@@ -49,7 +49,7 @@ export function HeroSection() {
               style={{ background: `${GOLD}66`, animation: "pr-glow 5s ease-in-out infinite" }}
             />
             <Image
-              src="/maskot.png"
+              src="/maskot.webp"
               alt="Fungsionaris UKM PERISAI UMI"
               width={550}
               height={720}

@@ -77,7 +77,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/(maskot.png|logoperisaii.png|og-default.jpg)",
+        source: "/:path*(maskot|logoperisaii|logoperisaidengantulisan|og-default).(png|webp|jpg)",
         headers: [
           {
             key: "Cache-Control",

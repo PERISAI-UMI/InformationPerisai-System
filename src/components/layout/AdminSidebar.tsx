@@ -176,7 +176,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
           <Link href="/admin" className="flex items-center gap-3 group">
             <div className="relative h-9 w-9 rounded-xl bg-[#FFB22C]/10 border border-[#FFB22C]/30 flex items-center justify-center p-1.5 shadow-[0_0_15px_rgba(255,178,44,0.15)] group-hover:scale-105 transition-transform">
               <Image
-                src="/logoperisaii.png"
+                src="/logoperisaii.webp"
                 alt="PERISAI UMI"
                 width={28}
                 height={28}

@@ -37,7 +37,7 @@ export default async function PeluangDetailPage({
     notFound();
   }
 
-  const coverImage = opp.coverImageUrl || "/og-default.jpg";
+  const coverImage = opp.coverImageUrl || "/og-default.webp";
   const isOpen = opp.isOpen ?? true;
   const daysLeft = opp.daysLeft;
 

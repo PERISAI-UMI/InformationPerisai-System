@@ -37,7 +37,7 @@ export default async function KabarDetailPage({
     notFound();
   }
 
-  const coverImage = post.coverImageUrl || "/og-default.jpg";
+  const coverImage = post.coverImageUrl || "/og-default.webp";
   const authorName = post.department?.name || post.author?.name || "Pengurus PERISAI UMI";
 
   return (
