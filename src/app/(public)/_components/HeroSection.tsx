@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Logo3DViewer } from "@/components/3d/Logo3DViewer";
 import { GOLD, Sparkle } from "./visuals";
 
 export function HeroSection() {
@@ -42,9 +42,20 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Kanan: Logo 3D Interaktif (Rotasi 360°, Orbit Mouse, Ambient Golden Glow) */}
-          <div className="relative flex justify-center lg:col-span-5">
-            <Logo3DViewer />
+          {/* Kanan: maskot + glow (disembunyikan di mobile, hanya muncul di desktop) */}
+          <div className="relative hidden justify-center lg:col-span-5 lg:flex">
+            <div
+              className="pointer-events-none absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl sm:h-[30rem] sm:w-[30rem] lg:h-[36rem] lg:w-[36rem]"
+              style={{ background: `${GOLD}66`, animation: "pr-glow 5s ease-in-out infinite" }}
+            />
+            <Image
+              src="/maskot.webp"
+              alt="Fungsionaris UKM PERISAI UMI"
+              width={550}
+              height={720}
+              priority
+              className="relative h-80 w-auto object-contain drop-shadow-2xl sm:h-[460px] lg:h-[540px] xl:h-[600px]"
+            />
           </div>
         </div>
       </div>

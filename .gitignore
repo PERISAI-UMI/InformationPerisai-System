@@ -26,7 +26,6 @@
 .DS_Store
 *.pem
 *.glb
-!public/logo-3d.glb
 
 # debug
 npm-debug.log*
