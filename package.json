@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && next build --webpack",
     "build:worker": "prisma generate && open-next build",
     "deploy": "npm run build:worker && wrangler deploy",
     "start": "next start",
@@ -15,21 +15,14 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1150.0",
-    "@emnapi/core": "^1.11.3",
-    "@emnapi/runtime": "^1.11.3",
-    "@emnapi/wasi-threads": "^1.2.3",
     "@libsql/client": "^0.18.0",
     "@opennextjs/cloudflare": "^1.20.11",
     "@prisma/adapter-better-sqlite3": "^7.10.0",
     "@prisma/adapter-libsql": "^7.10.0",
-    "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@tailwindcss/postcss": "^4.3.3",
-    "@types/better-sqlite3": "^9.6.0",
-    "@types/pg": "^8.23.1",
     "better-sqlite3": "^13.0.3",
     "next": "^16.3.8",
-    "pg": "^8.23.1",
     "prisma": "^7.10.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -38,6 +31,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

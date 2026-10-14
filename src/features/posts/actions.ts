@@ -3,7 +3,7 @@
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { slugify } from "@/lib/slug";
+import { slugify, generateUniqueSlug } from "@/lib/slug";
 import { writeAuditLog } from "@/lib/audit";
 import { postSchema, type PostInput } from "./schema";
 import type { ActionResponse } from "@/types";
@@ -20,7 +20,7 @@ export async function createPostAction(data: PostInput): Promise<ActionResponse>
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
-  const slug = parsed.data.slug ? slugify(parsed.data.slug) : slugify(parsed.data.title);
+  const slug = await generateUniqueSlug("tBerita", parsed.data.slug || parsed.data.title);
 
   try {
     const now = Math.floor(Date.now() / 1000);
@@ -76,7 +76,8 @@ export async function updatePostAction(id: string, data: PostInput): Promise<Act
     if (!existing) return { success: false, message: "Postingan tidak ditemukan." };
 
     const now = Math.floor(Date.now() / 1000);
-    const slug = parsed.data.slug ? slugify(parsed.data.slug) : existing.slug;
+    const slugTarget = parsed.data.slug ? parsed.data.slug : (parsed.data.title || existing.slug);
+    const slug = await generateUniqueSlug("tBerita", slugTarget, numId);
     const isPub = parsed.data.status.toLowerCase() === "published";
     const publishedAt = isPub ? (existing.tanggalPublish ?? now) : null;
 

@@ -74,13 +74,15 @@ export async function POST(request: Request) {
       .replace(/[^a-zA-Z0-9_-]/g, "_")
       .slice(0, 100); // batasi panjang nama
 
-    const cleanFilename = `${Date.now()}-${baseName}${outputExt}`;
+    // Tambahkan random salt untuk menjamin keunikan kunci penyimpanan saat upload paralel/batch
+    const randomSalt = Math.random().toString(36).substring(2, 8);
+    const cleanFilename = `${Date.now()}-${randomSalt}-${baseName}${outputExt}`;
 
     // Upload ke storage (R2 atau lokal)
     const uploaded = await storage.upload(processedBuffer, cleanFilename, outputMime);
 
     // Simpan metadata ke T_Media
-    const idMedia = `med-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const idMedia = `med-${Date.now()}-${randomSalt}`;
     const mediaRecord = await prisma.tMedia.create({
       data: {
         idMedia,

@@ -148,12 +148,13 @@ export async function verifyPassword(
 
       // Perbandingan timing-safe menggunakan Web Crypto
       // (tidak bisa pakai timingSafeEqual karena string berbeda panjang kadang ada)
-      if (sha256Hex.length !== storedHash.length) return false;
+      const normalizedStored = storedHash.toLowerCase();
+      if (sha256Hex.length !== normalizedStored.length) return false;
 
       // Manual timing-safe compare untuk string hex
       let diff = 0;
       for (let i = 0; i < sha256Hex.length; i++) {
-        diff |= sha256Hex.charCodeAt(i) ^ storedHash.charCodeAt(i);
+        diff |= sha256Hex.charCodeAt(i) ^ normalizedStored.charCodeAt(i);
       }
       return diff === 0;
     }

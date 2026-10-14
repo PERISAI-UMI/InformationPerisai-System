@@ -3,7 +3,7 @@
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { slugify } from "@/lib/slug";
+import { slugify, generateUniqueSlug } from "@/lib/slug";
 import { writeAuditLog } from "@/lib/audit";
 import { opportunitySchema, type OpportunityInput } from "./schema";
 import type { ActionResponse } from "@/types";
@@ -20,7 +20,7 @@ export async function createOpportunityAction(data: OpportunityInput): Promise<A
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
-  const slug = parsed.data.slug ? slugify(parsed.data.slug) : slugify(parsed.data.title);
+  const slug = await generateUniqueSlug("tKompetisi", parsed.data.slug || parsed.data.title);
 
   try {
     const now = Math.floor(Date.now() / 1000);
@@ -31,7 +31,7 @@ export async function createOpportunityAction(data: OpportunityInput): Promise<A
     const opp = await prisma.tKompetisi.create({
       data: {
         namaKompetisi: parsed.data.title,
-        slug: `${slug}-${Date.now().toString().slice(-4)}`,
+        slug,
         penyelenggara: parsed.data.organizer,
         deskripsi: parsed.data.description,
         linkPendaftaran: parsed.data.linkUrl || null,

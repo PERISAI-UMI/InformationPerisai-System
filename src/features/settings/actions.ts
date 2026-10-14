@@ -17,13 +17,15 @@ export async function updateSettingsAction(
 
   try {
     const now = Math.floor(Date.now() / 1000);
-    for (const item of settings) {
-      await prisma.tPengaturan.upsert({
-        where: { kunci: item.key },
-        update: { nilai: item.value, diperbaruiOleh: session.user.id, updatedAt: now },
-        create: { kunci: item.key, nilai: item.value, tipe: "string", diperbaruiOleh: session.user.id, updatedAt: now },
-      });
-    }
+    await prisma.$transaction(
+      settings.map((item) =>
+        prisma.tPengaturan.upsert({
+          where: { kunci: item.key },
+          update: { nilai: item.value, diperbaruiOleh: session.user.id, updatedAt: now },
+          create: { kunci: item.key, nilai: item.value, tipe: "string", diperbaruiOleh: session.user.id, updatedAt: now },
+        })
+      )
+    );
 
     await writeAuditLog({
       userId: session.user.id,

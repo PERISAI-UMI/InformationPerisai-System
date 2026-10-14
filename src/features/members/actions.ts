@@ -37,30 +37,37 @@ export async function createMemberAction(data: MemberInput): Promise<ActionRespo
       });
     }
 
-    // Cari atau buat anggota
-    const prnId = `PRN${Math.floor(1000 + Math.random() * 9000)}`;
-    const anggota = await prisma.mAnggota.create({
-      data: {
-        idPerisai: prnId,
-        namaLengkap: parsed.data.name,
-        nim: prnId,
-        angkatan: 2024,
-        gen: 11,
-        email: `${prnId.toLowerCase()}@perisai.umi.ac.id`,
-        fotoUrl: parsed.data.avatarUrl || null,
-        status: parsed.data.isActive ? "aktif" : "cuti",
-      },
-    });
+    // Buat ID anggota yang unik untuk mencegah collision pada id_perisai dan nim
+    const uniqueSuffix = `${Date.now().toString().slice(-4)}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const prnId = `PRN${uniqueSuffix}`;
 
-    const kepengurusan = await prisma.tKepengurusan.create({
-      data: {
-        idPeriode: periodId,
-        idPerisai: anggota.idPerisai,
-        idJabatan: jabatan.idJabatan,
-        idDepartemen: deptId,
-        status: parsed.data.isActive ? "aktif" : "cuti",
-        urutan: parsed.data.orderIndex ?? 0,
-      },
+    // Jalankan dalam transaksi agar mAnggota dan tKepengurusan tercipta secara atomik
+    const { anggota, kepengurusan } = await prisma.$transaction(async (tx) => {
+      const newAnggota = await tx.mAnggota.create({
+        data: {
+          idPerisai: prnId,
+          namaLengkap: parsed.data.name,
+          nim: prnId,
+          angkatan: 2024,
+          gen: 11,
+          email: `${prnId.toLowerCase()}@perisai.umi.ac.id`,
+          fotoUrl: parsed.data.avatarUrl || null,
+          status: parsed.data.isActive ? "aktif" : "cuti",
+        },
+      });
+
+      const newKepengurusan = await tx.tKepengurusan.create({
+        data: {
+          idPeriode: periodId,
+          idPerisai: newAnggota.idPerisai,
+          idJabatan: jabatan.idJabatan,
+          idDepartemen: deptId,
+          status: parsed.data.isActive ? "aktif" : "cuti",
+          urutan: parsed.data.orderIndex ?? 0,
+        },
+      });
+
+      return { anggota: newAnggota, kepengurusan: newKepengurusan };
     });
 
     await writeAuditLog({

@@ -3,7 +3,7 @@
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { slugify } from "@/lib/slug";
+import { slugify, generateUniqueSlug } from "@/lib/slug";
 import { writeAuditLog } from "@/lib/audit";
 import { departmentSchema, type DepartmentInput } from "./schema";
 import type { ActionResponse } from "@/types";
@@ -20,7 +20,7 @@ export async function createDepartmentAction(data: DepartmentInput): Promise<Act
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
-  const slug = parsed.data.slug ? slugify(parsed.data.slug) : slugify(parsed.data.name);
+  const slug = await generateUniqueSlug("mDepartemen", parsed.data.slug || parsed.data.name);
 
   try {
     const now = Math.floor(Date.now() / 1000);
@@ -70,7 +70,7 @@ export async function updateDepartmentAction(id: string, data: DepartmentInput):
   }
 
   try {
-    const slug = parsed.data.slug ? slugify(parsed.data.slug) : slugify(parsed.data.name);
+    const slug = await generateUniqueSlug("mDepartemen", parsed.data.slug || parsed.data.name, idNum);
     const now = Math.floor(Date.now() / 1000);
 
     const updated = await prisma.mDepartemen.update({

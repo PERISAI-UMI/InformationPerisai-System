@@ -3,7 +3,7 @@
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { slugify } from "@/lib/slug";
+import { slugify, generateUniqueSlug } from "@/lib/slug";
 import { writeAuditLog } from "@/lib/audit";
 import { workProgramSchema, type WorkProgramInput } from "./schema";
 import type { ActionResponse } from "@/types";
@@ -20,7 +20,7 @@ export async function createWorkProgramAction(data: WorkProgramInput): Promise<A
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
-  const slug = parsed.data.slug ? slugify(parsed.data.slug) : slugify(parsed.data.name);
+  const slug = await generateUniqueSlug("tProker", parsed.data.slug || parsed.data.name);
 
   try {
     const now = Math.floor(Date.now() / 1000);
@@ -37,7 +37,7 @@ export async function createWorkProgramAction(data: WorkProgramInput): Promise<A
         idDepartemen: isNaN(deptId) ? 1 : deptId,
         idPeriode: periodId,
         namaProker: parsed.data.name,
-        slug: `${slug}-${Date.now().toString().slice(-4)}`,
+        slug,
         deskripsi: parsed.data.description,
         targetPelaksanaan: parsed.data.targetDate || null,
         indikatorKeberhasilan: parsed.data.objectives || null,
