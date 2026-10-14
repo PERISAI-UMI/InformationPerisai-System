@@ -809,8 +809,13 @@ Cookie `perisai_session_id` menyimpan `id_perisai` (UUID anggota) secara langsun
 | **Object Storage Web Streams** | `src/lib/storage/s3.ts` | ✅ **RESOLVED** | Refaktor body S3 PutObject ke `Uint8Array` agar 100% kompatibel dengan Web APIs Cloudflare Workers. |
 | **`any` Type Casting di DB** | `src/lib/db.ts` | ✅ **RESOLVED** | Dihapus; digantikan dengan inisialisasi singleton `PrismaClient` yang tipe-aman dan sinkron. |
 | **Cloudflare Secrets Hygiene** | `wrangler.jsonc` | ✅ **RESOLVED** | Semua hardcoded secrets dibersihkan dan dipindahkan ke `wrangler secret`. |
-| **Mailer tidak fungsional** | `src/lib/mailer.ts` | ⚠️ Pending | Masih berupa stub console.log — perlu integrasi Resend / SendGrid / SMTP. |
-| **Unused Drivers (`pg`, `emnapi`)** | `package.json` | ⚠️ Pending | Dependensi legacy yang bisa dibersihkan saat dependency prune. |
+| **Mailer tidak fungsional** | `src/lib/mailer.ts` | ✅ **PRUNED** | File stub dihapus untuk menghemat bundle; integrasi notifikasi eksternal akan menggunakan Cloudflare Queues/Resend API. |
+| **Unused Drivers (`pg`, `emnapi`)** | `package.json` | ✅ **RESOLVED** | Dependensi legacy dibersihkan total dari `package.json` dan `package-lock.json`. |
+| **Race Condition: Slug Collisions** | `src/lib/slug.ts` | ✅ **RESOLVED** | Menggunakan generator slug adaptif `generateUniqueSlug()` dengan random suffix fallback saat duplikasi. |
+| **Race Condition: Media Upload Clashes** | `src/app/api/media/route.ts` | ✅ **RESOLVED** | Menggunakan high-entropy random salt pada filename dan storage key untuk mencegah tabrakan upload paralel. |
+| **Race Condition: Settings Batch Mutation** | `src/features/settings/actions.ts` | ✅ **RESOLVED** | Migrasi loop upsert sekuensial ke `prisma.$transaction(...)` atomik. |
+| **Race Condition: Member ID Collisions** | `src/features/members/actions.ts` | ✅ **RESOLVED** | Menghilangkan random 4-digit ID rawan tabrakan, kini menggunakan ID atomik + transaksi multi-tabel. |
+| **Rate Limit Memory Leak** | `src/lib/rate-limit.ts` | ✅ **RESOLVED** | Ditambahkan auto-sweep dan FIFO eviction dengan batas maksimum 1.000 entri untuk isolat V8. |
 | **Homepage oversized** | `src/app/(public)/page.tsx` | ⚠️ Pending | Berkas 53 KB — disarankan dipecah ke sub-komponen terpisah. |
 | **T_Sesi belum aktif** | `src/lib/auth.ts` | ⚠️ Pending | Tabel ada di DB tapi validasi sesi belum memanfaatkannya. |
 
@@ -818,25 +823,28 @@ Cookie `perisai_session_id` menyimpan `id_perisai` (UUID anggota) secara langsun
 
 ### 8.3 🚀 Roadmap Modernisasi Terkini
 
-#### Prioritas 1 — Keamanan & Deployment (Status: 75% Selesai)
+#### Prioritas 1 — Keamanan & Deployment (Status: 90% Selesai)
 - [x] **1. Bersihkan semua hardcoded credentials** di `db.ts` dan `wrangler.jsonc` *(SELESAI - 14 Okt 2026)*
 - [x] **2. Pindahkan secrets** ke Cloudflare Secrets (`wrangler secret put`) *(SELESAI - 14 Okt 2026)*
 - [x] **3. Kompatibilitas Runtime Edge**: Hilangkan native C++ & perbaiki storage stream *(SELESAI - 14 Okt 2026)*
-- [ ] **4. Refaktor sistem sesi**: Gunakan opaque random token + validasi tabel `T_Sesi`
-- [ ] **5. Ganti sanitasi HTML** ke library `sanitize-html`
+- [x] **4. Mitigasi Race Condition & Slug Collisions**: `generateUniqueSlug`, transaksi atomik, & random salt media *(SELESAI - 14 Okt 2026)*
+- [x] **5. Pembersihan Kode Mati (Dead-Code Pruning)**: Hapus skrip legacy Laravel, komponen tidak terpakai, dan file deploy Caddy *(SELESAI - 14 Okt 2026)*
+- [ ] **6. Refaktor sistem sesi**: Gunakan opaque random token + validasi tabel `T_Sesi`
+- [ ] **7. Ganti sanitasi HTML** ke library `sanitize-html`
 
 #### Prioritas 2 — Stabilitas & Fitur Eksternal (1-2 sprint)
-- [ ] **6. Implementasi SMTP** menggunakan Resend API atau nodemailer
-- [ ] **7. Rate limiting edge** via Cloudflare KV atau native CF Rate Limiting Rules
-- [ ] **8. Bersihkan dependencies** tak terpakai (`pg`, `@prisma/adapter-pg`, `emnapi`)
-- [ ] **9. Selaraskan `prisma/seed.ts`** dengan model skema terbaru
+- [ ] **8. Implementasi SMTP** menggunakan Resend API atau Cloudflare Queues
+- [ ] **9. Rate limiting edge terdistribusi** via Cloudflare KV atau native CF Rate Limiting Rules
+- [x] **10. Bersihkan dependencies** tak terpakai (`pg`, `@prisma/adapter-pg`, `emnapi`) *(SELESAI - 14 Okt 2026)*
+- [ ] **11. Selaraskan `prisma/seed.ts`** dengan model skema terbaru
 
 #### Prioritas 3 — Refaktor & Kualitas Kode (Ongoing)
-- [x] **10. Hapus `any` casting** pada database client singleton *(SELESAI - 14 Okt 2026)*
-- [x] **11. Amankan konfigurasi lokal** (`.dev.vars`, `wrangler.jsonc.bak` di `.gitignore`) *(SELESAI - 14 Okt 2026)*
-- [ ] **12. Pecah homepage** `page.tsx` (53 KB) ke komponen modular
-- [ ] **13. Lengkapi unit test coverage** untuk permission matrix dan alur autentikasi
+- [x] **12. Hapus `any` casting** pada database client singleton *(SELESAI - 14 Okt 2026)*
+- [x] **13. Amankan konfigurasi lokal** (`.dev.vars`, `wrangler.jsonc.bak` di `.gitignore`) *(SELESAI - 14 Okt 2026)*
+- [ ] **14. Pecah homepage** `page.tsx` (53 KB) ke komponen modular
+- [x] **15. Lengkapi unit test coverage**: Status peluang, matriks perizinan, slug, storage driver, dan visibility *(SELESAI - 14 Okt 2026)*
 
 ---
 
-*Laporan audit arsitektur ini diperbarui pada 14 Oktober 2026 setelah penyelesaian refaktor runtime Cloudflare Workers dan pengujian koneksi live Turso & R2.*
+*Laporan audit arsitektur ini diperbarui pada 14 Oktober 2026 setelah mitigasi risiko race condition, pembersihan kode mati, pengujian unit komprehensif, dan verifikasi build Next.js.*
+
