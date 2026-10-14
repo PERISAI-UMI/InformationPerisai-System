@@ -146,35 +146,31 @@ InformationPerisai-System/
 │   ├── components/         # Komponen UI yang dapat digunakan ulang
 │   ├── features/           # Modul fitur terorganisasi (14 feature folders)
 │   ├── lib/                # Library utilities & integrasi
-│   │   ├── auth.ts         # Logika sesi (getSession, cookie management)
-│   │   ├── db.ts           # Prisma client singleton (lazy proxy)
+│   │   ├── auth.ts         # Logika sesi (getSession via T_Sesi, cookie management, scrypt/sha256)
+│   │   ├── db.ts           # Prisma client singleton (lazy proxy Turso/SQLite)
 │   │   ├── permissions.ts  # RBAC: fungsi can(user, action, resource)
 │   │   ├── audit.ts        # Penulis audit log ke T_Audit_Log
 │   │   ├── cloudflare.ts   # Purge Cloudflare Cache via API
 │   │   ├── env.ts          # Validasi & ekspor environment variables
-│   │   ├── images.ts       # Optimasi gambar ke WebP (via sharp)
-│   │   ├── mailer.ts       # Abstraksi pengiriman email (SMTP stub)
-│   │   ├── rate-limit.ts   # In-memory rate limiter
-│   │   ├── sanitize.ts     # Sanitasi HTML (anti-XSS dasar)
-│   │   ├── slug.ts         # Generator slug URL
+│   │   ├── images.ts       # Optimasi gambar ke WebP (diisolasi dev-only, bypass di Edge)
+│   │   ├── rate-limit.ts   # In-memory rate limiter dengan auto-sweep & FIFO eviction
+│   │   ├── sanitize.ts     # Sanitasi HTML anti-XSS Edge-safe (sanitize-html whitelist)
+│   │   ├── slug.ts         # Generator slug URL adaptif dengan deteksi collision otomatis
 │   │   ├── turnstile.ts    # Verifikasi Cloudflare Turnstile CAPTCHA
 │   │   ├── youtube.ts      # YouTube utility (embed URL, thumbnail)
 │   │   ├── seo.ts          # Helper generate metadata SEO
 │   │   ├── dates.ts        # Format tanggal (unix → string)
-│   │   ├── legacy-redirects.ts  # Redirect URL dari sistem Laravel lama
 │   │   └── storage/        # Abstraction layer penyimpanan file
 │   │       ├── index.ts    # Factory: getStorageDriver() → local | S3/R2
-│   │       ├── s3.ts       # Driver: Cloudflare R2 / AWS S3
+│   │       ├── s3.ts       # Driver: Cloudflare R2 / AWS S3 (Web Streams / Uint8Array)
 │   │       └── local.ts    # Driver: disk lokal (/public/uploads)
-│   ├── proxy.ts            # Edge-compatible DB proxy untuk Cloudflare Workers
 │   └── types/
 │       └── index.ts        # Definisi tipe TypeScript global
 │
 ├── scripts/
 │   └── test-connections.ts # Script cek konektivitas DB & storage
-├── tests/                  # Unit/integration tests (tsx test runner)
-├── public/                 # Aset statis (favicon, ikon)
-└── deploy/                 # Skrip deploy (shell scripts)
+├── tests/                  # Unit/integration tests (tsx test runner: status, RBAC, slug, sanitize, storage, visibility)
+└── public/                 # Aset statis (favicon, ikon)
 ```
 
 ### 2.2 Entry Points Aplikasi
@@ -555,18 +551,21 @@ Response: { id, storageKey, url, path }
 
 ### 5.2 Model Autentikasi & Otorisasi
 
-#### Authentication (Cookie Session — Custom)
+#### Authentication (Opaque Token Session via `T_Sesi` — Custom Edge-safe)
 
-Sistem **tidak** menggunakan NextAuth/Auth.js. Autentikasi dibangun **dari scratch** menggunakan:
+Sistem **tidak** menggunakan NextAuth/Auth.js. Autentikasi dibangun secara kustom dan dirancang untuk keamanan edge multi-isolate:
 
-- **Session identifier**: Cookie `perisai_session_id` berisi `id_perisai` (UUID anggota)
+- **Session identifier**: Cookie `perisai_session_id` berisi **opaque token 32-byte (256-bit cryptographically secure hex string)** yang di-generate via Web Crypto API standard (`globalThis.crypto.getRandomValues`).
+- **Penyimpanan Sesi**: Disimpan secara persisten di tabel `T_Sesi` (`id_sesi`, `id_akun`, `token`, `ip_address`, `user_agent`, `expires_at`).
 - **Verifikasi password**: Dual-format support:
   1. `scrypt` dengan format `salt:key` (sistem baru)
-  2. `SHA-256 hex` (kompatibel dengan seed data lama)
-- **Cookie properties**: `httpOnly=true`, `secure=true` (production), `sameSite=lax`, `maxAge=7 hari`
-- **Session lookup**: Setiap request melakukan query `M_Anggota` berdasarkan cookie value
-
-> ⚠️ **Catatan arsitektur**: Sesi tidak menggunakan `T_Sesi` untuk lookup (model TSesi ada di skema tapi belum digunakan oleh `getSession()`). Cookie langsung menyimpan `id_perisai` sebagai session identifier.
+  2. `SHA-256 hex` (kompatibel dengan seed data awal)
+- **Cookie properties**: `httpOnly=true`, `secure=true` (production), `sameSite=lax`, `path=/`, `maxAge=7 hari` (604.800 detik).
+- **Session lookup & validation (`getSession`)**:
+  1. Membaca `token` dari cookie.
+  2. Query `T_Sesi` dengan eager loading `mAkun`, `mRole`, `mAnggota`, dan `tKepengurusan`.
+  3. Memeriksa `expires_at > Math.floor(Date.now() / 1000)`. Jika kedaluwarsa, sesi dihapus otomatis dari database dan mengembalikan `null`.
+  4. Memvalidasi status aktif akun (`mAkun.is_active === 1`).
 
 #### Authorization (RBAC — Custom)
 
@@ -582,15 +581,32 @@ EDITOR      → posts, gallery, opportunities: create, read, update
               resource lain: read only
 ```
 
-### 5.3 Alur End-to-End: Login Admin
+### 5.3 Alur End-to-End: Login & Logout Admin
 
+#### Login
 ```
-1. User buka /admin/login → mengisi email/NIM + password
+1. User buka /admin/login → mengisi email/PRN + password
 2. Frontend POST /api/auth/login → { email, password }
-3. Server: query M_Anggota WHERE email=? OR id_perisai=?
-4. Server: verifyPassword(input, storedHash) → scrypt / SHA-256
-5. Jika valid: Set-Cookie: perisai_session_id={id_perisai}; HttpOnly
-6. Response 200 OK → client redirect ke /admin
+3. Server:
+   a. Cek IP rate limiter (maksimal 10 percobaan/menit/IP)
+   b. Query M_Anggota & M_Akun WHERE email=? OR id_perisai=?
+   c. Validasi status akun (is_active === 1)
+   d. verifyPassword(input, storedHash) → scrypt / SHA-256
+   e. Jika valid: generate random token 32-byte (Web Crypto)
+   f. Insert record baru ke T_Sesi (id_sesi, id_akun, token, ip, user_agent, expires_at)
+   g. Update last_login pada M_Akun
+   h. Set-Cookie: perisai_session_id={sessionToken}; HttpOnly; Secure; SameSite=Lax
+4. Response 200 OK → client redirect ke /admin
+```
+
+#### Logout
+```
+1. Admin klik Logout di CMS
+2. Frontend POST /api/auth/logout
+3. Server membaca token dari cookie perisai_session_id
+4. Server menghapus record token terkait dari tabel T_Sesi
+5. Server mengosongkan cookie perisai_session_id (maxAge: 0)
+6. Response redirect ke /admin/login
 ```
 
 ### 5.4 Alur End-to-End: Upload Media
@@ -620,7 +636,7 @@ EDITOR      → posts, gallery, opportunities: create, read, update
 | **Sharp** | `import('sharp')` dynamic (dev only) | Kompresi gambar (Node.js dev offline) | ✅ **Diisolasi** (Bypass otomatis di Edge/Production Workers) |
 | **Cloudflare Turnstile** | Fetch ke `challenges.cloudflare.com` | Anti-bot CAPTCHA untuk formulir kontak | ✅ Implementasi tersedia |
 | **Cloudflare Cache Purge** | Fetch ke `api.cloudflare.com` | Purge CDN cache saat konten diperbarui | ✅ Implementasi tersedia |
-| **SMTP Email** | `mailer.ts` (stub/placeholder) | Notifikasi pesan masuk | ⚠️ Belum diimplementasi penuh |
+| **SMTP Email** | Resend API / Cloudflare Queues (Roadmap) | Notifikasi pesan masuk | ⏳ Dijadwalkan (File stub legacy dibersihkan untuk efisiensi bundle) |
 | **YouTube** | `youtube.ts` (URL parser) | Embed thumbnail/URL YouTube ke konten | ✅ Utility tersedia |
 
 ---
