@@ -1030,7 +1030,7 @@ async function main() {
     `).run(
       prn, nama, nim, jurusanId, angkatan, gen,
       tempat, tanggal, email, noWa, alamat,
-      linkedin, instagram, hobi, quotes, "/maskot.png",
+      linkedin, instagram, hobi, quotes, "/maskot.webp",
       now, now
     );
 

@@ -293,7 +293,7 @@ async function migrateAndSeedTarget(name, executor) {
         id_perisai, nama_lengkap, nim, id_jurusan, angkatan, gen, tempat_lahir,
         tanggal_lahir, jenis_kelamin, email, no_wa, alamat, linkedin, instagram,
         hobi, foto_url, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'L', ?, ?, ?, ?, ?, ?, '/maskot.png', 'aktif', ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'L', ?, ?, ?, ?, ?, ?, '/maskot.webp', 'aktif', ?, ?)
       ON CONFLICT(id_perisai) DO UPDATE SET
         nama_lengkap=excluded.nama_lengkap,
         nim=excluded.nim,
