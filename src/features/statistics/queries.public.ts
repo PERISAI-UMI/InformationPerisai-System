@@ -1,6 +1,7 @@
+import { cache } from "react";
 import prisma from "@/lib/db";
 
-export async function getPublicStatistics() {
+export const getPublicStatistics = cache(async function getPublicStatistics() {
   try {
     const [totalPengurus, totalDept, totalPrestasi, totalProker] = await Promise.all([
       prisma.tKepengurusan.count({
@@ -59,4 +60,4 @@ export async function getPublicStatistics() {
       { id: "stat-4", label: "Karya & Inovasi", value: "25+", description: "Prototipe, KTI, dan PKM didanai", orderIndex: 4, isActive: true },
     ];
   }
-}
+});

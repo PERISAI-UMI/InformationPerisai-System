@@ -1,3 +1,4 @@
+import { cache } from "react";
 import prisma from "@/lib/db";
 
 export interface GetPublicOpportunitiesParams {
@@ -7,7 +8,7 @@ export interface GetPublicOpportunitiesParams {
   onlyOpen?: boolean;
 }
 
-export async function getPublicOpportunities({
+export const getPublicOpportunities = cache(async function getPublicOpportunities({
   type,
   category,
   search,
@@ -46,6 +47,19 @@ export async function getPublicOpportunities({
     const [items, allOpportunities] = await Promise.all([
       prisma.tKompetisi.findMany({
         where,
+        select: {
+          idKompetisi: true,
+          tipe: true,
+          namaKompetisi: true,
+          slug: true,
+          kategori: true,
+          penyelenggara: true,
+          deskripsi: true,
+          deadlinePendaftaran: true,
+          linkPendaftaran: true,
+          linkPoster: true,
+          status: true,
+        },
         orderBy: [
           { deadlinePendaftaran: "asc" },
         ],
@@ -106,13 +120,26 @@ export async function getPublicOpportunities({
       total: 0,
     };
   }
-}
+});
 
-export async function getPublicOpportunityBySlug(slug: string) {
+export const getPublicOpportunityBySlug = cache(async function getPublicOpportunityBySlug(slug: string) {
   const now = Math.floor(Date.now() / 1000);
   try {
     const op = await prisma.tKompetisi.findFirst({
       where: { slug, status: "published" },
+      select: {
+        idKompetisi: true,
+        tipe: true,
+        namaKompetisi: true,
+        slug: true,
+        kategori: true,
+        penyelenggara: true,
+        deskripsi: true,
+        deadlinePendaftaran: true,
+        linkPendaftaran: true,
+        linkPoster: true,
+        status: true,
+      },
     });
 
     if (!op) return null;
@@ -123,7 +150,7 @@ export async function getPublicOpportunityBySlug(slug: string) {
     const daysLeft = secondsLeft !== null ? Math.ceil(secondsLeft / 86400) : null;
     const isUrgent = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
 
-    // Dapatkan peluang serupa
+    // Dapatkan peluang serupa dengan select projection
     const rawRelated = await prisma.tKompetisi.findMany({
       where: {
         status: "published",
@@ -132,6 +159,16 @@ export async function getPublicOpportunityBySlug(slug: string) {
       },
       take: 3,
       orderBy: { deadlinePendaftaran: "asc" },
+      select: {
+        idKompetisi: true,
+        tipe: true,
+        namaKompetisi: true,
+        slug: true,
+        kategori: true,
+        penyelenggara: true,
+        deadlinePendaftaran: true,
+        linkPoster: true,
+      },
     });
 
     const relatedOpportunities = rawRelated.map((ro) => {
@@ -175,4 +212,4 @@ export async function getPublicOpportunityBySlug(slug: string) {
     console.error("Gagal mengambil peluang:", err);
     return null;
   }
-}
+});

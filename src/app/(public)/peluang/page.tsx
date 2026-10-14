@@ -8,8 +8,7 @@ export const metadata: Metadata = {
     "Direktori informasi perlombaan karya tulis ilmiah, PKM Kemendikbudristek, PIMNAS, hibah inovasi, konferensi internasional, dan beasiswa mahasiswa berprestasi.",
 };
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 300;
 
 export default async function PeluangPage({
   searchParams,

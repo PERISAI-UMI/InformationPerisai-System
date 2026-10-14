@@ -6,8 +6,18 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
-import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import dynamic from "next/dynamic";
 import { MediaPicker } from "@/components/common/MediaPicker";
+
+const RichTextEditor = dynamic(
+  () => import("@/components/editor/RichTextEditor").then((mod) => mod.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 animate-pulse rounded-xl border border-white/10 bg-zinc-800/40" />
+    ),
+  }
+);
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
 import { createPostAction, updatePostAction } from "../actions";

@@ -1,6 +1,9 @@
+import { cache } from "react";
 import prisma from "@/lib/db";
 
-export async function getPublicWorkPrograms({ departmentSlug }: { departmentSlug?: string } = {}) {
+export const getPublicWorkPrograms = cache(async function getPublicWorkPrograms({
+  departmentSlug,
+}: { departmentSlug?: string } = {}) {
   const whereClause: {
     status: string;
     departemen?: { slug: string };
@@ -15,8 +18,22 @@ export async function getPublicWorkPrograms({ departmentSlug }: { departmentSlug
   try {
     const programs = await prisma.tProker.findMany({
       where: whereClause,
-      include: {
-        departemen: true,
+      select: {
+        idProker: true,
+        namaProker: true,
+        slug: true,
+        deskripsi: true,
+        status: true,
+        fotoCover: true,
+        fotoDokumentasi: true,
+        departemen: {
+          select: {
+            idDepartemen: true,
+            namaDepartemen: true,
+            slug: true,
+            singkatan: true,
+          },
+        },
       },
       orderBy: { urutan: "asc" },
     });
@@ -45,14 +62,28 @@ export async function getPublicWorkPrograms({ departmentSlug }: { departmentSlug
     console.warn("Notice: failed to load T_Proker:", err);
     return [];
   }
-}
+});
 
-export async function getPublicWorkProgramBySlug(slug: string) {
+export const getPublicWorkProgramBySlug = cache(async function getPublicWorkProgramBySlug(slug: string) {
   try {
     const p = await prisma.tProker.findFirst({
       where: { slug, status: "published" },
-      include: {
-        departemen: true,
+      select: {
+        idProker: true,
+        namaProker: true,
+        slug: true,
+        deskripsi: true,
+        status: true,
+        fotoCover: true,
+        fotoDokumentasi: true,
+        departemen: {
+          select: {
+            idDepartemen: true,
+            namaDepartemen: true,
+            slug: true,
+            singkatan: true,
+          },
+        },
       },
     });
 
@@ -84,4 +115,4 @@ export async function getPublicWorkProgramBySlug(slug: string) {
     console.error("Gagal mengambil program kerja:", err);
     return null;
   }
-}
+});

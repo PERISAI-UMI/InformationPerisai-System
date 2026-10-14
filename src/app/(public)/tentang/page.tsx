@@ -1,7 +1,16 @@
 import { getPublicActiveMembers } from "@/features/members/queries.public";
 import { getPublicSettings } from "@/features/settings/queries.public";
-import { OrganogramChart } from "@/features/members/components/OrganogramChart";
+import dynamic from "next/dynamic";
 import { AboutNavTabs } from "@/features/about/components/AboutNavTabs";
+
+const OrganogramChart = dynamic(
+  () => import("@/features/members/components/OrganogramChart").then((mod) => mod.OrganogramChart),
+  {
+    loading: () => (
+      <div className="h-96 w-full animate-pulse rounded-3xl border border-[#FFB22C]/20 bg-zinc-900/60" />
+    ),
+  }
+);
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";

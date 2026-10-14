@@ -1,6 +1,7 @@
+import { cache } from "react";
 import prisma from "@/lib/db";
 
-export async function getPublicGallery({ page = 1, pageSize = 12 } = {}) {
+export const getPublicGallery = cache(async function getPublicGallery({ page = 1, pageSize = 12 } = {}) {
   const skip = (page - 1) * pageSize;
 
   try {
@@ -9,6 +10,13 @@ export async function getPublicGallery({ page = 1, pageSize = 12 } = {}) {
         orderBy: { createdAt: "desc" },
         skip,
         take: pageSize,
+        select: {
+          idMedia: true,
+          url: true,
+          kunciPenyimpanan: true,
+          namaBerkas: true,
+          altText: true,
+        },
       }),
       prisma.tMedia.count(),
     ]);
@@ -37,4 +45,4 @@ export async function getPublicGallery({ page = 1, pageSize = 12 } = {}) {
       totalPages: 1,
     };
   }
-}
+});

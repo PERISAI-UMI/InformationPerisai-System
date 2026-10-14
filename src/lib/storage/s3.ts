@@ -115,7 +115,7 @@ export class S3StorageDriver {
       Key: key,
       Body: body,
       ContentType: mimeType || "application/octet-stream",
-      // Semua objek bersifat publik-baca (sesuai konfigurasi bucket R2 publik)
+      CacheControl: "public, max-age=31536000, immutable",
     };
 
     await this.client.send(new PutObjectCommand(params));

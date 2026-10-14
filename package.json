@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build --webpack",
-    "build:worker": "prisma generate && open-next build",
+    "build:worker": "npm run build && opennextjs-cloudflare build --skipNextBuild",
     "deploy": "npm run build:worker && wrangler deploy",
     "start": "next start",
     "typecheck": "tsc --noEmit",
@@ -23,6 +23,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@types/sanitize-html": "^2.16.2",
     "better-sqlite3": "^13.0.3",
+    "cloudflare": "^4.4.1",
     "next": "^16.3.8",
     "prisma": "^7.10.0",
     "react": "19.2.8",

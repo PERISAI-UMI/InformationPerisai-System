@@ -1,3 +1,4 @@
+import { cache } from "react";
 import prisma from "@/lib/db";
 
 export interface GetPublishedPostsParams {
@@ -8,7 +9,7 @@ export interface GetPublishedPostsParams {
   isFeatured?: boolean;
 }
 
-export async function getPublishedPosts({
+export const getPublishedPosts = cache(async function getPublishedPosts({
   page = 1,
   pageSize = 9,
   category,
@@ -50,8 +51,22 @@ export async function getPublishedPosts({
         ],
         skip,
         take: pageSize,
-        include: {
-          departemen: true,
+        select: {
+          idBerita: true,
+          judul: true,
+          slug: true,
+          kategori: true,
+          ringkasan: true,
+          fotoCover: true,
+          status: true,
+          tanggalPublish: true,
+          isFeatured: true,
+          departemen: {
+            select: {
+              idDepartemen: true,
+              namaDepartemen: true,
+            },
+          },
         },
       }),
       prisma.tBerita.count({ where }),
@@ -78,14 +93,14 @@ export async function getPublishedPosts({
       slug: p.slug,
       category: p.kategori || "Berita",
       excerpt: p.ringkasan,
-      content: p.konten,
+      content: p.ringkasan, // Menggunakan ringkasan untuk listing untuk menghemat transfer data
       coverImageUrl: p.fotoCover || "/og-default.jpg",
       status: p.status,
       publishedAt: p.tanggalPublish ? new Date(p.tanggalPublish * 1000).toISOString() : null,
       isFeatured: Boolean(p.isFeatured),
       department: p.departemen ? { id: String(p.departemen.idDepartemen), name: p.departemen.namaDepartemen } : null,
       author: { name: p.departemen?.namaDepartemen || "Pengurus PERISAI UMI" },
-      readTime: Math.max(2, Math.ceil((p.konten ? p.konten.split(/\s+/).length : 200) / 180)),
+      readTime: Math.max(2, Math.ceil((p.ringkasan ? p.ringkasan.split(/\s+/).length : 60) / 40)),
     }));
 
     return {
@@ -107,9 +122,9 @@ export async function getPublishedPosts({
       categories: [{ name: "Semua", count: 0 }],
     };
   }
-}
+});
 
-export async function getPublishedPostBySlug(slug: string) {
+export const getPublishedPostBySlug = cache(async function getPublishedPostBySlug(slug: string) {
   try {
     const p = await prisma.tBerita.findFirst({
       where: {
@@ -123,7 +138,7 @@ export async function getPublishedPostBySlug(slug: string) {
 
     if (!p) return null;
 
-    // Dapatkan berita terkait
+    // Dapatkan berita terkait dengan select hemat kolom
     const rawRelated = await prisma.tBerita.findMany({
       where: {
         status: "published",
@@ -132,7 +147,21 @@ export async function getPublishedPostBySlug(slug: string) {
       },
       take: 3,
       orderBy: { tanggalPublish: "desc" },
-      include: { departemen: true },
+      select: {
+        idBerita: true,
+        judul: true,
+        slug: true,
+        kategori: true,
+        ringkasan: true,
+        fotoCover: true,
+        tanggalPublish: true,
+        departemen: {
+          select: {
+            idDepartemen: true,
+            namaDepartemen: true,
+          },
+        },
+      },
     });
 
     const relatedPosts = rawRelated.map((rp) => ({
@@ -145,7 +174,7 @@ export async function getPublishedPostBySlug(slug: string) {
       publishedAt: rp.tanggalPublish ? new Date(rp.tanggalPublish * 1000).toISOString() : null,
       department: rp.departemen ? { id: String(rp.departemen.idDepartemen), name: rp.departemen.namaDepartemen } : null,
       author: { name: rp.departemen?.namaDepartemen || "Pengurus PERISAI UMI" },
-      readTime: Math.max(2, Math.ceil((rp.konten ? rp.konten.split(/\s+/).length : 200) / 180)),
+      readTime: Math.max(2, Math.ceil((rp.ringkasan ? rp.ringkasan.split(/\s+/).length : 60) / 40)),
     }));
 
     return {
@@ -171,4 +200,4 @@ export async function getPublishedPostBySlug(slug: string) {
     console.error("Gagal mengambil berita:", err);
     return null;
   }
-}
+});

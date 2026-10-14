@@ -1,8 +1,14 @@
+import { cache } from "react";
 import prisma from "@/lib/db";
 
-export async function getPublicSettings(): Promise<Record<string, string>> {
+export const getPublicSettings = cache(async function getPublicSettings(): Promise<Record<string, string>> {
   try {
-    const settings = await prisma.tPengaturan.findMany();
+    const settings = await prisma.tPengaturan.findMany({
+      select: {
+        kunci: true,
+        nilai: true,
+      },
+    });
 
     const record: Record<string, string> = {};
     for (const s of settings) {
@@ -15,4 +21,4 @@ export async function getPublicSettings(): Promise<Record<string, string>> {
     console.error("Error fetching public settings:", err);
     return {};
   }
-}
+});

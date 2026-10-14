@@ -2,8 +2,7 @@ import { getPublishedPosts } from "@/features/posts/queries.public";
 import { ActivityExplorer } from "@/features/posts/components/ActivityExplorer";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Activity & Kabar Kegiatan — UKM PERISAI UMI",

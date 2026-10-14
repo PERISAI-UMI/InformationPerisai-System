@@ -7,8 +7,8 @@ import prisma from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// Batas ukuran file: 10 MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+// Batas ukuran file ketat: 5 MB (hemat kuota R2 storage)
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 // Tipe file yang diizinkan
 const ALLOWED_MIME_TYPES = new Set([

@@ -2,7 +2,8 @@ import React from "react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
-export const dynamic = "force-dynamic";
+// Edge Caching: 5 menit (300s) + Stale-While-Revalidate untuk melindungi kuota Turso & Cloudflare
+export const revalidate = 300;
 
 export default function PublicLayout({
   children,

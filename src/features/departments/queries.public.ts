@@ -1,13 +1,24 @@
+import { cache } from "react";
 import prisma from "@/lib/db";
 
-export async function getPublicDepartments() {
+export const getPublicDepartments = cache(async function getPublicDepartments() {
   try {
     const depts = await prisma.mDepartemen.findMany({
       where: { isActive: 1 },
       orderBy: { urutan: "asc" },
-      include: {
+      select: {
+        idDepartemen: true,
+        namaDepartemen: true,
+        slug: true,
+        deskripsiSingkat: true,
+        tupoksiUtama: true,
+        visi: true,
+        misi: true,
+        isActive: true,
+        urutan: true,
         proker: {
           where: { status: "published" },
+          select: { idProker: true },
         },
         kepengurusan: {
           where: { status: "aktif" },
@@ -35,23 +46,48 @@ export async function getPublicDepartments() {
     console.warn("Notice: failed to load departments:", err);
     return [];
   }
-}
+});
 
-export async function getPublicDepartmentBySlug(slug: string) {
+export const getPublicDepartmentBySlug = cache(async function getPublicDepartmentBySlug(slug: string) {
   try {
     const dept = await prisma.mDepartemen.findFirst({
       where: { slug, isActive: 1 },
-      include: {
+      select: {
+        idDepartemen: true,
+        namaDepartemen: true,
+        slug: true,
+        deskripsiSingkat: true,
+        tupoksiUtama: true,
+        visi: true,
+        misi: true,
         kepengurusan: {
           where: { status: "aktif" },
-          include: {
-            anggota: true,
-            jabatan: true,
+          select: {
+            anggota: {
+              select: {
+                idPerisai: true,
+                namaLengkap: true,
+                linkedin: true,
+                instagram: true,
+                fotoUrl: true,
+              },
+            },
+            jabatan: {
+              select: {
+                namaJabatan: true,
+              },
+            },
           },
           orderBy: { urutan: "asc" },
         },
         proker: {
           where: { status: "published" },
+          select: {
+            idProker: true,
+            namaProker: true,
+            slug: true,
+            deskripsi: true,
+          },
           orderBy: { urutan: "asc" },
         },
       },
@@ -87,4 +123,4 @@ export async function getPublicDepartmentBySlug(slug: string) {
     console.error("Gagal mengambil departemen:", err);
     return null;
   }
-}
+});

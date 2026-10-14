@@ -1,6 +1,7 @@
+import { cache } from "react";
 import prisma from "@/lib/db";
 
-export async function getPublicActiveMembers() {
+export const getPublicActiveMembers = cache(async function getPublicActiveMembers() {
   try {
     // Eksekusi query Pembina dan Fungsionaris secara paralel untuk memangkas latensi SSR
     const [pembinaList, kepengurusan] = await Promise.all([
@@ -8,6 +9,16 @@ export async function getPublicActiveMembers() {
         .findMany({
           where: { isActive: 1 },
           orderBy: { urutan: "asc" },
+          select: {
+            idPembina: true,
+            nama: true,
+            gelar: true,
+            jabatan: true,
+            kategori: true,
+            fotoUrl: true,
+            linkedin: true,
+            urutan: true,
+          },
         })
         .catch((err) => {
           console.warn("Notice: failed to load M_Pembina:", err);
@@ -93,5 +104,4 @@ export async function getPublicActiveMembers() {
     console.error("Gagal memuat anggota publik:", err);
     return [];
   }
-}
-
+});
