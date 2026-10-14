@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "build:worker": "prisma generate && open-next build",
+    "deploy": "npm run build:worker && wrangler deploy",
     "start": "next start",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "test": "npx tsx --test tests/*.test.ts",
     "test:connections": "npx tsx scripts/test-connections.ts"

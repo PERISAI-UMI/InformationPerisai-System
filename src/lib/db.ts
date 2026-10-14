@@ -1,63 +1,83 @@
+/**
+ * db.ts — Prisma Client Singleton (Edge-safe)
+ *
+ * Strategi inisialisasi:
+ * - PRODUCTION / EDGE (Cloudflare Workers): @prisma/adapter-libsql (pure web, zero native C++)
+ *   Turso URL & token dibaca dari environment variables (wrangler secrets).
+ * - DEVELOPMENT / LOCAL: Gunakan LibSQL jika TURSO_DATABASE_URL tersedia,
+ *   atau better-sqlite3 secara dinamis di dalam blok else (dev only).
+ *
+ * ⚠️ TIDAK ADA credentials yang di-hardcode di file ini.
+ */
+
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
-import { createClient } from "@libsql/client/web";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const DEFAULT_TURSO_URL = "libsql://perisai-dev-psdm.aws-ap-northeast-1.turso.io";
-const DEFAULT_TURSO_TOKEN = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTE5MDg5OTcsImlkIjoiMDFhMTE3OGQtMGIwMS03NTc4LTgzMjctYmQ3MmExMGZkYzU0Iiwia2lkIjoiYnhxbm5VQ1Vrd1U0ZzRFakJoc0xxOXo0ZHZrdlF5NXJNbHdKVGIyb0NtZyIsInJpZCI6IjEzMGZkNzhmLTAyNWMtNDQzZi04ODUxLWQ0YzkyMTFiZWNkNyJ9.FkP5L7RA1D8BHOyOM1T4qy4Lgvg119HpUa83eBX0HqXCZg_KcPzbssE3Ez7thpEFdefEmgBrkl5oQDSOzCfHDQ";
-
 function createPrismaClient(): PrismaClient {
-  let url =
+  const isProduction = process.env.NODE_ENV === "production";
+  const tursoUrl =
     process.env.TURSO_DATABASE_URL ||
-    (process.env.DATABASE_URL?.startsWith("libsql://") ? process.env.DATABASE_URL : "");
-  let authToken = process.env.TURSO_AUTH_TOKEN;
+    (process.env.DATABASE_URL?.startsWith("libsql://")
+      ? process.env.DATABASE_URL
+      : undefined);
 
-  // Pastikan URL selalu menggunakan protokol yang didukung oleh @libsql/client/web
-  if (!url || (!url.startsWith("libsql:") && !url.startsWith("https:") && !url.startsWith("http:"))) {
-    url = DEFAULT_TURSO_URL;
-    authToken = authToken || DEFAULT_TURSO_TOKEN;
-  }
-
-  // Konfigurasi @libsql/client/web untuk Cloudflare Edge Runtime
-  createClient({
-    url,
-    authToken: authToken || undefined,
-  });
-
-  // Bind adapter PrismaLibSql
-  const adapter = new PrismaLibSql({
-    url,
-    authToken: authToken || undefined,
-  });
-
-  return new PrismaClient({
-    adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
-}
-
-function getPrisma(): PrismaClient {
-  if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = createPrismaClient();
-  }
-  return globalForPrisma.prisma;
-}
-
-// Gunakan Proxy agar inisialisasi dilakukan secara lazy (tidak crash saat worker bootstrap)
-export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
-  get(_target, prop) {
-    const client = getPrisma();
-    const val = (client as any)[prop];
-    if (typeof val === "function") {
-      return val.bind(client);
+  // Jika di production atau ada URL Turso, gunakan adapter LibSQL Web (Edge-safe)
+  if (isProduction || tursoUrl) {
+    if (!tursoUrl && isProduction) {
+      throw new Error(
+        "[db] TURSO_DATABASE_URL wajib dikonfigurasi pada environment production / Cloudflare Workers."
+      );
     }
-    return val;
-  },
-});
+
+    const adapter = new PrismaLibSql({
+      url: tursoUrl || "libsql://perisai-dev-psdm.aws-ap-northeast-1.turso.io",
+      authToken: process.env.TURSO_AUTH_TOKEN || undefined,
+    });
+
+    return new PrismaClient({
+      adapter,
+      log: isProduction ? ["error"] : ["error", "warn"],
+    });
+  }
+
+  // Development / Local SQLite: dynamic require agar TIDAK di-bundle ke Cloudflare Workers
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+    const dbPath = (process.env.DATABASE_URL || "file:./psdm-db.db").replace(
+      /^file:/,
+      ""
+    );
+    const adapter = new PrismaBetterSqlite3({ url: dbPath });
+
+    return new PrismaClient({
+      adapter,
+      log: ["error", "warn"],
+    });
+  } catch (error) {
+    console.warn(
+      "[db] Fallback better-sqlite3 gagal di lingkungan lokal, mencoba LibSQL adapter:",
+      error
+    );
+    const adapter = new PrismaLibSql({
+      url: process.env.DATABASE_URL || "file:./psdm-db.db",
+    });
+    return new PrismaClient({ adapter, log: ["error", "warn"] });
+  }
+}
+
+export const prisma: PrismaClient =
+  globalForPrisma.prisma ??
+  (function () {
+    const client = createPrismaClient();
+    if (process.env.NODE_ENV !== "production") {
+      globalForPrisma.prisma = client;
+    }
+    return client;
+  })();
 
 export default prisma;
-
-

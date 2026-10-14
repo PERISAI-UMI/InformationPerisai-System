@@ -49,3 +49,11 @@ next-env.d.ts
 *.db-*
 *.backup.db
 data/
+
+# Cloudflare / Wrangler — jangan commit file ini:
+# wrangler.toml atau .dev.vars berisi overrides lokal yang mungkin mengandung secrets
+.dev.vars
+wrangler.jsonc.bak
+wrangler.toml.bak
+# Prisma generated client (di-generate saat build)
+/node_modules/.prisma/

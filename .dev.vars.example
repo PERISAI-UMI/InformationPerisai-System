@@ -1,0 +1,29 @@
+# .dev.vars — Wrangler Local Development Secrets
+# Berkas ini dibaca oleh `wrangler dev` sebagai secrets lokal.
+# File ini TIDAK boleh di-commit (sudah ada di .gitignore).
+# Salin dari .env.example: cp .env.example .dev.vars (lalu hapus komentar #)
+#
+# Dokumentasi: https://developers.cloudflare.com/workers/configuration/secrets/#local-development
+
+# DATABASE
+TURSO_DATABASE_URL=libsql://<NAMA_DATABASE>-<ORG>.turso.io
+TURSO_AUTH_TOKEN=your-turso-jwt-token-here
+
+# STORAGE (R2)
+R2_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+R2_BUCKET=perisai-media
+R2_ACCESS_KEY_ID=your-r2-access-key-id
+R2_SECRET_ACCESS_KEY=your-r2-secret-access-key
+R2_PUBLIC_URL=https://media.perisai-umi.org
+
+# AUTH
+AUTH_SECRET=ganti-dengan-kunci-acak-minimal-32-karakter
+
+# APP
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# CLOUDFLARE (opsional)
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-turnstile-site-key
+CLOUDFLARE_TURNSTILE_SECRET_KEY=your-turnstile-secret-key
+CLOUDFLARE_ZONE_ID=your-cloudflare-zone-id
+CLOUDFLARE_API_TOKEN=your-cloudflare-api-token

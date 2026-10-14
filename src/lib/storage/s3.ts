@@ -1,65 +1,104 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+/**
+ * storage/s3.ts — Cloudflare R2 / AWS S3 Storage Driver (Edge-safe)
+ *
+ * Menggunakan @aws-sdk/client-s3 yang kompatibel dengan Web APIs standard.
+ * Operasi upload menggunakan Uint8Array/Buffer (bukan Node.js Readable streams)
+ * sehingga berjalan di Cloudflare Workers.
+ *
+ * Env vars yang dibaca (R2_* lebih diutamakan, S3_* sebagai alias):
+ *   R2_ENDPOINT           / S3_ENDPOINT
+ *   R2_BUCKET             / S3_BUCKET
+ *   R2_ACCESS_KEY_ID      / S3_ACCESS_KEY_ID      / AWS_ACCESS_KEY_ID
+ *   R2_SECRET_ACCESS_KEY  / S3_SECRET_ACCESS_KEY  / AWS_SECRET_ACCESS_KEY
+ *   R2_PUBLIC_URL         / S3_PUBLIC_URL
+ *   R2_REGION             / S3_REGION             / AWS_REGION  (default: "auto")
+ */
+
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  type PutObjectCommandInput,
+} from "@aws-sdk/client-s3";
 
 export class S3StorageDriver {
   private client: S3Client | null = null;
   private endpoint: string;
   private bucket: string;
   private publicUrl: string;
+  private region: string;
 
   constructor() {
     this.endpoint =
-      process.env.R2_ENDPOINT ||
-      process.env.S3_ENDPOINT ||
-      "";
+      process.env.R2_ENDPOINT || process.env.S3_ENDPOINT || "";
+
     this.bucket =
       process.env.R2_BUCKET ||
       process.env.R2_BUCKET_NAME ||
       process.env.S3_BUCKET ||
       "";
+
     this.publicUrl =
-      process.env.R2_PUBLIC_URL ||
-      process.env.S3_PUBLIC_URL ||
-      "";
+      process.env.R2_PUBLIC_URL || process.env.S3_PUBLIC_URL || "";
+
+    this.region =
+      process.env.R2_REGION ||
+      process.env.S3_REGION ||
+      process.env.AWS_REGION ||
+      "auto";
 
     const accessKeyId =
       process.env.R2_ACCESS_KEY_ID ||
       process.env.S3_ACCESS_KEY_ID ||
       process.env.AWS_ACCESS_KEY_ID ||
       "";
+
     const secretAccessKey =
       process.env.R2_SECRET_ACCESS_KEY ||
       process.env.S3_SECRET_ACCESS_KEY ||
       process.env.AWS_SECRET_ACCESS_KEY ||
       "";
-    const region =
-      process.env.R2_REGION ||
-      process.env.S3_REGION ||
-      process.env.AWS_REGION ||
-      "auto";
 
     if (accessKeyId && secretAccessKey && this.bucket) {
       this.client = new S3Client({
-        region,
-        endpoint: this.endpoint ? this.endpoint : undefined,
+        region: this.region,
+        endpoint: this.endpoint || undefined,
         credentials: {
           accessKeyId,
           secretAccessKey,
         },
+        // Cloudflare R2 memerlukan path-style URL
+        forcePathStyle: false,
       });
     }
   }
 
+  /**
+   * Apakah driver siap digunakan (kredensial tersedia).
+   */
+  get isConfigured(): boolean {
+    return this.client !== null;
+  }
+
+  /**
+   * Upload berkas ke R2/S3.
+   * @param file     - Buffer atau Uint8Array (Web-standard, kompatibel dengan edge)
+   * @param filename - Nama berkas yang sudah disanitasi
+   * @param mimeType - MIME type berkas
+   */
   async upload(
     file: Buffer | Uint8Array,
     filename: string,
     mimeType?: string
   ): Promise<{ url: string; path: string }> {
-    const key = `uploads/${Date.now()}-${filename}`;
+    const key = `uploads/${filename}`;
 
     if (!this.client || !this.bucket) {
+      // Fallback aman jika kredensial belum dikonfigurasi
       console.warn(
-        "⚠️ Kredensial Cloudflare R2 / S3 belum lengkap di env (R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET). " +
-        "Penyimpanan menggunakan URL representatif fallback."
+        "[storage/s3] Kredensial R2/S3 belum dikonfigurasi " +
+          "(R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET). " +
+          "Menggunakan URL representatif sebagai fallback."
       );
       const fallbackUrl = this.publicUrl
         ? `${this.publicUrl.replace(/\/$/, "")}/${key}`
@@ -67,50 +106,33 @@ export class S3StorageDriver {
       return { url: fallbackUrl, path: key };
     }
 
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: file,
-        ContentType: mimeType || "application/octet-stream",
-      })
-    );
+    // Konversi ke Uint8Array untuk kompatibilitas Web Streams di edge
+    const body: Uint8Array =
+      file instanceof Buffer ? new Uint8Array(file) : file;
 
-    let url: string;
-    if (this.publicUrl) {
-      url = `${this.publicUrl.replace(/\/$/, "")}/${key}`;
-    } else if (this.endpoint) {
-      url = `${this.endpoint.replace(/\/$/, "")}/${this.bucket}/${key}`;
-    } else {
-      url = `/${key}`;
-    }
-
-    return {
-      url,
-      path: key,
+    const params: PutObjectCommandInput = {
+      Bucket: this.bucket,
+      Key: key,
+      Body: body,
+      ContentType: mimeType || "application/octet-stream",
+      // Semua objek bersifat publik-baca (sesuai konfigurasi bucket R2 publik)
     };
+
+    await this.client.send(new PutObjectCommand(params));
+
+    const url = this.buildPublicUrl(key);
+    return { url, path: key };
   }
 
+  /**
+   * Hapus berkas dari R2/S3 berdasarkan storage key atau URL publik.
+   */
   async delete(keyOrUrl: string): Promise<boolean> {
     if (!this.client || !this.bucket) {
       return false;
     }
 
-    // Normalisasi kunci penyimpanan: jika input berupa URL penuh atau diawali slash, bersihkan
-    let cleanKey = keyOrUrl;
-    if (cleanKey.startsWith("http://") || cleanKey.startsWith("https://")) {
-      try {
-        const parsed = new URL(cleanKey);
-        cleanKey = parsed.pathname.replace(/^\//, "");
-        if (cleanKey.startsWith(`${this.bucket}/`)) {
-          cleanKey = cleanKey.replace(`${this.bucket}/`, "");
-        }
-      } catch {
-        cleanKey = cleanKey.replace(/^https?:\/\/[^/]+\//, "");
-      }
-    } else {
-      cleanKey = cleanKey.replace(/^\//, "");
-    }
+    const cleanKey = this.normalizeKey(keyOrUrl);
 
     try {
       await this.client.send(
@@ -121,9 +143,49 @@ export class S3StorageDriver {
       );
       return true;
     } catch (error) {
-      console.error(`Gagal menghapus berkas '${cleanKey}' dari Cloudflare R2 / S3:`, error);
+      console.error(
+        `[storage/s3] Gagal menghapus berkas '${cleanKey}':`,
+        error
+      );
       return false;
     }
   }
-}
 
+  /** Bangun URL publik untuk sebuah storage key */
+  private buildPublicUrl(key: string): string {
+    if (this.publicUrl) {
+      return `${this.publicUrl.replace(/\/$/, "")}/${key}`;
+    }
+    if (this.endpoint) {
+      return `${this.endpoint.replace(/\/$/, "")}/${this.bucket}/${key}`;
+    }
+    return `/${key}`;
+  }
+
+  /**
+   * Normalisasi key dari berbagai format:
+   * - URL penuh (https://...) → ekstrak path
+   * - Path dengan leading slash → hapus slash
+   * - Path dengan prefix bucket → hapus prefix
+   */
+  private normalizeKey(input: string): string {
+    let key = input;
+
+    if (key.startsWith("http://") || key.startsWith("https://")) {
+      try {
+        const parsed = new URL(key);
+        key = parsed.pathname.replace(/^\//, "");
+        // Hapus prefix bucket jika ada (mis. "bucket-name/uploads/...")
+        if (this.bucket && key.startsWith(`${this.bucket}/`)) {
+          key = key.slice(this.bucket.length + 1);
+        }
+      } catch {
+        key = key.replace(/^https?:\/\/[^/]+\//, "");
+      }
+    } else {
+      key = key.replace(/^\//, "");
+    }
+
+    return key;
+  }
+}

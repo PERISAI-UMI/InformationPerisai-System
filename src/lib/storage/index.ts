@@ -1,5 +1,14 @@
-import { LocalStorageDriver } from "./local";
+/**
+ * storage/index.ts — Storage Driver Factory (Edge-safe)
+ *
+ * Memilih driver penyimpanan berdasarkan:
+ * - STORAGE_DRIVER env var: "r2" | "s3" | "local"
+ * - Di edge runtime (Cloudflare Workers), selalu gunakan S3/R2,
+ *   karena filesystem lokal tidak tersedia.
+ */
+
 import { S3StorageDriver } from "./s3";
+import { LocalStorageDriver } from "./local";
 
 export interface StorageDriver {
   upload(
@@ -10,13 +19,25 @@ export interface StorageDriver {
   delete(path: string): Promise<boolean>;
 }
 
+/** Apakah runtime saat ini adalah Cloudflare Workers / edge */
+function isEdgeRuntime(): boolean {
+  return (
+    process.env.NEXT_RUNTIME === "edge" ||
+    (process.env.NODE_ENV === "production" &&
+      process.env.FORCE_NODE_IMAGES !== "true")
+  );
+}
+
 export function getStorageDriver(): StorageDriver {
-  const driver = (process.env.STORAGE_DRIVER || "").toLowerCase();
-  if (driver === "local") {
+  const driver = (process.env.STORAGE_DRIVER || "r2").toLowerCase();
+
+  // Di edge runtime, local filesystem tidak tersedia — paksa ke S3/R2
+  if (driver === "local" && !isEdgeRuntime()) {
     return new LocalStorageDriver();
   }
+
+  // Default: S3/R2 (untuk edge dan production)
   return new S3StorageDriver();
 }
 
 export const storage = getStorageDriver();
-
