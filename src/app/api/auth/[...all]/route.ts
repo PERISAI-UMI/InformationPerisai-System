@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { SESSION_COOKIE_NAME, verifyPassword } from "@/lib/auth";
+import {
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+  createSessionRecord,
+  destroySessionRecord,
+  verifyPassword,
+} from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +16,20 @@ export async function POST(request: Request) {
   const action = url.pathname.split("/").pop();
 
   if (action === "logout") {
+    try {
+      const cookieHeader = request.headers.get("cookie") || "";
+      const match = cookieHeader.match(
+        new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`)
+      );
+      const token = match ? decodeURIComponent(match[1].trim()) : null;
+
+      if (token) {
+        await destroySessionRecord(token);
+      }
+    } catch (err) {
+      console.warn("[auth] Gagal memproses logout pada DB:", err);
+    }
+
     const response = NextResponse.redirect(new URL("/admin/login", request.url));
     response.cookies.delete(SESSION_COOKIE_NAME);
     return response;
@@ -39,7 +59,9 @@ export async function POST(request: Request) {
       }
 
       const body = await request.json();
-      const identifier = String(body.email || body.identifier || body.username || "").trim();
+      const identifier = String(
+        body.email || body.identifier || body.username || ""
+      ).trim();
       const password = String(body.password || "");
       const cleanPrn = identifier.replace(/\s+/g, "").toUpperCase();
 
@@ -87,7 +109,15 @@ export async function POST(request: Request) {
           where: { idAkun: anggota.akun.idAkun },
           data: { lastLogin: now },
         })
-        .catch(() => {}); // Non-blocking agar tidak menunda respons
+        .catch(() => {});
+
+      // 4. Generate token ber-entropi tinggi dan simpan sesi ke T_Sesi
+      const userAgent = request.headers.get("user-agent") || null;
+      const { token } = await createSessionRecord({
+        idAkun: anggota.akun.idAkun,
+        ipAddress: clientIp,
+        userAgent,
+      });
 
       const response = NextResponse.json({
         success: true,
@@ -101,19 +131,27 @@ export async function POST(request: Request) {
 
       response.cookies.set({
         name: SESSION_COOKIE_NAME,
-        value: anggota.idPerisai,
+        value: token,
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: 7 * 24 * 60 * 60, // 7 hari
+        maxAge: SESSION_MAX_AGE_SECONDS,
       });
 
       return response;
-    } catch {
-      return NextResponse.json({ error: "Terjadi kesalahan saat otentikasi." }, { status: 500 });
+    } catch (err) {
+      console.error("[auth] Terjadi kesalahan saat autentikasi:", err);
+      return NextResponse.json(
+        { error: "Terjadi kesalahan saat otentikasi." },
+        { status: 500 }
+      );
     }
   }
 
-  return NextResponse.json({ error: "Endpoint tidak ditemukan" }, { status: 404 });
+  return NextResponse.json(
+    { error: "Endpoint tidak ditemukan" },
+    { status: 404 }
+  );
 }
+

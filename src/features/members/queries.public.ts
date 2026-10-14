@@ -1,14 +1,53 @@
 import prisma from "@/lib/db";
 
 export async function getPublicActiveMembers() {
-  // 1. Ambil dewan pembina dari M_Pembina
-  let pembinaMembers: any[] = [];
   try {
-    const pembinaList = await prisma.mPembina.findMany({
-      where: { isActive: 1 },
-      orderBy: { urutan: "asc" },
-    });
-    pembinaMembers = pembinaList.map((p, idx) => ({
+    // Eksekusi query Pembina dan Fungsionaris secara paralel untuk memangkas latensi SSR
+    const [pembinaList, kepengurusan] = await Promise.all([
+      prisma.mPembina
+        .findMany({
+          where: { isActive: 1 },
+          orderBy: { urutan: "asc" },
+        })
+        .catch((err) => {
+          console.warn("Notice: failed to load M_Pembina:", err);
+          return [];
+        }),
+
+      prisma
+        .$queryRaw<
+          Array<{
+            id_perisai: string;
+            nama_lengkap: string;
+            nama_jabatan: string;
+            foto_url: string | null;
+            linkedin: string | null;
+            instagram: string | null;
+            singkatan: string | null;
+            nama_dept: string | null;
+            slug_dept: string | null;
+            level_hirarki: number;
+            urutan: number;
+          }>
+        >`
+          SELECT 
+            a.id_perisai, a.nama_lengkap, j.nama_jabatan, a.foto_url, a.linkedin, a.instagram,
+            d.singkatan, d.nama_departemen as nama_dept, d.slug as slug_dept, j.level_hirarki, k.urutan
+          FROM T_Kepengurusan k
+          JOIN M_Anggota a ON k.id_perisai = a.id_perisai
+          JOIN M_Jabatan j ON k.id_jabatan = j.id_jabatan
+          LEFT JOIN M_Departemen d ON k.id_departemen = d.id_departemen
+          JOIN M_Periode p ON k.id_periode = p.id_periode
+          WHERE p.is_active = 1
+          ORDER BY k.urutan ASC
+        `
+        .catch((err) => {
+          console.error("Gagal mengambil fungsionaris aktif:", err);
+          return [];
+        }),
+    ]);
+
+    const pembinaMembers = pembinaList.map((p, idx) => ({
       id: String(p.idPembina),
       name: p.nama + (p.gelar ? `, ${p.gelar}` : ""),
       position: p.jabatan,
@@ -18,37 +57,6 @@ export async function getPublicActiveMembers() {
       department: null,
       orderIndex: p.urutan || idx,
     }));
-  } catch (err) {
-    console.warn("Notice: failed to load M_Pembina:", err);
-    pembinaMembers = [];
-  }
-
-  // 2. Ambil fungsionaris aktif dari T_Kepengurusan & M_Anggota
-  try {
-    const kepengurusan = await prisma.$queryRaw<Array<{
-      id_perisai: string;
-      nama_lengkap: string;
-      nama_jabatan: string;
-      foto_url: string | null;
-      linkedin: string | null;
-      instagram: string | null;
-      singkatan: string | null;
-      nama_dept: string | null;
-      slug_dept: string | null;
-      level_hirarki: number;
-      urutan: number;
-    }>>`
-      SELECT 
-        a.id_perisai, a.nama_lengkap, j.nama_jabatan, a.foto_url, a.linkedin, a.instagram,
-        d.singkatan, d.nama_departemen as nama_dept, d.slug as slug_dept, j.level_hirarki, k.urutan
-      FROM T_Kepengurusan k
-      JOIN M_Anggota a ON k.id_perisai = a.id_perisai
-      JOIN M_Jabatan j ON k.id_jabatan = j.id_jabatan
-      LEFT JOIN M_Departemen d ON k.id_departemen = d.id_departemen
-      JOIN M_Periode p ON k.id_periode = p.id_periode
-      WHERE p.is_active = 1
-      ORDER BY k.urutan ASC
-    `;
 
     if (kepengurusan && kepengurusan.length > 0) {
       const pengurusMembers = kepengurusan.map((k) => {
@@ -60,7 +68,9 @@ export async function getPublicActiveMembers() {
         }
 
         const deptName = k.nama_dept || k.singkatan || "";
-        const posTitle = k.nama_jabatan + (k.singkatan && k.singkatan !== "BPH" ? ` ${k.singkatan}` : "");
+        const posTitle =
+          k.nama_jabatan +
+          (k.singkatan && k.singkatan !== "BPH" ? ` ${k.singkatan}` : "");
 
         return {
           id: k.id_perisai,
@@ -77,9 +87,11 @@ export async function getPublicActiveMembers() {
 
       return [...pembinaMembers, ...pengurusMembers];
     }
-  } catch (err) {
-    console.error("Gagal mengambil fungsionaris aktif:", err);
-  }
 
-  return pembinaMembers;
+    return pembinaMembers;
+  } catch (err) {
+    console.error("Gagal memuat anggota publik:", err);
+    return [];
+  }
 }
+

@@ -771,32 +771,33 @@ npm run deploy            # build:worker + wrangler deploy
   4. File `.dev.vars`, `wrangler.jsonc.bak`, dan state file wrangler telah diamankan di `.gitignore`.
 
 #### 2. Session Cookie Menyimpan Identifier Langsung (Insecure Session Design)
-> **Severity: HIGH** (Pending Refactor)
+> **Status: ✅ RESOLVED (14 Oktober 2026)**  
+> **Original Severity: HIGH**
 
-Cookie `perisai_session_id` menyimpan `id_perisai` (UUID anggota) secara langsung tanpa cryptographic signature. Seorang attacker yang mengetahui `id_perisai` seorang admin berpotensi memalsukan cookie. Model `T_Sesi` tersedia di skema namun belum dihubungkan ke `getSession()`.
-
-**Rekomendasi:**
-- Ganti cookie value ke opaque random token (32+ byte)
-- Aktifkan validasi lookup via tabel `T_Sesi` (verifikasi token + `expires_at` server-side)
+- **Sebelumnya**: Cookie `perisai_session_id` menyimpan `id_perisai` (UUID anggota) mentah tanpa signature dan tidak divalidasi ke tabel `T_Sesi`.
+- **Tindakan Perbaikan**:
+  1. Cookie kini menyimpan opaque token ber-entropi tinggi (32-byte / 256-bit cryptographically secure hex string via Web Crypto API).
+  2. Sesi disimpan di tabel `T_Sesi` (`id_sesi`, `id_akun`, `token`, `ip_address`, `user_agent`, `expires_at`).
+  3. `getSession()` melakukan lookup token ke `T_Sesi`, memeriksa `expires_at > now`, status akun aktif (`isActive === 1`), serta membersihkan sesi expired secara otomatis.
+  4. Logout menghapus token dari `T_Sesi` dan mengosongkan cookie.
 
 #### 3. Sanitasi HTML Tidak Memadai (XSS Risk)
-> **Severity: MEDIUM** (Pending Refactor)
+> **Status: ✅ RESOLVED (14 Oktober 2026)**  
+> **Original Severity: MEDIUM**
 
-`sanitize.ts` menggunakan regex sederhana yang tidak mencakup seluruh XSS vector modern (seperti `<svg onload>`, `<img onerror>`, inline CSS expression).
-
-**Rekomendasi:** Ganti ke library standar industri seperti `sanitize-html` atau `DOMPurify`.
+- **Sebelumnya**: `sanitize.ts` menggunakan regex sederhana yang rentan terhadap bypass XSS modern.
+- **Tindakan Perbaikan**: Mengganti implementasi ke library `sanitize-html` murni JavaScript (Edge-safe) dengan whitelist elemen artikel ketat (`h1`-`h6`, `p`, `b`, `i`, `u`, `a[href]`, `img[src|alt]`, `table`, dsb.), pembersihan otomatis semua event handler (`on*`), dan pemblokiran scheme berbahaya (`javascript:`, `data:` non-image).
 
 #### 4. Rate Limiting In-Memory Tidak Efektif di Edge
-> **Severity: MEDIUM** (Pending Refactor)
+> **Severity: MEDIUM** (Mitigasi Awal Aktif)
 
-`rate-limit.ts` menggunakan `Map` in-memory. Pada runtime multi-isolate Cloudflare Workers, state memori tidak dibagikan antar instance/region.
-
-**Rekomendasi:** Terapkan Cloudflare Rate Limiting Rules di level dashboard/CDN atau gunakan Cloudflare KV untuk distributed counter.
+`rate-limit.ts` telah dilengkapi auto-sweep dan FIFO eviction (cap 1.000 entri) untuk mencegah memory leak. Untuk rate limit terdistribusi antar isolate, disarankan mengaktifkan Cloudflare Rate Limiting Rules di Cloudflare Dashboard.
 
 #### 5. Session Expiry Tidak Divalidasi Server-side
-> **Severity: MEDIUM** (Pending Refactor)
+> **Status: ✅ RESOLVED (14 Oktober 2026)**  
+> **Original Severity: MEDIUM**
 
-`getSession()` tidak memeriksa `T_Sesi.expires_at`. Validitas session sepenuhnya bergantung pada `maxAge` cookie browser.
+Validitas masa aktif sesi kini diverifikasi langsung pada kolom `T_Sesi.expires_at` (Unix seconds) di setiap pemanggilan `getSession()`.
 
 ---
 
@@ -816,35 +817,39 @@ Cookie `perisai_session_id` menyimpan `id_perisai` (UUID anggota) secara langsun
 | **Race Condition: Settings Batch Mutation** | `src/features/settings/actions.ts` | ✅ **RESOLVED** | Migrasi loop upsert sekuensial ke `prisma.$transaction(...)` atomik. |
 | **Race Condition: Member ID Collisions** | `src/features/members/actions.ts` | ✅ **RESOLVED** | Menghilangkan random 4-digit ID rawan tabrakan, kini menggunakan ID atomik + transaksi multi-tabel. |
 | **Rate Limit Memory Leak** | `src/lib/rate-limit.ts` | ✅ **RESOLVED** | Ditambahkan auto-sweep dan FIFO eviction dengan batas maksimum 1.000 entri untuk isolat V8. |
+| **Opaque Session Token (`T_Sesi`)** | `src/lib/auth.ts` | ✅ **RESOLVED** | Token acak 32-byte diverifikasi ke tabel `T_Sesi` server-side dengan validasi expiry timestamp. |
+| **Sanitasi HTML Anti-XSS** | `src/lib/sanitize.ts` | ✅ **RESOLVED** | Library `sanitize-html` berbasis whitelist ketat, kompatibel murni dengan Cloudflare Workers Isolate. |
+| **Sinkronisasi Seeder Skema** | `prisma/seed.ts` | ✅ **RESOLVED** | Pemanggilan model telah diselaraskan ke `mPeriode` dan `tPengaturan`. |
+| **Paralelisasi SSR Latency** | `src/app/(public)/page.tsx` | ✅ **RESOLVED** | Seluruh 6 query publik dieksekusi secara paralel dalam satu round-trip `Promise.all`. |
 | **Homepage oversized** | `src/app/(public)/page.tsx` | ⚠️ Pending | Berkas 53 KB — disarankan dipecah ke sub-komponen terpisah. |
-| **T_Sesi belum aktif** | `src/lib/auth.ts` | ⚠️ Pending | Tabel ada di DB tapi validasi sesi belum memanfaatkannya. |
 
 ---
 
 ### 8.3 🚀 Roadmap Modernisasi Terkini
 
-#### Prioritas 1 — Keamanan & Deployment (Status: 90% Selesai)
+#### Prioritas 1 — Keamanan & Deployment (Status: 100% Selesai)
 - [x] **1. Bersihkan semua hardcoded credentials** di `db.ts` dan `wrangler.jsonc` *(SELESAI - 14 Okt 2026)*
 - [x] **2. Pindahkan secrets** ke Cloudflare Secrets (`wrangler secret put`) *(SELESAI - 14 Okt 2026)*
 - [x] **3. Kompatibilitas Runtime Edge**: Hilangkan native C++ & perbaiki storage stream *(SELESAI - 14 Okt 2026)*
 - [x] **4. Mitigasi Race Condition & Slug Collisions**: `generateUniqueSlug`, transaksi atomik, & random salt media *(SELESAI - 14 Okt 2026)*
 - [x] **5. Pembersihan Kode Mati (Dead-Code Pruning)**: Hapus skrip legacy Laravel, komponen tidak terpakai, dan file deploy Caddy *(SELESAI - 14 Okt 2026)*
-- [ ] **6. Refaktor sistem sesi**: Gunakan opaque random token + validasi tabel `T_Sesi`
-- [ ] **7. Ganti sanitasi HTML** ke library `sanitize-html`
+- [x] **6. Refaktor sistem sesi**: Gunakan opaque random token 32-byte + validasi tabel `T_Sesi` server-side *(SELESAI - 14 Okt 2026)*
+- [x] **7. Ganti sanitasi HTML** ke library `sanitize-html` berbasis whitelist aman *(SELESAI - 14 Okt 2026)*
 
 #### Prioritas 2 — Stabilitas & Fitur Eksternal (1-2 sprint)
 - [ ] **8. Implementasi SMTP** menggunakan Resend API atau Cloudflare Queues
 - [ ] **9. Rate limiting edge terdistribusi** via Cloudflare KV atau native CF Rate Limiting Rules
 - [x] **10. Bersihkan dependencies** tak terpakai (`pg`, `@prisma/adapter-pg`, `emnapi`) *(SELESAI - 14 Okt 2026)*
-- [ ] **11. Selaraskan `prisma/seed.ts`** dengan model skema terbaru
+- [x] **11. Selaraskan `prisma/seed.ts`** dengan model skema terbaru (`mPeriode`, `tPengaturan`) *(SELESAI - 14 Okt 2026)*
 
 #### Prioritas 3 — Refaktor & Kualitas Kode (Ongoing)
 - [x] **12. Hapus `any` casting** pada database client singleton *(SELESAI - 14 Okt 2026)*
 - [x] **13. Amankan konfigurasi lokal** (`.dev.vars`, `wrangler.jsonc.bak` di `.gitignore`) *(SELESAI - 14 Okt 2026)*
 - [ ] **14. Pecah homepage** `page.tsx` (53 KB) ke komponen modular
-- [x] **15. Lengkapi unit test coverage**: Status peluang, matriks perizinan, slug, storage driver, dan visibility *(SELESAI - 14 Okt 2026)*
+- [x] **15. Lengkapi unit test coverage**: Status peluang, matriks perizinan, slug, storage driver, sanitasi HTML, dan visibility *(SELESAI - 14 Okt 2026)*
 
 ---
 
-*Laporan audit arsitektur ini diperbarui pada 14 Oktober 2026 setelah mitigasi risiko race condition, pembersihan kode mati, pengujian unit komprehensif, dan verifikasi build Next.js.*
+*Laporan audit arsitektur ini diperbarui pada 14 Oktober 2026 setelah mitigasi keamanan autentikasi T_Sesi, sanitasi HTML Edge, perbaikan seeder, dan paralelisasi query SSR.*
+
 

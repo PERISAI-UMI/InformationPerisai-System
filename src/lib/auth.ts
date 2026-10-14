@@ -1,15 +1,13 @@
 /**
  * auth.ts — Session Management (Edge-safe)
  *
- * Menggunakan cookie-based session. Cookie berisi `id_perisai` yang
- * digunakan untuk lookup data anggota di database.
+ * Menggunakan cookie-based session dengan opaque token ber-entropi tinggi (32 bytes).
+ * Setiap sesi tersimpan dan divalidasi ke tabel `T_Sesi` (model Prisma `tSesi`)
+ * yang mencakup pengecekan masa aktif (`expires_at`), verifikasi status akun aktif,
+ * serta penghapusan sesi kedaluwarsa.
  *
- * ⚠️ Catatan arsitektur: Tabel T_Sesi ada di skema tapi belum digunakan
- * untuk validasi sesi di sini. Ini adalah area utama technical debt — di masa
- * depan, cookie seharusnya berisi opaque token yang diverifikasi via T_Sesi.
- *
- * Modul `crypto` diakses melalui Web Crypto API (globalThis.crypto) yang
- * tersedia baik di Cloudflare Workers maupun Node.js 20+, tanpa `node:crypto`.
+ * Modul crypto diakses melalui Web Crypto API (globalThis.crypto) yang kompatibel
+ * murni dengan Cloudflare Workers Isolate dan Node.js 20+.
  */
 
 import { cookies } from "next/headers";
@@ -17,54 +15,122 @@ import type { AuthUser, Session } from "@/types";
 import prisma from "./db";
 
 export const SESSION_COOKIE_NAME = "perisai_session_id";
+export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 hari
+
+/**
+ * Buat sesi baru di tabel T_Sesi dan kembalikan token unik ber-entropi tinggi.
+ */
+export async function createSessionRecord({
+  idAkun,
+  ipAddress,
+  userAgent,
+}: {
+  idAkun: number;
+  ipAddress?: string;
+  userAgent?: string | null;
+}): Promise<{ token: string; expiresAt: number }> {
+  const tokenBytes = new Uint8Array(32);
+  globalThis.crypto.getRandomValues(tokenBytes);
+  const token = Array.from(tokenBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  const idSesi = globalThis.crypto.randomUUID();
+  const expiresAt = Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SECONDS;
+
+  await prisma.tSesi.create({
+    data: {
+      idSesi,
+      idAkun,
+      token,
+      ipAddress: ipAddress || null,
+      userAgent: userAgent || null,
+      expiresAt,
+    },
+  });
+
+  return { token, expiresAt };
+}
+
+/**
+ * Hapus sesi dari database berdasarkan token.
+ */
+export async function destroySessionRecord(token: string): Promise<void> {
+  if (!token) return;
+  try {
+    await prisma.tSesi.deleteMany({
+      where: { token },
+    });
+  } catch (err) {
+    console.warn("[auth] Gagal menghapus record T_Sesi:", err);
+  }
+}
 
 /**
  * Ambil sesi dari cookie request saat ini.
- * Mengembalikan null jika tidak ada sesi atau sesi tidak valid.
+ * Memvalidasi token terhadap tabel `T_Sesi` di database dan memeriksa masa kedaluwarsa.
+ * Mengembalikan null jika token tidak ada, kedaluwarsa, atau akun tidak aktif.
  */
 export async function getSession(): Promise<Session | null> {
   try {
     const cookieStore = await cookies();
-    const sessionId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-    if (!sessionId || sessionId.trim() === "") {
+    if (!token || token.trim() === "") {
       return null;
     }
 
-    // Lookup anggota berdasarkan id_perisai yang tersimpan di cookie
-    const anggota = await prisma.mAnggota.findUnique({
-      where: { idPerisai: sessionId },
-      select: {
-        idPerisai: true,
-        namaLengkap: true,
-        email: true,
+    const now = Math.floor(Date.now() / 1000);
+
+    // Lookup record sesi di T_Sesi dengan eager loading akun & relasinya
+    const sessionRecord = await prisma.tSesi.findUnique({
+      where: { token },
+      include: {
         akun: {
-          select: {
-            isActive: true,
+          include: {
             role: {
               select: { namaRole: true },
             },
-          },
-        },
-        kepengurusan: {
-          where: { status: "aktif" },
-          select: {
-            departemen: {
-              select: { slug: true },
+            anggota: {
+              select: {
+                idPerisai: true,
+                namaLengkap: true,
+                email: true,
+                kepengurusan: {
+                  where: { status: "aktif" },
+                  select: {
+                    departemen: {
+                      select: { slug: true },
+                    },
+                  },
+                  take: 1,
+                  orderBy: { idKepengurusan: "desc" },
+                },
+              },
             },
           },
-          take: 1,
-          orderBy: { idKepengurusan: "desc" },
         },
       },
     });
 
-    if (!anggota || !anggota.akun || !anggota.akun.isActive) {
+    if (!sessionRecord) {
       return null;
     }
 
-    // Mapping nama role PSDM → role CMS
-    const cmsRole = mapRoleToCmsRole(anggota.akun.role.namaRole);
+    // Validasi masa aktif sesi
+    if (sessionRecord.expiresAt <= now) {
+      // Sesi telah expired: hapus secara asynchronous dari database
+      prisma.tSesi.delete({ where: { token } }).catch(() => {});
+      return null;
+    }
+
+    const { akun } = sessionRecord;
+    if (!akun || !akun.isActive || akun.isActive !== 1 || !akun.anggota) {
+      return null;
+    }
+
+    const { anggota, role } = akun;
+    const cmsRole = mapRoleToCmsRole(role.namaRole);
 
     return {
       user: {
@@ -72,11 +138,10 @@ export async function getSession(): Promise<Session | null> {
         name: anggota.namaLengkap,
         email: anggota.email,
         role: cmsRole,
-        isActive: Boolean(anggota.akun.isActive),
-        departmentId:
-          anggota.kepengurusan[0]?.departemen?.slug || undefined,
+        isActive: Boolean(akun.isActive),
+        departmentId: anggota.kepengurusan[0]?.departemen?.slug || undefined,
       },
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      expires: new Date(sessionRecord.expiresAt * 1000).toISOString(),
     };
   } catch (err) {
     console.error("[auth] Error retrieving session:", err);
@@ -87,7 +152,7 @@ export async function getSession(): Promise<Session | null> {
 /**
  * Map nama role dari database PSDM ke role CMS internal.
  */
-function mapRoleToCmsRole(namaRole: string): AuthUser["role"] {
+export function mapRoleToCmsRole(namaRole: string): AuthUser["role"] {
   switch (namaRole.toUpperCase()) {
     case "SUPER_ADMIN":
       return "SUPER_ADMIN";
@@ -147,7 +212,6 @@ export async function verifyPassword(
         .join("");
 
       // Perbandingan timing-safe menggunakan Web Crypto
-      // (tidak bisa pakai timingSafeEqual karena string berbeda panjang kadang ada)
       const normalizedStored = storedHash.toLowerCase();
       if (sha256Hex.length !== normalizedStored.length) return false;
 
@@ -167,3 +231,4 @@ export async function verifyPassword(
 }
 
 export { SESSION_COOKIE_NAME as default };
+
