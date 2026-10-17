@@ -26,24 +26,6 @@ export function SiteFooter() {
             />
           </Link>
 
-          {/* Horizontal Nav Links */}
-          <nav className="flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm font-semibold text-zinc-300">
-            <Link href="/" className="hover:text-[#FFB22C] transition">
-              Beranda
-            </Link>
-            <Link href="/tentang" className="hover:text-[#FFB22C] transition">
-              Tentang
-            </Link>
-            <Link href="/activity" className="hover:text-[#FFB22C] transition">
-              Activity
-            </Link>
-            <Link href="/competition" className="hover:text-[#FFB22C] transition">
-              Competition
-            </Link>
-            <Link href="/kontak" className="hover:text-[#FFB22C] transition">
-              Kontak
-            </Link>
-          </nav>
 
           {/* Social Icons (SVGs with Gold Hover Glow) */}
           <div className="flex items-center gap-2.5 shrink-0">

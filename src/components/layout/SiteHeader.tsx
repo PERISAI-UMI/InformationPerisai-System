@@ -18,6 +18,30 @@ export function SiteHeader() {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleOpenDropdown = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setIsAboutOpen(true);
+  };
+
+  const handleCloseDropdown = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      setIsAboutOpen(false);
+    }, 250);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -79,12 +103,12 @@ export function SiteHeader() {
           <div
             ref={dropdownRef}
             className="relative"
-            onMouseEnter={() => setIsAboutOpen(true)}
-            onMouseLeave={() => setIsAboutOpen(false)}
+            onMouseEnter={handleOpenDropdown}
+            onMouseLeave={handleCloseDropdown}
           >
             <button
               type="button"
-              onClick={() => setIsAboutOpen(!isAboutOpen)}
+              onClick={() => setIsAboutOpen((prev) => !prev)}
               className={cn(
                 "inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer",
                 isAboutActive
@@ -96,35 +120,46 @@ export function SiteHeader() {
               aria-expanded={isAboutOpen}
             >
               <span>Tentang</span>
-              <span className="text-[9px] transition-transform duration-200 inline-block font-sans">
+              <span
+                className={cn(
+                  "text-[9px] transition-transform duration-200 inline-block font-sans",
+                  isAboutOpen && "rotate-180"
+                )}
+              >
                 ▼
               </span>
             </button>
 
-            {/* Dropdown Menu Container */}
+            {/* Dropdown Menu Container with seamless hover bridge */}
             {isAboutOpen && (
-              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 rounded-2xl bg-[#2b2b31]/95 p-2.5 shadow-2xl border border-[#FFB22C]/30 backdrop-blur-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="flex flex-col gap-1.5">
-                  {aboutDropdownItems.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      pathname === item.href.replace("/tentang", "/about");
+              <div
+                className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+                onMouseEnter={handleOpenDropdown}
+                onMouseLeave={handleCloseDropdown}
+              >
+                <div className="w-64 rounded-2xl bg-[#202026]/98 p-2.5 shadow-2xl border border-[#FFB22C]/30 backdrop-blur-xl">
+                  <div className="flex flex-col gap-1.5">
+                    {aboutDropdownItems.map((item) => {
+                      const isActive =
+                        pathname === item.href ||
+                        pathname === item.href.replace("/tentang", "/about");
 
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "w-full rounded-xl px-4 py-2.5 text-center text-xs font-bold transition-all shadow-xs",
-                          isActive
-                            ? "bg-[#FFB22C] text-[#1b1b1f] shadow-sm font-extrabold"
-                            : "bg-white/5 text-zinc-200 hover:bg-[#FFB22C] hover:text-[#1b1b1f]"
-                        )}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={cn(
+                            "w-full rounded-xl px-4 py-2.5 text-center text-xs font-bold transition-all shadow-xs",
+                            isActive
+                              ? "bg-[#FFB22C] text-[#1b1b1f] shadow-sm font-extrabold"
+                              : "bg-white/5 text-zinc-200 hover:bg-[#FFB22C] hover:text-[#1b1b1f]"
+                          )}
+                        >
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
