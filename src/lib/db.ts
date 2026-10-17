@@ -28,8 +28,8 @@ function createPrismaClient(): PrismaClient {
   // Jika di production atau ada URL Turso, gunakan adapter LibSQL Web (Edge-safe)
   if (isProduction || tursoUrl) {
     if (!tursoUrl && isProduction) {
-      throw new Error(
-        "[db] TURSO_DATABASE_URL wajib dikonfigurasi pada environment production / Cloudflare Workers."
+      console.warn(
+        "[db] Peringatan: TURSO_DATABASE_URL tidak terdeteksi saat build time. Menggunakan fallback adapter agar proses build tidak terhenti."
       );
     }
 
