@@ -82,94 +82,83 @@ export function ContactForm() {
       <div className="space-y-4">
         {/* Grid Inputs: Nama & Email */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
               Nama Lengkap <span className="text-[#FFB22C]">*</span>
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                placeholder="e.g. Andi Pratama"
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C] transition"
-              />
-            </div>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="e.g. Andi Pratama"
+              className="w-full rounded-xl border border-white/10 bg-[#16161a] px-4 py-2.5 text-sm text-white placeholder-zinc-500 transition hover:border-white/20 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C]"
+            />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
               Alamat Email <span className="text-[#FFB22C]">*</span>
             </label>
-            <div className="relative">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="e.g. andi@umi.ac.id"
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C] transition"
-              />
-            </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="e.g. andi@umi.ac.id"
+              className="w-full rounded-xl border border-white/10 bg-[#16161a] px-4 py-2.5 text-sm text-white placeholder-zinc-500 transition hover:border-white/20 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C]"
+            />
           </div>
         </div>
 
         {/* Row: Nomor WhatsApp & Subjek */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
               Nomor WhatsApp / HP <span className="text-zinc-500 text-[10px] lowercase font-normal">(opsional)</span>
             </label>
-            <div className="relative">
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="e.g. 0812-3456-7890"
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C] transition"
-              />
-            </div>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="e.g. 0812-3456-7890"
+              className="w-full rounded-xl border border-white/10 bg-[#16161a] px-4 py-2.5 text-sm text-white placeholder-zinc-500 transition hover:border-white/20 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C]"
+            />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
               Subjek / Perihal <span className="text-[#FFB22C]">*</span>
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                required
-                placeholder="e.g. Konsultasi Proposal PKM-RE 2025"
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C] transition"
-              />
-            </div>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              required
+              placeholder="e.g. Konsultasi Proposal PKM-RE 2025"
+              className="w-full rounded-xl border border-white/10 bg-[#16161a] px-4 py-2.5 text-sm text-white placeholder-zinc-500 transition hover:border-white/20 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C]"
+            />
           </div>
         </div>
 
         {/* Textarea: Pesan */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-              Isi Pesan Lengkap <span className="text-[#FFB22C]">*</span>
-            </label>
-            <span className="text-[11px] text-zinc-500">Minimal 10 karakter</span>
-          </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+            Isi Pesan Lengkap <span className="text-[#FFB22C]">*</span>
+          </label>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             required
             placeholder="Tuliskan rincian pertanyaan, proposal gagasan, atau keperluan Anda kepada pengurus UKM PERISAI UMI..."
-            className="w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm text-white placeholder-zinc-500 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C] transition leading-relaxed resize-y"
+            className="w-full rounded-xl border border-white/10 bg-[#16161a] p-3.5 text-sm text-white placeholder-zinc-500 transition hover:border-white/20 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C] leading-relaxed resize-y"
           />
         </div>
       </div>
 
-      {/* Submit Button & Disclaimer */}
-      <div className="pt-2 space-y-3">
+      {/* Submit Button */}
+      <div className="pt-2">
         <button
           type="submit"
           disabled={isLoading}
@@ -192,10 +181,6 @@ export function ContactForm() {
             </>
           )}
         </button>
-
-        <p className="text-center text-[11px] text-zinc-500">
-          Informasi Anda dilindungi dan hanya akan digunakan untuk komunikasi resmi pengurus UKM PERISAI UMI.
-        </p>
       </div>
     </form>
   );

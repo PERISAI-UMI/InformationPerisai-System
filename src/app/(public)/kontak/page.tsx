@@ -132,22 +132,22 @@ export default function KontakPage() {
                     href="https://wa.me/6281234567890"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40 transition group"
+                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-white/10 bg-white/5 hover:border-[#FFB22C]/40 hover:bg-[#FFB22C]/10 transition group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                      <div className="h-8 w-8 rounded-lg bg-[#FFB22C]/10 border border-[#FFB22C]/30 flex items-center justify-center text-[#FFB22C] shrink-0">
                         <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.529 1.761.782 2.791.782 3.182 0 5.768-2.587 5.768-5.766.001-3.182-2.585-5.768-5.768-5.768zm3.385 8.165c-.145.407-.743.746-1.025.792-.259.043-.591.076-1.706-.385-1.425-.59-2.345-2.034-2.417-2.128-.071-.095-.572-.76-.572-1.449 0-.688.361-1.027.489-1.168.128-.142.28-.178.373-.178s.187.004.269.008c.085.004.2-.033.313.238.118.283.407.994.443 1.066.036.072.06.156.012.251-.048.096-.072.155-.143.238-.072.083-.151.186-.216.25-.072.072-.147.151-.063.295.084.144.373.615.801.996.551.49 1.016.642 1.16.714.144.072.228.06.313-.036.084-.096.361-.42.457-.564.096-.144.192-.12.325-.072.132.048.841.396.985.468.144.072.24.108.276.168.036.06.036.348-.109.755z" />
                         </svg>
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition">
+                        <div className="text-xs font-bold text-white group-hover:text-[#FFB22C] transition">
                           WhatsApp Hotline
                         </div>
                         <div className="text-[11px] text-zinc-400">+62 812-3456-7890</div>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-emerald-400">Chat →</span>
+                    <span className="text-xs font-bold text-[#FFB22C]">Chat →</span>
                   </a>
 
                   {/* Email */}
@@ -219,11 +219,6 @@ export default function KontakPage() {
                     <span className="text-xs font-bold text-[#FFB22C]">Tonton ↗</span>
                   </a>
                 </div>
-              </div>
-
-              <div className="pt-3.5 border-t border-white/5 flex items-center justify-center text-[11px] text-zinc-400 gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                <span>Rata-rata respon pengurus dalam 1x24 jam kerja</span>
               </div>
             </div>
           </div>
