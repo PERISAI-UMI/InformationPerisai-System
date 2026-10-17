@@ -67,7 +67,7 @@ export function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-1 flex-col justify-between space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
       {/* Feedback Alert Status */}
       {statusMessage && (
         <Alert
@@ -160,7 +160,7 @@ export function ContactForm() {
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            rows={5}
+            rows={4}
             required
             placeholder="Tuliskan rincian pertanyaan, proposal gagasan, atau keperluan Anda kepada pengurus UKM PERISAI UMI..."
             className="w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm text-white placeholder-zinc-500 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C] transition leading-relaxed resize-y"

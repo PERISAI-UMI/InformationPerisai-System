@@ -37,55 +37,53 @@ export default function KontakPage() {
         </div>
       </section>
 
-      {/* Main Content: 2-Column Responsive Grid with Matched Heights */}
-      <main className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 sm:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* Kolom Kiri: 1 Kotak Formulir Kontak (Tinggi Penuh) */}
-          <div className="lg:col-span-7 flex flex-col">
-            <div className="relative flex-1 h-full flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#202026] p-6 sm:p-8 lg:p-10 shadow-2xl">
+      {/* Main Content: 2-Column Responsive Grid with Natural, Balanced Heights */}
+      <main className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 sm:py-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+          {/* Kolom Kiri: Formulir Kontak */}
+          <div className="lg:col-span-7">
+            <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-[#202026] p-5 sm:p-7 lg:p-8 shadow-xl">
               {/* Subtle Ambient Corner Glow */}
-              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#FFB22C]/10 blur-3xl" />
+              <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#FFB22C]/10 blur-3xl" />
 
-              <div>
-                <div className="relative mb-6 space-y-2 border-b border-white/10 pb-5">
-                  <div className="flex items-center gap-2">
-                    <span className="h-3 w-3 rounded-full bg-[#FFB22C]" />
-                    <h2 className="text-xl sm:text-2xl font-black text-white">
-                      Formulir Pesan & Konsultasi
-                    </h2>
-                  </div>
-                  <p className="text-xs sm:text-sm text-zinc-400">
-                    Sampaikan pertanyaan, usulan riset, atau ajakan kemitraan Anda kepada pengurus UKM PERISAI UMI.
-                  </p>
+              <div className="relative mb-5 space-y-1.5 border-b border-white/10 pb-4">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#FFB22C]" />
+                  <h2 className="text-lg sm:text-2xl font-black text-white">
+                    Formulir Pesan & Konsultasi
+                  </h2>
                 </div>
-
-                <ContactForm />
+                <p className="text-xs sm:text-sm text-zinc-400">
+                  Sampaikan pertanyaan, usulan riset, atau ajakan kemitraan Anda kepada pengurus UKM PERISAI UMI.
+                </p>
               </div>
+
+              <ContactForm />
             </div>
           </div>
 
-          {/* Kolom Kanan: 2 Kotak yang Disusun (Total Tinggi Sama dengan Kotak Kiri) */}
-          <div className="lg:col-span-5 flex flex-col gap-8 h-full">
+          {/* Kolom Kanan: Sekretariat & Kontak Resmi */}
+          <div className="lg:col-span-5 space-y-6">
             {/* Kotak 1: Sekretariat & Lokasi Resmi */}
-            <div className="relative flex-1 flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#202026] p-6 sm:p-8 shadow-xl">
+            <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-[#202026] p-5 sm:p-6 shadow-xl">
               {/* Subtle Ambient Glow */}
-              <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#FFB22C]/5 blur-2xl" />
+              <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#FFB22C]/5 blur-2xl" />
 
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-xl sm:rounded-2xl bg-[#FFB22C]/10 border border-[#FFB22C]/30 flex items-center justify-center text-[#FFB22C]">
+                <div className="flex items-center gap-3 mb-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-[#FFB22C]/10 border border-[#FFB22C]/30 flex items-center justify-center text-[#FFB22C] shrink-0">
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white">Sekretariat Resmi</h3>
+                    <h3 className="text-sm sm:text-base font-bold text-white">Sekretariat Resmi</h3>
                     <span className="text-xs text-zinc-400">Pusat Aktivitas & Riset Fungsionaris</span>
                   </div>
                 </div>
 
-                <div className="space-y-3 text-xs sm:text-sm text-zinc-300 leading-relaxed pl-1">
+                <div className="space-y-2 text-xs sm:text-sm text-zinc-300 leading-relaxed pl-0.5">
                   <p className="font-semibold text-white">
                     GOR UMI Ruangan No. 10
                   </p>
@@ -94,19 +92,15 @@ export default function KontakPage() {
                     Jl. Urip Sumoharjo KM 5, Panaikang, Panakkukang<br />
                     Makassar, Sulawesi Selatan 90231
                   </p>
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
-                    <span>Waktu Layanan:</span>
-                    <strong className="text-white">Senin – Jumat (09.00 – 17.00 WITA)</strong>
-                  </div>
                 </div>
               </div>
 
-              <div className="pt-6">
+              <div className="pt-4">
                 <a
-                  href="https://maps.google.com/?q=GOR+Universitas+Muslim+Indonesia+Makassar"
+                  href="https://maps.app.goo.gl/5fUW1vEk1MquhL926"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-xs font-bold text-white hover:border-[#FFB22C] hover:text-[#FFB22C] hover:bg-[#FFB22C]/10 transition"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-bold text-white hover:border-[#FFB22C] hover:text-[#FFB22C] hover:bg-[#FFB22C]/10 transition"
                 >
                   <span>Buka Petunjuk Arah (Google Maps)</span>
                   <span>↗</span>
@@ -115,30 +109,30 @@ export default function KontakPage() {
             </div>
 
             {/* Kotak 2: Kontak Cepat & Media */}
-            <div className="relative flex-1 flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#202026] p-6 sm:p-8 shadow-xl">
+            <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-[#202026] p-5 sm:p-6 shadow-xl">
               {/* Subtle Ambient Glow */}
-              <div className="pointer-events-none absolute -right-16 -bottom-16 h-48 w-48 rounded-full bg-[#FFA000]/5 blur-2xl" />
+              <div className="pointer-events-none absolute -right-16 -bottom-16 h-40 w-40 rounded-full bg-[#FFA000]/5 blur-2xl" />
 
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-xl sm:rounded-2xl bg-[#FFB22C]/10 border border-[#FFB22C]/30 flex items-center justify-center text-[#FFB22C]">
+                <div className="flex items-center gap-3 mb-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-[#FFB22C]/10 border border-[#FFB22C]/30 flex items-center justify-center text-[#FFB22C] shrink-0">
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white">Kontak Cepat & Media</h3>
+                    <h3 className="text-sm sm:text-base font-bold text-white">Kontak Cepat & Media</h3>
                     <span className="text-xs text-zinc-400">Saluran Komunikasi Resmi</span>
                   </div>
                 </div>
 
-                <div className="space-y-2.5 pt-1">
+                <div className="space-y-2 pt-0.5">
                   {/* WhatsApp */}
                   <a
                     href="https://wa.me/6281234567890"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40 transition group"
+                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40 transition group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
@@ -158,8 +152,8 @@ export default function KontakPage() {
 
                   {/* Email */}
                   <a
-                    href="mailto:ukmperisai@umi.ac.id"
-                    className="flex items-center justify-between p-3 rounded-2xl border border-white/10 bg-white/5 hover:border-[#FFB22C]/40 hover:bg-[#FFB22C]/10 transition group"
+                    href="mailto:perisaiumi@umi.ac.id"
+                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-white/10 bg-white/5 hover:border-[#FFB22C]/40 hover:bg-[#FFB22C]/10 transition group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-lg bg-[#FFB22C]/10 border border-[#FFB22C]/30 flex items-center justify-center text-[#FFB22C] shrink-0">
@@ -171,7 +165,7 @@ export default function KontakPage() {
                         <div className="text-xs font-bold text-white group-hover:text-[#FFB22C] transition">
                           Email Resmi
                         </div>
-                        <div className="text-[11px] text-zinc-400">ukmperisai@umi.ac.id</div>
+                        <div className="text-[11px] text-zinc-400">perisaiumi@umi.ac.id</div>
                       </div>
                     </div>
                     <span className="text-xs font-bold text-[#FFB22C]">Kirim →</span>
@@ -179,10 +173,10 @@ export default function KontakPage() {
 
                   {/* Instagram */}
                   <a
-                    href="https://instagram.com/ukmperisai_umi"
+                    href="https://instagram.com/perisaiumi"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-2xl border border-white/10 bg-white/5 hover:border-[#FFB22C]/40 hover:bg-[#FFB22C]/10 transition group"
+                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-white/10 bg-white/5 hover:border-[#FFB22C]/40 hover:bg-[#FFB22C]/10 transition group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-lg bg-[#FFB22C]/10 border border-[#FFB22C]/30 flex items-center justify-center text-[#FFB22C] shrink-0">
@@ -196,7 +190,7 @@ export default function KontakPage() {
                         <div className="text-xs font-bold text-white group-hover:text-[#FFB22C] transition">
                           Instagram Resmi
                         </div>
-                        <div className="text-[11px] text-zinc-400">@ukmperisai_umi</div>
+                        <div className="text-[11px] text-zinc-400">perisaiumi</div>
                       </div>
                     </div>
                     <span className="text-xs font-bold text-[#FFB22C]">Buka ↗</span>
@@ -204,10 +198,10 @@ export default function KontakPage() {
 
                   {/* YouTube */}
                   <a
-                    href="https://youtube.com/@ukmperisaiumi"
+                    href="https://youtube.com/@perisaiumi"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-2xl border border-white/10 bg-white/5 hover:border-[#FFB22C]/40 hover:bg-[#FFB22C]/10 transition group"
+                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-white/10 bg-white/5 hover:border-[#FFB22C]/40 hover:bg-[#FFB22C]/10 transition group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-lg bg-[#FFB22C]/10 border border-[#FFB22C]/30 flex items-center justify-center text-[#FFB22C] shrink-0">
@@ -219,7 +213,7 @@ export default function KontakPage() {
                         <div className="text-xs font-bold text-white group-hover:text-[#FFB22C] transition">
                           YouTube Channel
                         </div>
-                        <div className="text-[11px] text-zinc-400">@ukmperisaiumi</div>
+                        <div className="text-[11px] text-zinc-400">PERISAI UMI</div>
                       </div>
                     </div>
                     <span className="text-xs font-bold text-[#FFB22C]">Tonton ↗</span>
@@ -227,7 +221,7 @@ export default function KontakPage() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-white/5 flex items-center justify-center text-[11px] text-zinc-400 gap-1.5">
+              <div className="pt-3.5 border-t border-white/5 flex items-center justify-center text-[11px] text-zinc-400 gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                 <span>Rata-rata respon pengurus dalam 1x24 jam kerja</span>
               </div>
