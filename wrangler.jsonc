@@ -7,8 +7,8 @@
     "binding": "ASSETS"
   },
 
-  // Compatibility date: gunakan tanggal yang mendukung nodejs_compat stabil
-  "compatibility_date": "2024-09-23",
+  // Compatibility date: gunakan tanggal yang mendukung nodejs_compat dan workerd stabil
+  "compatibility_date": "2025-01-01",
   "compatibility_flags": [
     // WAJIB: mengaktifkan modul Node.js (crypto, buffer, stream) di Workers
     "nodejs_compat"
