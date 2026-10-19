@@ -96,7 +96,12 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       service: "UKM PERISAI UMI System",
       environment: process.env.NODE_ENV || "development",
-      runtime: process.env.NEXT_RUNTIME === "edge" ? "edge" : "nodejs",
+      runtime:
+        typeof (globalThis as unknown as { WebSocketPair?: unknown }).WebSocketPair !== "undefined"
+          ? "cloudflare-workers"
+          : process.env.NEXT_RUNTIME === "edge"
+          ? "edge"
+          : "nodejs",
       responseTimeMs: totalResponseTimeMs,
       checks: {
         database: {

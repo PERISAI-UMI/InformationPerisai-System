@@ -40,9 +40,8 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        toast.success("Login berhasil!", { duration: 2000 });
-        router.push("/admin");
-        router.refresh();
+        toast.success("Login berhasil! Mengalihkan ke panel...", { duration: 2000 });
+        window.location.href = "/admin";
       } else {
         const errorMsg = data.error || "ID/Email atau kata sandi tidak cocok.";
         setError(errorMsg);

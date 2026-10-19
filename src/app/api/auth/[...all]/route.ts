@@ -14,6 +14,36 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const action = url.pathname.split("/").pop();
+
+  if (action === "logout") {
+    try {
+      const cookieHeader = request.headers.get("cookie") || "";
+      const match = cookieHeader.match(
+        new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`)
+      );
+      const token = match ? decodeURIComponent(match[1].trim()) : null;
+
+      if (token) {
+        await destroySessionRecord(token);
+      }
+    } catch (err) {
+      console.warn("[auth] Gagal memproses logout pada DB:", err);
+    }
+
+    const response = NextResponse.redirect(new URL("/admin/login", request.url), 303);
+    response.cookies.delete(SESSION_COOKIE_NAME);
+    return response;
+  }
+
+  return NextResponse.json(
+    { error: "Endpoint tidak ditemukan" },
+    { status: 404 }
+  );
+}
+
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const action = url.pathname.split("/").pop();
@@ -33,7 +63,7 @@ export async function POST(request: Request) {
       console.warn("[auth] Gagal memproses logout pada DB:", err);
     }
 
-    const response = NextResponse.redirect(new URL("/admin/login", request.url));
+    const response = NextResponse.redirect(new URL("/admin/login", request.url), 303);
     response.cookies.delete(SESSION_COOKIE_NAME);
     return response;
   }
@@ -117,36 +147,37 @@ export async function POST(request: Request) {
         );
       }
 
-      // 4. Migrasi Transparan Hash Kata Sandi (SHA-256 legacy ke scrypt)
+      // 4. Migrasi Transparan Hash Kata Sandi (SHA-256 legacy ke Edge-native PBKDF2)
       if (isLegacyPasswordHash(anggota.akun.passwordHash)) {
         try {
-          const newScryptHash = await hashPassword(password);
+          const newHash = await hashPassword(password);
           await prisma.mAkun.update({
             where: { idAkun: anggota.akun.idAkun },
-            data: { passwordHash: newScryptHash },
+            data: { passwordHash: newHash },
           });
           console.info(
-            `[auth] Berhasil memigrasikan hash kata sandi akun ID ${anggota.akun.idAkun} (${anggota.idPerisai}) dari SHA-256 ke scrypt.`
+            `[auth] Berhasil memigrasikan hash kata sandi akun ID ${anggota.akun.idAkun} (${anggota.idPerisai}) ke Edge PBKDF2.`
           );
         } catch (migrationErr) {
           console.error(
-            `[auth] Gagal memperbarui hash kata sandi akun ID ${anggota.akun.idAkun} ke scrypt:`,
+            `[auth] Gagal memperbarui hash kata sandi akun ID ${anggota.akun.idAkun}:`,
             migrationErr
           );
-          // Jangan gagalkan proses login jika pembaruan hash scrypt gagal di background
         }
       }
 
-      // 5. Catat waktu login terakhir (last_login)
+      // 5. Catat waktu login terakhir (last_login) - wajib di-await agar tidak meninggalkan orphaned I/O di Workers
       const now = Math.floor(Date.now() / 1000);
-      prisma.mAkun
-        .update({
+      try {
+        await prisma.mAkun.update({
           where: { idAkun: anggota.akun.idAkun },
           data: { lastLogin: now },
-        })
-        .catch(() => {});
+        });
+      } catch (lastLoginErr) {
+        console.warn("[auth] Gagal memperbarui lastLogin:", lastLoginErr);
+      }
 
-      // 4. Generate token ber-entropi tinggi dan simpan sesi ke T_Sesi
+      // 6. Generate token ber-entropi tinggi dan simpan sesi ke T_Sesi
       const userAgent = request.headers.get("user-agent") || null;
       const { token } = await createSessionRecord({
         idAkun: anggota.akun.idAkun,

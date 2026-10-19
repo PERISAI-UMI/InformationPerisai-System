@@ -119,8 +119,11 @@ export async function getSession(): Promise<Session | null> {
 
     // Validasi masa aktif sesi
     if (sessionRecord.expiresAt <= now) {
-      // Sesi telah expired: hapus secara asynchronous dari database
-      prisma.tSesi.delete({ where: { token } }).catch(() => {});
+      try {
+        await prisma.tSesi.delete({ where: { token } });
+      } catch {
+        // Abaikan jika record telah dihapus oleh worker lain
+      }
       return null;
     }
 
@@ -176,6 +179,16 @@ export function mapRoleToCmsRole(namaRole: string): AuthUser["role"] {
  * Untuk fungsi scryptSync, menggunakan `node:crypto` dengan dynamic import
  * karena Web Crypto API tidak mendukung scrypt natively.
  */
+/**
+ * Verifikasi password terhadap hash yang tersimpan.
+ *
+ * Mendukung format:
+ * 1. PBKDF2 — format: "salt:hexKey" (standar Web Crypto API, 100% kompatibel Cloudflare Workers & Node.js)
+ * 2. Scrypt — fallback kompatibilitas jika hash scrypt dibuat di Node.js
+ * 3. SHA-256 hex — format legacy untuk seed data awal
+ *
+ * Menggunakan Web Crypto API murni (globalThis.crypto.subtle) tanpa dependensi native C++.
+ */
 export async function verifyPassword(
   password: string,
   storedHash: string
@@ -183,23 +196,73 @@ export async function verifyPassword(
   try {
     if (!storedHash) return false;
 
-    // Format 1: scrypt (salt:hexKey)
+    // Format 1: PBKDF2 atau scrypt ("salt:hexKey")
     if (storedHash.includes(":")) {
       const parts = storedHash.split(":");
       if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
 
-      const [salt, hexKey] = parts;
+      const [saltHex, expectedKey] = parts;
 
-      // Gunakan node:crypto scryptSync di bawah nodejs_compat flag
-      const { scryptSync, timingSafeEqual } = await import("node:crypto");
-      const keyBuffer = Buffer.from(hexKey, "hex");
-      const derivedKey = scryptSync(password, salt, keyBuffer.length);
-      return timingSafeEqual(keyBuffer, derivedKey);
+      // 1a. Verifikasi dengan Web Crypto PBKDF2 (Edge-native)
+      try {
+        const enc = new TextEncoder();
+        const saltMatch = saltHex.match(/.{1,2}/g);
+        if (saltMatch) {
+          const salt = new Uint8Array(saltMatch.map((b) => parseInt(b, 16)));
+          const keyMaterial = await globalThis.crypto.subtle.importKey(
+            "raw",
+            enc.encode(password),
+            { name: "PBKDF2" },
+            false,
+            ["deriveBits"]
+          );
+          const expectedKeyLengthBits = expectedKey.length * 4;
+          const hashAlg = expectedKeyLengthBits > 256 ? "SHA-512" : "SHA-256";
+          const derivedBits = await globalThis.crypto.subtle.deriveBits(
+            {
+              name: "PBKDF2",
+              salt,
+              iterations: 100000,
+              hash: hashAlg,
+            },
+            keyMaterial,
+            expectedKeyLengthBits
+          );
+          const computedHexKey = Array.from(new Uint8Array(derivedBits))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+
+          if (computedHexKey.length === expectedKey.length) {
+            let diff = 0;
+            for (let i = 0; i < computedHexKey.length; i++) {
+              diff |= computedHexKey.charCodeAt(i) ^ expectedKey.charCodeAt(i);
+            }
+            if (diff === 0) return true;
+          }
+        }
+      } catch (pbkdf2Err) {
+        console.warn("[auth] PBKDF2 verify skipped/failed:", pbkdf2Err);
+      }
+
+      // 1b. Fallback untuk legacy scrypt hash jika runtime mendukung
+      try {
+        const cryptoMod = await import("node:crypto");
+        if (typeof cryptoMod.scryptSync === "function") {
+          const keyBuffer = Buffer.from(expectedKey, "hex");
+          const derivedKey = cryptoMod.scryptSync(password, saltHex, keyBuffer.length);
+          if (cryptoMod.timingSafeEqual(keyBuffer, derivedKey)) {
+            return true;
+          }
+        }
+      } catch {
+        // Abaikan jika scryptSync tidak diimplementasikan (mis. di Cloudflare Workers unenv)
+      }
+
+      return false;
     }
 
     // Format 2: SHA-256 hex (legacy seed data)
     if (storedHash.length === 64) {
-      // Gunakan Web Crypto API — tersedia di Cloudflare Workers & Node.js 20+
       const encoder = new TextEncoder();
       const data = encoder.encode(password);
       const hashBuffer = await globalThis.crypto.subtle.digest(
@@ -211,11 +274,9 @@ export async function verifyPassword(
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
 
-      // Perbandingan timing-safe menggunakan Web Crypto
       const normalizedStored = storedHash.toLowerCase();
       if (sha256Hex.length !== normalizedStored.length) return false;
 
-      // Manual timing-safe compare untuk string hex
       let diff = 0;
       for (let i = 0; i < sha256Hex.length; i++) {
         diff |= sha256Hex.charCodeAt(i) ^ normalizedStored.charCodeAt(i);
@@ -231,14 +292,36 @@ export async function verifyPassword(
 }
 
 /**
- * Buat hash scrypt baru dalam format "salt:hexKey".
- * Menggunakan salt 16 bytes acak dan derived key scrypt 64 bytes.
+ * Buat hash password aman dalam format "salt:hexKey" menggunakan Web Crypto PBKDF2.
+ * 100% kompatibel dengan Cloudflare Workers, V8 Isolates, dan Node.js 20+.
  */
 export async function hashPassword(password: string): Promise<string> {
-  const { scryptSync, randomBytes } = await import("node:crypto");
-  const salt = randomBytes(16).toString("hex");
-  const derivedKey = scryptSync(password, salt, 64);
-  return `${salt}:${derivedKey.toString("hex")}`;
+  const enc = new TextEncoder();
+  const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await globalThis.crypto.subtle.importKey(
+    "raw",
+    enc.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const derivedBits = await globalThis.crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: 100000,
+      hash: "SHA-512",
+    },
+    keyMaterial,
+    512
+  );
+  const hexKey = Array.from(new Uint8Array(derivedBits))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  const hexSalt = Array.from(salt)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `${hexSalt}:${hexKey}`;
 }
 
 /**

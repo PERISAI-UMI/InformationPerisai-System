@@ -8,7 +8,6 @@
  */
 
 import { S3StorageDriver } from "./s3";
-import { LocalStorageDriver } from "./local";
 
 export interface StorageDriver {
   upload(
@@ -22,9 +21,9 @@ export interface StorageDriver {
 /** Apakah runtime saat ini adalah Cloudflare Workers / edge */
 function isEdgeRuntime(): boolean {
   return (
+    typeof (globalThis as unknown as { WebSocketPair?: unknown }).WebSocketPair !== "undefined" ||
     process.env.NEXT_RUNTIME === "edge" ||
-    (process.env.NODE_ENV === "production" &&
-      process.env.FORCE_NODE_IMAGES !== "true")
+    process.env.NODE_ENV === "production"
   );
 }
 
@@ -33,7 +32,13 @@ export function getStorageDriver(): StorageDriver {
 
   // Di edge runtime, local filesystem tidak tersedia — paksa ke S3/R2
   if (driver === "local" && !isEdgeRuntime()) {
-    return new LocalStorageDriver();
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { LocalStorageDriver } = require("./local");
+      return new LocalStorageDriver();
+    } catch {
+      return new S3StorageDriver();
+    }
   }
 
   // Default: S3/R2 (untuk edge dan production)
@@ -41,3 +46,4 @@ export function getStorageDriver(): StorageDriver {
 }
 
 export const storage = getStorageDriver();
+
