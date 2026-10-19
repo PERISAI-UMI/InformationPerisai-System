@@ -444,22 +444,27 @@ export function FinanceManager({
                       {/* Aksi */}
                       <td className="py-3 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          <Button
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="sm"
                             onClick={() => handleOpenEditModal(item)}
-                            className="h-7 px-2 text-zinc-400 hover:text-white text-xs"
-                            title="Edit Transaksi"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#FFB22C] bg-[#FFB22C]/10 border border-[#FFB22C]/25 hover:bg-[#FFB22C]/20 hover:border-[#FFB22C]/40 hover:text-[#FFC85A] transition-all shadow-sm shrink-0 cursor-pointer"
+                            title="Ubah Transaksi Kas"
                           >
-                            Edit
-                          </Button>
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                              />
+                            </svg>
+                            <span>Ubah</span>
+                          </button>
                           <ConfirmDelete
                             title="Hapus Transaksi Kas"
                             description={`Apakah Anda yakin ingin menghapus catatan transaksi "${item.keterangan}" (${formatRupiah(item.nominal)})? Tindakan ini akan memperbarui saldo kas.`}
                             onConfirm={() => handleDelete(item.idTransaksi)}
                             triggerText="Hapus"
-                            className="h-7 px-2 text-xs"
                           />
                         </div>
                       </td>

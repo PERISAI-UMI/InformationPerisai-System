@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { formatDateIndonesian } from "@/lib/dates";
@@ -83,7 +84,7 @@ export function UserTable({ users }: UserTableProps) {
           <TableHead>Status</TableHead>
           <TableHead>Kontribusi</TableHead>
           <TableHead>Bergabung</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          <TableHead className="text-right w-44 whitespace-nowrap">Aksi</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -103,20 +104,18 @@ export function UserTable({ users }: UserTableProps) {
               {u._count?.posts ?? 0} artikel / {u._count?.uploadedMedia ?? 0} media
             </TableCell>
             <TableCell className="text-xs text-zinc-400">{formatDateIndonesian(u.createdAt)}</TableCell>
-            <TableCell className="text-right space-x-2">
-              <Button
-                size="sm"
-                variant={u.isActive ? "outline" : "primary"}
-                onClick={() => handleToggle(u.id, u.isActive)}
-              >
-                {u.isActive ? "Nonaktifkan" : "Aktifkan"}
-              </Button>
-              <Link
-                href={`/admin/users/${u.id}`}
-                className="text-xs font-semibold text-[#FFB22C] hover:text-[#FFA000] transition-colors"
-              >
-                Ubah
-              </Link>
+            <TableCell className="text-right whitespace-nowrap">
+              <div className="inline-flex items-center justify-end gap-1.5">
+                <Button
+                  size="sm"
+                  variant={u.isActive ? "outline" : "primary"}
+                  className="px-2.5 py-1.5 text-xs rounded-lg"
+                  onClick={() => handleToggle(u.id, u.isActive)}
+                >
+                  {u.isActive ? "Nonaktifkan" : "Aktifkan"}
+                </Button>
+                <EditLink href={`/admin/users/${u.id}`} />
+              </div>
             </TableCell>
           </TableRow>
         ))}

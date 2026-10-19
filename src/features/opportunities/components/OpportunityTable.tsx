@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { formatDateIndonesian } from "@/lib/dates";
@@ -62,7 +63,7 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
           <TableHead>Kategori</TableHead>
           <TableHead>Tenggat (Deadline)</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -78,18 +79,15 @@ export function OpportunityTable({ opportunities }: OpportunityTableProps) {
               <TableCell><Badge variant="neutral">{opp.category}</Badge></TableCell>
               <TableCell className="text-zinc-400 font-light">{formatDateIndonesian(opp.deadlineAt)}</TableCell>
               <TableCell><Badge variant={statusInfo.variant}>{statusInfo.label}</Badge></TableCell>
-              <TableCell className="text-right space-x-3">
-                <Link
-                  href={`/admin/opportunities/${opp.id}`}
-                  className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
-                >
-                  Ubah
-                </Link>
-                <ConfirmDelete
-                  onConfirm={() => handleDelete(opp.id)}
-                  title="Hapus Peluang"
-                  description={`Apakah Anda yakin ingin menghapus "${opp.title}"?`}
-                />
+              <TableCell className="text-right whitespace-nowrap">
+                <div className="inline-flex items-center justify-end gap-1.5">
+                  <EditLink href={`/admin/opportunities/${opp.id}`} />
+                  <ConfirmDelete
+                    onConfirm={() => handleDelete(opp.id)}
+                    title="Hapus Peluang"
+                    description={`Apakah Anda yakin ingin menghapus "${opp.title}"?`}
+                  />
+                </div>
               </TableCell>
             </TableRow>
           );

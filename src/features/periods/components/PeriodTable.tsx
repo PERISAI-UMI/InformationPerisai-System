@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { formatDateIndonesian } from "@/lib/dates";
@@ -64,7 +65,7 @@ export function PeriodTable({ periods }: PeriodTableProps) {
           <TableHead>Selesai</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Pengurus / Proker</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          <TableHead className="text-right w-44 whitespace-nowrap">Aksi</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -83,22 +84,20 @@ export function PeriodTable({ periods }: PeriodTableProps) {
             <TableCell className="text-zinc-300">
               {p._count?.members ?? 0} orang / {p._count?.workPrograms ?? 0} proker
             </TableCell>
-            <TableCell className="text-right space-x-3">
-              {!p.isActive && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleSetActive(p.id, p.name)}
-                >
-                  Jadikan Aktif
-                </Button>
-              )}
-              <Link
-                href={`/admin/periods/${p.id}`}
-                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
-              >
-                Ubah
-              </Link>
+            <TableCell className="text-right whitespace-nowrap">
+              <div className="inline-flex items-center justify-end gap-1.5">
+                {!p.isActive && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="px-2.5 py-1.5 text-xs rounded-lg"
+                    onClick={() => handleSetActive(p.id, p.name)}
+                  >
+                    Jadikan Aktif
+                  </Button>
+                )}
+                <EditLink href={`/admin/periods/${p.id}`} />
+              </div>
             </TableCell>
           </TableRow>
         ))}

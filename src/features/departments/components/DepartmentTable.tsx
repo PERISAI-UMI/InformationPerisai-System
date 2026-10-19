@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { deleteDepartmentAction } from "../actions";
@@ -62,7 +63,7 @@ export function DepartmentTable({ departments }: DepartmentTableProps) {
           <TableHead>Kode</TableHead>
           <TableHead>Jumlah Pengurus</TableHead>
           <TableHead>Jumlah Proker</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -73,18 +74,15 @@ export function DepartmentTable({ departments }: DepartmentTableProps) {
             <TableCell className="text-zinc-300 font-mono text-xs">{dept.code || "-"}</TableCell>
             <TableCell className="text-zinc-300">{dept._count?.members ?? 0} orang</TableCell>
             <TableCell className="text-zinc-300">{dept._count?.workPrograms ?? 0} program</TableCell>
-            <TableCell className="text-right space-x-3">
-              <Link
-                href={`/admin/departments/${dept.id}`}
-                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
-              >
-                Ubah
-              </Link>
-              <ConfirmDelete
-                onConfirm={() => handleDelete(dept.id)}
-                title="Hapus Departemen"
-                description={`Apakah Anda yakin ingin menghapus departemen "${dept.name}"?`}
-              />
+            <TableCell className="text-right whitespace-nowrap">
+              <div className="inline-flex items-center justify-end gap-1.5">
+                <EditLink href={`/admin/departments/${dept.id}`} />
+                <ConfirmDelete
+                  onConfirm={() => handleDelete(dept.id)}
+                  title="Hapus Departemen"
+                  description={`Apakah Anda yakin ingin menghapus departemen "${dept.name}"?`}
+                />
+              </div>
             </TableCell>
           </TableRow>
         ))}

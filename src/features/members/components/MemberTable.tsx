@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { deleteMemberAction } from "../actions";
@@ -62,7 +63,7 @@ export function MemberTable({ members }: MemberTableProps) {
           <TableHead>Departemen</TableHead>
           <TableHead>Periode</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -76,18 +77,15 @@ export function MemberTable({ members }: MemberTableProps) {
             <TableCell>
               {m.isActive ? <Badge variant="success">Aktif</Badge> : <Badge variant="neutral">Nonaktif</Badge>}
             </TableCell>
-            <TableCell className="text-right space-x-3">
-              <Link
-                href={`/admin/members/${m.id}`}
-                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
-              >
-                Ubah
-              </Link>
-              <ConfirmDelete
-                onConfirm={() => handleDelete(m.id)}
-                title="Hapus Pengurus"
-                description={`Apakah Anda yakin ingin menghapus "${m.name}"?`}
-              />
+            <TableCell className="text-right whitespace-nowrap">
+              <div className="inline-flex items-center justify-end gap-1.5">
+                <EditLink href={`/admin/members/${m.id}`} />
+                <ConfirmDelete
+                  onConfirm={() => handleDelete(m.id)}
+                  title="Hapus Pengurus"
+                  description={`Apakah Anda yakin ingin menghapus "${m.name}"?`}
+                />
+              </div>
             </TableCell>
           </TableRow>
         ))}

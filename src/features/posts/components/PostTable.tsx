@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { formatDateIndonesian } from "@/lib/dates";
@@ -73,7 +74,7 @@ export function PostTable({ posts }: PostTableProps) {
           <TableHead>Penulis</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Dibuat Pada</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -85,18 +86,15 @@ export function PostTable({ posts }: PostTableProps) {
             <TableCell className="text-zinc-300">{post.author?.name || "-"}</TableCell>
             <TableCell>{getStatusBadge(post.status)}</TableCell>
             <TableCell className="text-zinc-400 font-light">{formatDateIndonesian(post.createdAt)}</TableCell>
-            <TableCell className="text-right space-x-3">
-              <Link
-                href={`/admin/posts/${post.id}`}
-                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
-              >
-                Ubah
-              </Link>
-              <ConfirmDelete
-                onConfirm={() => handleDelete(post.id)}
-                title="Hapus Postingan"
-                description={`Apakah Anda yakin ingin menghapus "${post.title}"?`}
-              />
+            <TableCell className="text-right whitespace-nowrap">
+              <div className="inline-flex items-center justify-end gap-1.5">
+                <EditLink href={`/admin/posts/${post.id}`} />
+                <ConfirmDelete
+                  onConfirm={() => handleDelete(post.id)}
+                  title="Hapus Postingan"
+                  description={`Apakah Anda yakin ingin menghapus "${post.title}"?`}
+                />
+              </div>
             </TableCell>
           </TableRow>
         ))}

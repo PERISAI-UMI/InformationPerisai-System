@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { deleteStatisticAction } from "../actions";
@@ -61,7 +62,7 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
           <TableHead>Indikator</TableHead>
           <TableHead>Nilai</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -86,18 +87,15 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
             <TableCell>
               {s.isActive ? <Badge variant="success">Aktif</Badge> : <Badge variant="neutral">Non-aktif</Badge>}
             </TableCell>
-            <TableCell className="text-right space-x-2">
-              <Link
-                href={`/admin/statistics/${s.id}`}
-                className="text-xs font-semibold text-[#FFB22C] hover:text-[#FFA000] transition-colors"
-              >
-                Ubah
-              </Link>
-              <ConfirmDelete
-                onConfirm={() => handleDelete(s.id)}
-                title="Hapus Statistik"
-                description={`Apakah Anda yakin ingin menghapus indikator "${s.label}"?`}
-              />
+            <TableCell className="text-right whitespace-nowrap">
+              <div className="inline-flex items-center justify-end gap-1.5">
+                <EditLink href={`/admin/statistics/${s.id}`} />
+                <ConfirmDelete
+                  onConfirm={() => handleDelete(s.id)}
+                  title="Hapus Statistik"
+                  description={`Apakah Anda yakin ingin menghapus indikator "${s.label}"?`}
+                />
+              </div>
             </TableCell>
           </TableRow>
         ))}
