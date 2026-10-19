@@ -97,12 +97,33 @@ function createPrismaClient(): PrismaClient {
   }
 }
 
-export const prisma: PrismaClient =
-  globalForPrisma.prisma ??
-  (function () {
-    const client = createPrismaClient();
-    globalForPrisma.prisma = client;
-    return client;
-  })();
+// Di Cloudflare Workers, instance DB TIDAK boleh di-cache di globalThis antar request
+// karena Cloudflare runtime melarang "Cannot perform I/O on behalf of a different request".
+// Gunakan React cache() agar client di-cache per-request di production, dan globalThis hanya di dev.
+import { cache } from "react";
+
+const getRequestScopedClient = cache(() => createPrismaClient());
+
+function getDbInstance(): PrismaClient {
+  if (process.env.NODE_ENV !== "production") {
+    if (!globalForPrisma.prisma) {
+      globalForPrisma.prisma = createPrismaClient();
+    }
+    return globalForPrisma.prisma;
+  }
+  return getRequestScopedClient();
+}
+
+export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getDbInstance();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const val = (client as any)[prop];
+    if (typeof val === "function") {
+      return val.bind(client);
+    }
+    return val;
+  },
+});
 
 export default prisma;
