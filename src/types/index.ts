@@ -34,6 +34,7 @@ export type PermissionResource =
   | "inbox"
   | "settings"
   | "users"
+  | "finance"
   | "audit_log";
 
 export interface ActionResponse<T = unknown> {

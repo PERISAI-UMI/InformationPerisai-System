@@ -31,6 +31,10 @@ export function can(
 
   // Editor Konten
   if (user.role === "EDITOR") {
+    // Editor tidak berhak mengakses manajemen keuangan kas
+    if (resource === "finance") {
+      return false;
+    }
     const editorAllowedResources: PermissionResource[] = ["posts", "gallery", "opportunities"];
     if (editorAllowedResources.includes(resource)) {
       return ["create", "read", "update"].includes(action);
