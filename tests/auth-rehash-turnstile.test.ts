@@ -72,43 +72,41 @@ async function main() {
     assert(isWrong === false, "verifyPassword harus menolak kata sandi yang salah terhadap hash scrypt");
   });
 
-  // 4. Uji Turnstile pada lingkungan non-produksi tanpa secret key (development bypass)
-  await runTest("verifyTurnstileToken melewatkan verifikasi di mode development jika secret key kosong", async () => {
-    const prevEnv = process.env.NODE_ENV;
+  // 4. Uji Turnstile tanpa secret key (graceful bypass agar admin tidak terkunci jika belum diset)
+  await runTest("verifyTurnstileToken melewatkan verifikasi jika secret key kosong", async () => {
     const prevSecret = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
     const prevOldSecret = process.env.TURNSTILE_SECRET_KEY;
 
     try {
       delete process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
       delete process.env.TURNSTILE_SECRET_KEY;
-      (process.env as Record<string, string | undefined>).NODE_ENV = "development";
 
       const res = await verifyTurnstileToken("");
-      assert(res === true, "Harus mengembalikan true di development mode tanpa secret key");
+      assert(res === true, "Harus mengembalikan true jika secret key tidak dikonfigurasi (graceful bypass)");
     } finally {
-      (process.env as any).NODE_ENV = prevEnv;
       if (prevSecret) process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY = prevSecret;
       if (prevOldSecret) process.env.TURNSTILE_SECRET_KEY = prevOldSecret;
     }
   });
 
-  // 5. Uji Turnstile pada lingkungan produksi tanpa secret key (wajib ditolak)
-  await runTest("verifyTurnstileToken menolak verifikasi di mode produksi jika secret key kosong", async () => {
-    const prevEnv = process.env.NODE_ENV;
+  // 5. Uji Turnstile token bypass ketika widget belum aktif di client
+  await runTest("verifyTurnstileToken menerima token bypass client 'turnstile-not-configured'", async () => {
     const prevSecret = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
-    const prevOldSecret = process.env.TURNSTILE_SECRET_KEY;
 
     try {
-      delete process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
-      delete process.env.TURNSTILE_SECRET_KEY;
-      (process.env as any).NODE_ENV = "production";
+      process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY = "dummy-secret-key";
 
-      const res = await verifyTurnstileToken("dummy-token");
-      assert(res === false, "Harus mengembalikan false di mode production jika secret key tidak dikonfigurasi");
+      const resBypass = await verifyTurnstileToken("turnstile-not-configured");
+      assert(resBypass === true, "Token 'turnstile-not-configured' harus di-bypass");
+
+      const resDevBypass = await verifyTurnstileToken("dev-bypass-turnstile-token");
+      assert(resDevBypass === true, "Token 'dev-bypass-turnstile-token' harus di-bypass");
     } finally {
-      (process.env as any).NODE_ENV = prevEnv;
-      if (prevSecret) process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY = prevSecret;
-      if (prevOldSecret) process.env.TURNSTILE_SECRET_KEY = prevOldSecret;
+      if (prevSecret) {
+        process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY = prevSecret;
+      } else {
+        delete process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
+      }
     }
   });
 

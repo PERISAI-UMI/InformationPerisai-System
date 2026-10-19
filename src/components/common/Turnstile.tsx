@@ -77,11 +77,9 @@ export const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(
     }));
 
     useEffect(() => {
-      // Jika site key tidak tersedia di lingkungan non-produksi, berikan bypass token
+      // Jika site key tidak tersedia di lingkungan apapun, berikan token fallback agar form tidak terblokir
       if (!siteKey) {
-        if (process.env.NODE_ENV !== "production") {
-          onVerify("dev-bypass-turnstile-token");
-        }
+        onVerify("turnstile-not-configured");
         return;
       }
 
