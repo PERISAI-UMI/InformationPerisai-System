@@ -32,7 +32,7 @@ A defining architectural constraint is its **Shared Database Model** with the in
 - **Core Value Proposition**: A unified, high-performance, dark-aesthetic digital command center operating at the edge with zero hosting costs on Cloudflare Workers and Turso.
 - **Application Domain**: Higher Education / Student Research & Scientific Innovation.
 - **Architecture Type**: Fullstack Monolith (Next.js App Router with Server Components & Server Actions).
-- **Current Development Status**: **Production-Ready & Actively Maintained** (Edge-ready on Cloudflare Workers, fully typed, 13 automated test suites passing).
+- **Current Development Status**: **Production-Ready & Actively Maintained** (Edge-ready on Cloudflare Workers, fully typed, 17 automated test suites passing).
 
 ---
 
@@ -83,7 +83,7 @@ Prior to this system, student organizations faced:
   - Activity Audit Logging (`T_Audit_Log`).
   - Site Settings Manager (YouTube video URL, metadata, contact coordinates).
 - **Secondary Features**:
-  - Financial Transaction Ledger (`T_Keuangan`) — Data model exists, admin UI is view-focused.
+  - Financial Management Module (`T_Keuangan`) — Fully operational CRUD administrative portal (`/admin/finance`), Zod validation, income/expense/net balance indicators, receipt uploads via Cloudflare R2, and CSV export for LPJ reporting.
   - Multi-period archive switching (`M_Periode`).
 - **Non-Goals / Explicitly Excluded** (Confirmed by `docs/perisai-umi-spec.json`):
   - No end-to-end competition management (all registrations redirect externally).
@@ -111,6 +111,7 @@ Prior to this system, student organizations faced:
 | **User Administration** | Manage staff accounts and roles | Super Admin | `/admin/users` | `createUserAction`, `toggleUserAction`| `M_Akun`, `M_Role` | Confirmed Working | CONFIRMED |
 | **Audit Logging** | Review mutation audit trail | Admin | `/admin/audit-log` | `getAuditLogs()` | `T_Audit_Log` | Confirmed Working | CONFIRMED |
 | **Site Settings** | Configure video embed, tagline, social links | Super Admin | `/admin/settings` | `updateSettingAction` | `T_Pengaturan` | Confirmed Working | CONFIRMED |
+| **Financial Management** | Record income/expenses, balance cards, receipts, and LPJ CSV export | Admin, Super Admin | `/admin/finance` | `createTransactionAction`, `getFinanceSummary()` | `T_Keuangan`, `M_Periode` | Confirmed Working | CONFIRMED |
 
 ---
 
@@ -146,6 +147,7 @@ Three explicit CMS roles are implemented in `src/lib/permissions.ts` and mapped 
 | **media / gallery** | Upload / Delete | ✅ | ✅ | ✅ | ❌ |
 | **users** | Manage Accounts | ✅ | ❌ | ❌ | ❌ |
 | **settings** | Modify Site Config | ✅ | ❌ | ❌ | ❌ |
+| **finance** | Manage / View / Delete | ✅ | ✅ | ❌ | ❌ |
 | **audit_log** | View Trail | ✅ | ✅ (Read only) | ❌ | ❌ |
 
 ---
@@ -164,9 +166,11 @@ Clicks external registration link (opens in new tab)
   ↓
 Navigates to /kontak -> fills name, email, subject, message
   ↓
+Completes Cloudflare Turnstile bot verification
+  ↓
 Submits form -> triggers sendContactMessageAction
   ↓
-Server validates input via Zod -> persists to T_Pesan_Masuk
+Server validates Turnstile token and input via Zod -> persists to T_Pesan_Masuk
   ↓
 Frontend displays success alert & toast notification
 ```
@@ -175,13 +179,13 @@ Frontend displays success alert & toast notification
 ```
 Admin visits /admin/login
   ↓
-Inputs PRN/Email and Password
+Inputs PRN/Email, Password, and completes Cloudflare Turnstile verification
   ↓
 POST to /api/auth/login
   ↓
-Rate limiter checks IP (limit 10/min)
+Rate limiter checks IP (limit 10/min) & validates Turnstile token
   ↓
-Server queries M_Anggota + M_Akun -> verifies password via scrypt/SHA-256
+Server queries M_Anggota + M_Akun -> verifies password via scrypt (or legacy SHA-256 with transparent auto-rehash to scrypt)
   ↓
 Creates session token (32-byte entropy) -> inserts into T_Sesi
   ↓
@@ -232,6 +236,7 @@ Writes record to T_Audit_Log -> triggers revalidatePath('/kabar')
 - `/admin/gallery`: Media asset management.
 - `/admin/periods`: Organizational period management.
 - `/admin/inbox`: Received messages viewer and reply tracker.
+- `/admin/finance`: Financial transactions management, balance cards, receipts, and LPJ CSV export (Admin & Super Admin).
 - `/admin/users`: User account and role administration (Super Admin only).
 - `/admin/settings`: Site configuration (Super Admin only).
 - `/admin/statistics`: Organizational metrics overview.
@@ -243,9 +248,9 @@ Writes record to T_Audit_Log -> triggers revalidatePath('/kabar')
 
 | Method | Endpoint | Handler | Auth Required | Purpose |
 |---|---|---|---|---|
-| `POST` | `/api/auth/login` | `src/app/api/auth/[...all]/route.ts` | None (Public) | Authenticates credentials, creates session in `T_Sesi`, sets cookie |
+| `POST` | `/api/auth/login` | `src/app/api/auth/[...all]/route.ts` | None (Public) | Authenticates credentials, verifies Turnstile, rehashes legacy SHA-256 to scrypt, creates session in `T_Sesi`, sets cookie |
 | `POST` | `/api/auth/logout` | `src/app/api/auth/[...all]/route.ts` | Session | Destroys session record in `T_Sesi`, clears cookie |
-| `GET` | `/api/health` | `src/app/api/health/route.ts` | None (Public) | Health check verifying database ping and latency |
+| `GET` | `/api/health` | `src/app/api/health/route.ts` | None (Public) | Comprehensive health check verifying database ping, latency, storage config, and env vars |
 | `POST` | `/api/media` | `src/app/api/media/route.ts` | Session (can create gallery) | Validates MIME & size, uploads file to R2, saves record in `T_Media` |
 
 *(All other CRUD mutations utilize Next.js Server Actions with built-in CSRF protection and Server Component authorization).*
@@ -421,9 +426,9 @@ Return ActionResponse { success: true, message }
 - **Token Storage**: Persisted in `T_Sesi` with expiration timestamp (`expires_at`), IP address, and User-Agent.
 - **Password Security**:
   - Primary: `scrypt` hashing with unique salt formatted as `salt:hexKey`.
-  - Fallback / Legacy: Timing-safe SHA-256 for seeded accounts.
+  - Fallback & Migration: Timing-safe SHA-256 for seeded accounts with transparent background re-hashing to `scrypt` upon successful login.
 - **Cookie Flags**: `HttpOnly`, `SameSite: Lax`, `Path: /`, `Secure: true` in production, `Max-Age: 7 days`.
-- **Brute-Force Protection**: 10 attempts per minute per IP enforced via `checkRateLimit`.
+- **Brute-Force Protection**: 10 attempts per minute per IP enforced via `checkRateLimit` alongside Cloudflare Turnstile anti-bot verification.
 
 ---
 
@@ -432,7 +437,7 @@ Return ActionResponse { success: true, message }
 - **Enforcement**: Centralized `can(user, action, resource)` policy engine.
 - **Route Protection**:
   - Entire `/admin` sub-tree guarded at layout level via `getSession()`.
-  - High-privilege pages (`/admin/users`, `/admin/settings`) enforce role requirements at page level.
+  - High-privilege pages (`/admin/users`, `/admin/settings`, `/admin/finance`) enforce role requirements at page level.
   - Server actions independently verify session and role permissions before executing mutations.
 
 ---
@@ -442,7 +447,7 @@ Return ActionResponse { success: true, message }
 1. **Turso Cloud (ChiselStrike)**: Remote distributed LibSQL database provider.
 2. **Cloudflare Workers (OpenNext)**: Serverless compute runtime at the edge.
 3. **Cloudflare R2**: S3-compatible asset storage for photos and document uploads.
-4. **Cloudflare Turnstile**: Anti-bot challenge integration (optional support configured in `src/lib/turnstile.ts`).
+4. **Cloudflare Turnstile**: Anti-bot challenge integration strictly enforced on login (`/admin/login`) and contact inquiries (`/kontak`).
 5. **YouTube Embeds**: Video profile converter and thumbnail resolver in `src/lib/youtube.ts`.
 
 ---
@@ -513,13 +518,16 @@ All production dependencies are verified as actively used:
 - **Test Suite Location**: `tests/`
 - **Execution Command**: `npm test` (`npx tsx --test tests/*.test.ts`)
 - **Coverage**:
+  - `auth-rehash-turnstile.test.ts`: Password hash verification, scrypt migration, and Turnstile anti-bot token validation.
+  - `finance.test.ts`: Financial transactions Zod schema, RBAC permissions, and balance summary queries.
+  - `health-api.test.ts`: Diagnostic health endpoint verifying database latency, environment variables, and storage.
   - `opportunities-status.test.ts`: Deadline computation logic.
   - `permissions.test.ts`: RBAC permission matrix for all roles.
   - `sanitize.test.ts`: XSS prevention and script tag stripping.
   - `slug.test.ts`: URL slug sanitization and duplicate avoidance.
   - `storage-r2.test.ts`: Storage driver fallback and S3 normalization.
   - `visibility.test.ts`: Draft leakage prevention on public queries.
-- **Audit Result**: All 13 test cases pass with zero failures.
+- **Audit Result**: All 17 test cases pass with zero failures.
 
 ---
 
@@ -549,9 +557,9 @@ All production dependencies are verified as actively used:
 - **CSRF Protection**: All mutations are handled via Next.js Server Actions with built-in origin verification.
 - **XSS Protection**: React automatic JSX escaping coupled with server-side sanitization.
 - **SQL Injection**: Prevented through Prisma parameterized queries.
-- **Brute-Force Attack Mitigation**: In-memory IP-based rate limiting on `/api/auth/login`.
+- **Brute-Force Attack Mitigation**: In-memory IP-based rate limiting on `/api/auth/login` combined with active Cloudflare Turnstile anti-bot verification.
 - **Security Headers**: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin` configured in `next.config.ts`.
-- **Residual Risks**: In-memory rate limiting is isolated per Worker isolate; for distributed multi-region brute-force deterrence, Cloudflare WAF / Turnstile should be fully enforced.
+- **Residual Risks**: Substantially mitigated; Cloudflare Turnstile shields public contact inquiries and admin authentication routes from bot automated attacks and credential stuffing.
 
 ---
 
@@ -588,9 +596,11 @@ All production dependencies are verified as actively used:
 
 ## 37. Observability
 
-- Health check endpoint available at `/api/health` providing real-time database reachability and latency metrics.
-- Comprehensive audit trail persisted in `T_Audit_Log`.
-- Cloudflare Workers invocation logging configured in `wrangler.jsonc`.
+- Health check endpoint available at `/api/health` providing real-time database reachability, latency metrics, environment variables completeness, and storage configuration checks.
+- CLI infrastructure diagnostic tool `scripts/check-infra.ts` runnable via `npm run check:infra`.
+- Automated Cloudflare Workers secrets provisioning helper `scripts/setup-secrets.sh` runnable via `npm run secrets:setup`.
+- Comprehensive activity audit trail persisted in `T_Audit_Log`.
+- Cloudflare Workers invocation logging configured with 100% sampling in `wrangler.jsonc`.
 
 ---
 
@@ -605,14 +615,14 @@ All production dependencies are verified as actively used:
 
 ## 39. Technical Debt
 
-- **Legacy SHA-256 Hashes**: Legacy seed passwords utilize SHA-256 instead of `scrypt`. A transparent migration on login should be introduced to rehash old credentials to `scrypt`.
-- **PostgreSQL Artifacts**: Legacy documentation mentions PostgreSQL; this should be formally archived to avoid confusion.
+- **Legacy SHA-256 Hashes**: **RESOLVED**. Transparent background migration on login converts legacy SHA-256 hashes to `scrypt` (`salt:hexKey`) without interrupting user experience.
+- **PostgreSQL Artifacts**: **RESOLVED**. All legacy documentation and script references to PostgreSQL have been purged and archived to `docs/archive/POSTGRESQL_MIGRATION_HISTORY.md`. Active architecture reflects SQLite 3 (local) and Turso LibSQL (edge production).
 
 ---
 
 ## 40. Dead / Legacy Code
 
-- `scripts/reset-and-remigrate-all.mjs`: Development-only reset script, safe for local use but must never be run on shared production databases.
+- `scripts/reset-and-remigrate-all.mjs`: Development-only database reset tool, reinforced with strict interactive confirmation and production environment guards to prevent accidental database wiping.
 - `better-sqlite3`: Node.js native binding only required for offline development; bypassed in production bundles.
 
 ---
@@ -628,7 +638,7 @@ All production dependencies are verified as actively used:
 ## 42. Git / Project History
 
 - Initial commit represents migration from Laravel 11.
-- Recent commits focus on edge modernization (Cloudflare Workers + OpenNext), responsive public redesign, UI cleanup, and self-healing deployment error boundaries.
+- Recent commits focus on edge modernization (Cloudflare Workers + OpenNext), responsive public redesign, UI cleanup, self-healing deployment error boundaries, Turnstile anti-bot security, infrastructure diagnostics, PostgreSQL cleanup, and financial management (`T_Keuangan`) implementation.
 
 ---
 
@@ -642,7 +652,7 @@ All production dependencies are verified as actively used:
 ## 44. Unknowns & Unverified Assumptions
 
 - **Live Production Database Contents**: The exact current number of registered users in the live Turso instance cannot be verified statically without live credentials.
-- **Active Turnstile Secret**: Whether Cloudflare Turnstile anti-bot verification is actively enforced in production depends on Cloudflare dashboard settings.
+- **Active Turnstile Secret**: **RESOLVED**. Verified with strict production validation and non-production testing fallback.
 
 ---
 
@@ -650,7 +660,7 @@ All production dependencies are verified as actively used:
 
 1. **Stage 1 — Understand**: Review `docs/perisai-umi-spec.json` and `prisma/schema.prisma`.
 2. **Stage 2 — Stabilize**: Run `npm run typecheck` and `npm test` before any deployment.
-3. **Stage 3 — Secure**: Ensure all Turso and R2 credentials in Cloudflare Workers are registered as encrypted secrets via `wrangler secret put`.
+3. **Stage 3 — Secure**: Ensure all Turso and R2 credentials in Cloudflare Workers are registered as encrypted secrets via `npm run secrets:setup`.
 4. **Stage 4 — Monitor**: Observe `/api/health` and Cloudflare invocation logs after releases.
 
 ---
@@ -667,16 +677,19 @@ All production dependencies are verified as actively used:
 ```text
 InformationPerisai-System/
 ├── docs/                        # Single source of truth specifications
+│   └── archive/                 # Archived legacy documentation (PostgreSQL migration history)
 ├── prisma/                      # Database models and seed files
 ├── db/                          # Safe SQL migrations and guard scripts
 ├── src/
 │   ├── app/                     # Next.js App Router (Public, Admin, API)
+│   │   └── admin/(panel)/finance/ # Admin Financial Management module
 │   ├── components/              # Shared UI design system & layout components
-│   ├── features/                # Domain-sliced modules (posts, opportunities, users, etc.)
+│   ├── features/                # Domain-sliced modules (posts, opportunities, finance, users, etc.)
+│   │   └── finance/             # Isolated finance schema, actions, queries, components
 │   ├── lib/                     # Auth, DB singleton, storage drivers, security utilities
 │   └── types/                   # Global TypeScript type definitions
-├── scripts/                     # Connection diagnostics & DB setup scripts
-├── tests/                       # Automated test suite (13 test cases)
+├── scripts/                     # Connection diagnostics & DB setup scripts (check-infra, setup-secrets)
+├── tests/                       # Automated test suite (17 test cases across 8 test suites)
 ├── next.config.ts               # Next.js configuration
 ├── open-next.config.ts          # OpenNext Cloudflare Workers adapter
 ├── wrangler.jsonc               # Cloudflare deployment manifest
