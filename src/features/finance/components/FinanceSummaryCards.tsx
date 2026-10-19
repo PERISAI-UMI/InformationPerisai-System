@@ -1,5 +1,5 @@
 import React from "react";
-import type { FinanceSummary } from "../queries.admin";
+import type { FinanceSummary } from "../types";
 
 interface FinanceSummaryCardsProps {
   summary: FinanceSummary;

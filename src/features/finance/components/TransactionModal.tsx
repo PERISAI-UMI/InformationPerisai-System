@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/Toast";
 import {
   DEFAULT_FINANCE_CATEGORIES,
   type TransactionItem,
-} from "../queries.admin";
+} from "../types";
 import { createTransactionAction, updateTransactionAction } from "../actions";
 
 interface TransactionModalProps {

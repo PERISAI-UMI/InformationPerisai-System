@@ -15,7 +15,7 @@ import type {
   FinanceSummary,
   TransactionFilterParams,
   TransactionItem,
-} from "../queries.admin";
+} from "../types";
 import type { PaginatedResult } from "@/types";
 
 interface FinanceManagerProps {
