@@ -6,8 +6,11 @@ import {
   createSessionRecord,
   destroySessionRecord,
   verifyPassword,
+  hashPassword,
+  isLegacyPasswordHash,
 } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +75,18 @@ export async function POST(request: Request) {
         );
       }
 
+      // 2. Validasi Cloudflare Turnstile anti-bot token
+      const turnstileToken = String(
+        body.turnstileToken || body["cf-turnstile-response"] || ""
+      );
+      const isHuman = await verifyTurnstileToken(turnstileToken, clientIp);
+      if (!isHuman) {
+        return NextResponse.json(
+          { error: "Verifikasi keamanan Turnstile gagal atau kedaluwarsa. Silakan coba kembali." },
+          { status: 403 }
+        );
+      }
+
       const anggota = await prisma.mAnggota.findFirst({
         where: {
           OR: [
@@ -86,7 +101,7 @@ export async function POST(request: Request) {
         },
       });
 
-      // 2. Validasi keberadaan akun dan status aktif (isActive === 1)
+      // 3. Validasi keberadaan akun dan status aktif (isActive === 1)
       if (!anggota || !anggota.akun || anggota.akun.isActive !== 1) {
         return NextResponse.json(
           { error: "Kredensial login tidak valid atau akun telah dinonaktifkan." },
@@ -102,7 +117,27 @@ export async function POST(request: Request) {
         );
       }
 
-      // 3. Catat waktu login terakhir (last_login)
+      // 4. Migrasi Transparan Hash Kata Sandi (SHA-256 legacy ke scrypt)
+      if (isLegacyPasswordHash(anggota.akun.passwordHash)) {
+        try {
+          const newScryptHash = await hashPassword(password);
+          await prisma.mAkun.update({
+            where: { idAkun: anggota.akun.idAkun },
+            data: { passwordHash: newScryptHash },
+          });
+          console.info(
+            `[auth] Berhasil memigrasikan hash kata sandi akun ID ${anggota.akun.idAkun} (${anggota.idPerisai}) dari SHA-256 ke scrypt.`
+          );
+        } catch (migrationErr) {
+          console.error(
+            `[auth] Gagal memperbarui hash kata sandi akun ID ${anggota.akun.idAkun} ke scrypt:`,
+            migrationErr
+          );
+          // Jangan gagalkan proses login jika pembaruan hash scrypt gagal di background
+        }
+      }
+
+      // 5. Catat waktu login terakhir (last_login)
       const now = Math.floor(Date.now() / 1000);
       prisma.mAkun
         .update({

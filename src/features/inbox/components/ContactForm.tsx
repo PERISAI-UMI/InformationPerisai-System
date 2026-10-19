@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { sendContactMessageAction } from "../actions";
 
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
+import { Turnstile, type TurnstileRef } from "@/components/common/Turnstile";
 
 export function ContactForm() {
   const [name, setName] = useState("");
@@ -12,6 +13,8 @@ export function ContactForm() {
   const [phone, setPhone] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileRef = useRef<TurnstileRef>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{
     type: "success" | "error";
@@ -31,6 +34,7 @@ export function ContactForm() {
         purpose: "pertanyaan",
         subject,
         message,
+        turnstileToken,
       });
 
       setIsLoading(false);
@@ -47,6 +51,8 @@ export function ContactForm() {
         setPhone("");
         setSubject("");
         setMessage("");
+        setTurnstileToken("");
+        turnstileRef.current?.reset();
       } else {
         const errorMsg = res.message || "Gagal mengirim pesan. Silakan periksa kembali formulir Anda.";
         setStatusMessage({
@@ -54,6 +60,7 @@ export function ContactForm() {
           text: errorMsg,
         });
         toast.error(errorMsg);
+        turnstileRef.current?.reset();
       }
     } catch {
       setIsLoading(false);
@@ -63,8 +70,10 @@ export function ContactForm() {
         text: networkMsg,
       });
       toast.error(networkMsg);
+      turnstileRef.current?.reset();
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
@@ -157,8 +166,17 @@ export function ContactForm() {
         </div>
       </div>
 
+      {/* Cloudflare Turnstile Verification */}
+      <Turnstile
+        ref={turnstileRef}
+        id="contact-turnstile"
+        onVerify={(token) => setTurnstileToken(token)}
+        onExpire={() => setTurnstileToken("")}
+      />
+
       {/* Submit Button */}
       <div className="pt-2">
+
         <button
           type="submit"
           disabled={isLoading}

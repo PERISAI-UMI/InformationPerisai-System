@@ -230,5 +230,25 @@ export async function verifyPassword(
   }
 }
 
+/**
+ * Buat hash scrypt baru dalam format "salt:hexKey".
+ * Menggunakan salt 16 bytes acak dan derived key scrypt 64 bytes.
+ */
+export async function hashPassword(password: string): Promise<string> {
+  const { scryptSync, randomBytes } = await import("node:crypto");
+  const salt = randomBytes(16).toString("hex");
+  const derivedKey = scryptSync(password, salt, 64);
+  return `${salt}:${derivedKey.toString("hex")}`;
+}
+
+/**
+ * Cek apakah string hash kata sandi masih menggunakan format legacy SHA-256 (64 hex characters tanpa separator colon).
+ */
+export function isLegacyPasswordHash(storedHash: string): boolean {
+  if (!storedHash || typeof storedHash !== "string") return false;
+  return !storedHash.includes(":") && storedHash.trim().length === 64;
+}
+
 export { SESSION_COOKIE_NAME as default };
+
 

@@ -22,13 +22,15 @@ export async function sendContactMessageAction(data: ContactInput): Promise<Acti
     return { success: false, message: "Terlalu banyak permintaan pesan. Silakan tunggu beberapa menit sebelum mencoba lagi." };
   }
 
-  // Cloudflare Turnstile token validation jika ada
-  if (parsed.data.turnstileToken) {
-    const isHuman = await verifyTurnstileToken(parsed.data.turnstileToken);
-    if (!isHuman) {
-      return { success: false, message: "Verifikasi bot Turnstile gagal. Silakan coba kembali." };
-    }
+  // Cloudflare Turnstile anti-bot token verification
+  const isHuman = await verifyTurnstileToken(parsed.data.turnstileToken || "");
+  if (!isHuman) {
+    return {
+      success: false,
+      message: "Verifikasi keamanan Turnstile gagal atau kedaluwarsa. Silakan coba kembali.",
+    };
   }
+
 
   try {
     const message = await prisma.tPesanMasuk.create({
