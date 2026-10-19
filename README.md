@@ -197,7 +197,7 @@ InformationPerisai-System/
 │   │   └── 002_complete_perisai_schema.sql # Skema tunggal komprehensif (M_* & T_*)
 │   └── protected-schema...     # Snapshot tabel terlindungi milik PSDM
 ├── deploy/                     # Konfigurasi deployment server mandiri (VPS)
-│   ├── backup.sh               # Skrip backup otomatis berkala (SQLite / Postgres)
+│   ├── backup.sh               # Skrip backup otomatis berkala (SQLite lokal)
 │   ├── Caddyfile               # Konfigurasi reverse proxy Caddy (HTTPS otomatis)
 │   ├── deploy.sh               # Skrip pembaruan aplikasi satu perintah
 │   ├── perisai-umi.service     # Unit file Systemd untuk auto-restart aplikasi

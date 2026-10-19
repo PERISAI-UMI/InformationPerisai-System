@@ -1,10 +1,46 @@
-import { createClient } from "@libsql/client";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
+// ==============================================================================
+// SAFETY GUARD: Proteksi Lingkungan Produksi & Basis Data Cloud
+// ==============================================================================
+const isProduction = process.env.NODE_ENV === "production";
+const hasTursoUrl = Boolean(process.env.TURSO_DATABASE_URL);
+const allowReset = process.env.ALLOW_DB_RESET === "true";
+
+if (isProduction || hasTursoUrl) {
+  console.error("\x1b[31m\x1b[1m");
+  console.error("================================================================================");
+  console.error("⛔ EKSEKUSI DIBATALKAN: SAFETY GUARD MENDETEKSI LINGKUNGAN BERISIKO TINGGI!");
+  console.error("================================================================================");
+  console.error(`  - NODE_ENV           : ${process.env.NODE_ENV || "not set"}`);
+  console.error(`  - TURSO_DATABASE_URL : ${hasTursoUrl ? "TERDETEKSI (" + process.env.TURSO_DATABASE_URL + ")" : "TIDAK ADA"}`);
+  console.error("");
+  console.error("Skrip ini ('scripts/reset-and-remigrate-all.mjs') bersifat DESTRUKTIF TOTAL (DROP ALL TABLES).");
+  console.error("Skrip DILARANG KERAS dijalankan pada lingkungan produksi atau database Turso Cloud!");
+  console.error("Jika Anda bermaksud mereset SQLite lokal dev, kosongkan TURSO_DATABASE_URL dan jalankan:");
+  console.error("  ALLOW_DB_RESET=true node scripts/reset-and-remigrate-all.mjs");
+  console.error("================================================================================\x1b[0m\n");
+  process.exit(1);
+}
+
+if (!allowReset) {
+  console.error("\x1b[31m\x1b[1m");
+  console.error("================================================================================");
+  console.error("⛔ EKSEKUSI DITOLAK: VARIABEL 'ALLOW_DB_RESET=true' DIPERLUKAN!");
+  console.error("================================================================================");
+  console.error("Skrip ini akan MENGHAPUS dan MEMBUAT ULANG seluruh database SQLite lokal ('psdm-db.db').");
+  console.error("Untuk mencegah kehilangan data lokal yang tidak disengaja, jalankan dengan izin eksplisit:");
+  console.error("");
+  console.error("  ALLOW_DB_RESET=true node scripts/reset-and-remigrate-all.mjs");
+  console.error("================================================================================\x1b[0m\n");
+  process.exit(1);
+}
+
 // 1. Data 42 Pengurus Riil 2026/2027
+
 const rawMembers = [
   { "ID PERISAI":"PRN0238", "Generasi":10, "Tugas dan Tanggung Jawab":"Ketua Umum", "NamaLengkap":"Aisyah Ramadhani Muchlis", "Tempat, Tanggal Lahir":"Wamena, 02 Oktober 2004 ", "Fakultas":"FEB", "Program Studi/Jurusan":"Manajemen", "NIM/Stambuk":"2220230181", "Angkatan":2023, "Email":"aisyahramadhani.m@gmail.com ", "No. Telepon/WA":"6281244899985", "Alamat":"BTP Blok G Baru ", "Linkedn":"linkedin.com/in/aisyahmuchlis", "Instagram":"instagram.com/aisyahmuchliis", "Hobi":"Organizing " },
   { "ID PERISAI":"PRN0241", "Generasi":10, "Tugas dan Tanggung Jawab":"Sekretaris Umum", "NamaLengkap":"Baiq Indar Pirayati", "Tempat, Tanggal Lahir":"Tammarunang, 17 Maret 2005", "Fakultas":"FKM", "Program Studi/Jurusan":"Kesehatan Masyarakat", "NIM/Stambuk":"14120230025", "Angkatan":2023, "Email":"baiqindarp@gmail.com", "No. Telepon/WA":"6281243953198", "Alamat":"Pampang", "Linkedn":"linkedin.com/in/baiq-indar-p", "Instagram":"instagram.com/_baiqindar", "Hobi":"Menonton, membaca" },
@@ -622,64 +658,14 @@ async function main() {
   await migrateAndSeedTarget("SQLite Lokal (psdm-db.db)", localExecutor);
   localDb.pragma("foreign_keys = ON");
   localDb.close();
-  console.log("✅ Database SQLite lokal 'psdm-db.db' selesai dibuat ulang dari nol.");
 
-  // 2. Reset Turso Cloud LibSQL
-  const tursoUrl = process.env.TURSO_DATABASE_URL || "libsql://perisai-dev-psdm.aws-ap-northeast-1.turso.io";
-  const tursoAuthToken = process.env.TURSO_AUTH_TOKEN || "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTEzOTY1MzMsImlkIjoiMDFhMTE3OGQtMGIwMS03NTc4LTgzMjctYmQ3MmExMGZkYzU0Iiwia2lkIjoiYnhxbm5VQ1Vrd1U0ZzRFakJoc0xxOXo0ZHZrdlF5NXJNbHdKVGIyb0NtZyIsInJpZCI6IjEzMGZkNzhmLTAyNWMtNDQzZi04ODUxLWQ0YzkyMTFiZWNkNyJ9.jB-8X5V7nHjl5IsTnc1ZmTR1jhaZG6MGayuNJmWrqBe7K4FiPQeRSjr32oKoNhCIVPCAfeY-MChdvwfQH26mDg";
-
-  console.log(`\n🌐 Menghubungkan ke Turso Cloud untuk reset: ${tursoUrl}`);
-  const tursoClient = createClient({ url: tursoUrl, authToken: tursoAuthToken });
-
-  console.log("🗑️ Menghapus seluruh triggers, views, dan tabel di Turso Cloud...");
-  try {
-    await tursoClient.execute("PRAGMA foreign_keys = OFF");
-
-    // 1. Drop Triggers
-    const triggers = await tursoClient.execute("SELECT name FROM sqlite_master WHERE type='trigger'");
-    for (const row of triggers.rows) {
-      try { await tursoClient.execute(`DROP TRIGGER IF EXISTS "${row.name}"`); } catch(e) {}
-    }
-
-    // 2. Drop Views
-    const views = await tursoClient.execute("SELECT name FROM sqlite_master WHERE type='view'");
-    for (const row of views.rows) {
-      try { await tursoClient.execute(`DROP VIEW IF EXISTS "${row.name}"`); } catch(e) {}
-    }
-
-    // 3. Drop Tables (Retry loop to handle any remaining constraints)
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const tables = await tursoClient.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_litestream_%'"
-      );
-      if (tables.rows.length === 0) break;
-      for (const row of tables.rows) {
-        try { await tursoClient.execute(`DROP TABLE IF EXISTS "${row.name}"`); } catch(e) {}
-      }
-    }
-    console.log("✅ Seluruh elemen lama di Turso Cloud berhasil dibersihkan.");
-  } catch(e) {
-    console.warn("Peringatan inspect Turso schema:", e.message);
-  }
-
-  const tursoExecutor = async (sql, args = []) => {
-    try {
-      const res = await tursoClient.execute({ sql, args });
-      return res.rows;
-    } catch(err) {
-      if (!err.message.includes("already exists")) {
-        console.warn("Turso error on SQL:", sql.slice(0, 100), "->", err.message);
-      }
-      return [];
-    }
-  };
-
-  await migrateAndSeedTarget("Turso Cloud LibSQL", tursoExecutor);
-  console.log("✅ Database Turso Cloud berhasil dibuat ulang dari nol.");
-
+  console.log("✅ Database SQLite lokal 'psdm-db.db' selesai dibuat ulang dan di-seed dengan sukses.");
   console.log("\n======================================================");
-  console.log("🎉 SELURUH DATABASE BERHASIL DIMIGRASI ULANG & TERNORMALISASI! 🎉");
+  console.log("🎉 DATABASE SQLITE LOKAL BERHASIL DIRESET & TERNORMALISASI! 🎉");
   console.log("======================================================");
+  console.log("ℹ️  Catatan: Untuk menerapkan migrasi ke Turso Cloud LibSQL produksi,");
+  console.log("   gunakan skrip khusus: node scripts/migrate-and-seed-turso.mjs");
+  console.log("======================================================\n");
 }
 
 main().catch(err => {

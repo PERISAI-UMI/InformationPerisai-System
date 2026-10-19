@@ -86,7 +86,7 @@ Berkas basis data lengkap telah berada di direktori utama:
 ### 2. Menggunakan Berkas Migrasi DDL Mentah
 Berkas DDL SQL murni tersedia di:
 - [`db/migrations/002_complete_perisai_schema.sql`](./migrations/002_complete_perisai_schema.sql)
-- Skrip ini kompatibel dengan SQLite 3.35+, Turso LibSQL, dan dapat dengan mudah diadaptasikan ke MySQL / PostgreSQL jika diperlukan.
+- Skrip ini dirancang khusus untuk SQLite 3.35+ (lingkungan lokal) dan Turso Cloud LibSQL (lingkungan produksi Cloudflare Edge).
 
 ---
 

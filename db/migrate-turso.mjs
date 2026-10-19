@@ -1,8 +1,13 @@
 import { createClient } from "@libsql/client";
 import fs from "fs";
 
-const url = "libsql://perisai-dev-psdm.aws-ap-northeast-1.turso.io";
-const authToken = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTEzOTY1MzMsImlkIjoiMDFhMTE3OGQtMGIwMS03NTc4LTgzMjctYmQ3MmExMGZkYzU0Iiwia2lkIjoiYnhxbm5VQ1Vrd1U0ZzRFakJoc0xxOXo0ZHZrdlF5NXJNbHdKVGIyb0NtZyIsInJpZCI6IjEzMGZkNzhmLTAyNWMtNDQzZi04ODUxLWQ0YzkyMTFiZWNkNyJ9.jB-8X5V7nHjl5IsTnc1ZmTR1jhaZG6MGayuNJmWrqBe7K4FiPQeRSjr32oKoNhCIVPCAfeY-MChdvwfQH26mDg";
+const url = process.env.TURSO_DATABASE_URL;
+const authToken = process.env.TURSO_AUTH_TOKEN;
+
+if (!url || !authToken) {
+  console.error("❌ Kesalahan: TURSO_DATABASE_URL dan TURSO_AUTH_TOKEN wajib diatur di .env sebelum menjalankan skrip ini.");
+  process.exit(1);
+}
 
 const client = createClient({ url, authToken });
 
