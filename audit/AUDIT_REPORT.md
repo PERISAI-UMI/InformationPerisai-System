@@ -432,13 +432,144 @@ Return ActionResponse { success: true, message }
 
 ---
 
-## 22. Authorization
+## 22. Authorization & Comprehensive RBAC Matrix (Role Capabilities)
 
-- **Enforcement**: Centralized `can(user, action, resource)` policy engine.
-- **Route Protection**:
-  - Entire `/admin` sub-tree guarded at layout level via `getSession()`.
-  - High-privilege pages (`/admin/users`, `/admin/settings`, `/admin/finance`) enforce role requirements at page level.
-  - Server actions independently verify session and role permissions before executing mutations.
+The system implements a strict, multi-layered **Role-Based Access Control (RBAC)** architecture centered around the policy engine `can(user, action, resource)` defined in `src/lib/permissions.ts`.
+
+### 22.1. Role Hierarchy & Philosophy
+
+The system distinguishes four privilege tiers:
+1. **SUPER_ADMIN (Admin Utama)**: Full system sovereignty. Intended for the organization's technical leads or chief administrators.
+2. **ADMIN (Administrator Operasional)**: Day-to-day organizational management. Intended for BPH (Badan Pengurus Harian) executives managing programs, members, media, and finance.
+3. **EDITOR (Editor Konten)**: Public information curation. Intended for publication staff and department writers creating news and opportunities without administrative or destructive privileges.
+4. **PUBLIC / ANONYMOUS**: Unauthenticated visitors and general students browsing the public website.
+
+---
+
+### 22.2. Master Permission Matrix
+
+| Feature / Resource | Action | SUPER_ADMIN | ADMIN | EDITOR | PUBLIC | Enforcing Layer |
+|---|---|:---:|:---:|:---:|:---:|---|
+| **Berita / Artikel (`posts`)** | Read | ✅ | ✅ | ✅ | ✅ (Published only) | SQL Filter (`status='PUBLISHED'`) / `can()` |
+| | Create | ✅ | ✅ | ✅ | ❌ | Server Action (`createPostAction`) |
+| | Update / Edit | ✅ | ✅ | ✅ | ❌ | Server Action (`updatePostAction`) |
+| | **Delete (Hapus)** | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`deletePostAction`) |
+| **Peluang & Lomba (`opportunities`)** | Read | ✅ | ✅ | ✅ | ✅ (Public portal) | Public Query / Admin Query |
+| | Create | ✅ | ✅ | ✅ | ❌ | Server Action (`createOpportunityAction`) |
+| | Update / Edit | ✅ | ✅ | ✅ | ❌ | Server Action (`updateOpportunityAction`) |
+| | **Delete (Hapus)** | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`deleteOpportunityAction`) |
+| **Galeri Media (`gallery`)** | Read / View | ✅ | ✅ | ✅ | ✅ (Used in content) | API Route (`/api/media`) |
+| | Upload File | ✅ | ✅ | ✅ | ❌ | Server Action / API Route Handler |
+| | **Delete (Hapus)** | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`deleteMediaAction`) |
+| **Departemen (`departments`)** | Read | ✅ | ✅ | ✅ (Read-only) | ✅ (About page) | Public / Admin Queries |
+| | Create / Update | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Actions (`create/updateDepartmentAction`) |
+| | **Delete (Hapus)** | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`deleteDepartmentAction`) |
+| **Program Kerja (`work_programs`)** | Read | ✅ | ✅ | ✅ (Read-only) | ✅ (Home/About) | Public / Admin Queries |
+| | Create / Update | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Actions (`create/updateWorkProgramAction`) |
+| | **Delete (Hapus)** | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`deleteWorkProgramAction`) |
+| **Struktur Anggota (`members`)** | Read | ✅ | ✅ | ✅ (Read-only) | ✅ (Organogram) | Public / Admin Queries |
+| | Create / Update | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Actions (`create/updateMemberAction`) |
+| | **Delete (Hapus)** | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`deleteMemberAction`) |
+| **Periode Kepengurusan (`periods`)** | Read | ✅ | ✅ | ✅ (Read-only) | ✅ | Admin Query |
+| | Create / Update | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Actions (`create/updatePeriodAction`) |
+| | Set Active Period | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`setActivePeriodAction`) |
+| **Keuangan Kas (`finance`)** | View Balance & Summary | ✅ | ✅ | ❌ **(Hidden & Blocked)** | ❌ | Page Guard + Action Guard |
+| | Record Income / Expense | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`createTransactionAction`) |
+| | Update Transaction | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`updateTransactionAction`) |
+| | **Delete Transaction** | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`deleteTransactionAction`) |
+| | Export CSV Financial Report | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Client-side export helper |
+| **Indikator Statistik (`statistics`)** | Read / View | ✅ | ✅ | ✅ (Read-only) | ✅ (Home counters) | Public / Admin Queries |
+| | Create / Update / Delete | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Actions (`create/update/deleteStatisticAction`) |
+| **Pesan Masuk (`inbox`)** | Read Messages | ✅ | ✅ | ❌ **(Read-only list)** | ❌ | Admin Query |
+| | Mark as Read | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`markAsReadAction`) |
+| | **Delete Message** | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`deleteMessageAction`) |
+| | Submit Public Message | ✅ | ✅ | ✅ | ✅ (Allowed) | Server Action (`sendContactMessageAction`) |
+| **Pengaturan Situs (`settings`)** | Read Settings | ✅ | ✅ | ✅ (Read-only) | ✅ (Public metadata) | Public / Admin Queries |
+| | Update YouTube / Site Info | ✅ | ✅ | ❌ **(Blocked)** | ❌ | Server Action (`updateSettingsAction`) |
+| | Manage System Parameters | ✅ | ❌ **(Restricted)** | ❌ **(Blocked)** | ❌ | Server Action (`updateSettingsAction`) |
+| **Pengguna & Akses (`users`)** | Read Users List | ✅ | ❌ **(Hidden)** | ❌ **(Hidden)** | ❌ | Admin Page Guard (`/admin/users`) |
+| | **Create User Baru** | ✅ | ❌ **(Prohibited)** | ❌ **(Prohibited)** | ❌ | Server Action (`createUserAction`) |
+| | Edit Role / Password | ✅ | ❌ **(Prohibited)** | ❌ **(Prohibited)** | ❌ | Server Action (`updateUserAction`) |
+| | **Delete User (Hapus Akun)** | ✅ | ❌ **(Prohibited)** | ❌ **(Prohibited)** | ❌ | Server Action (`deleteUserAction`) |
+| **Log Audit Sistem (`audit_log`)** | Read Immutable Log | ✅ | ❌ **(Hidden)** | ❌ **(Hidden)** | ❌ | Admin Page Guard (`/admin/audit-log`) |
+| | Mutate / Delete Logs | ❌ **(Never)** | ❌ **(Never)** | ❌ **(Never)** | ❌ | Immutable DB trigger & no delete endpoint |
+
+---
+
+### 22.3. Exhaustive Role Capabilities Breakdown
+
+#### 1. SUPER_ADMIN (Admin Utama)
+- **Karakteristik**: Role dengan hak akses paling tinggi dan menyeluruh (*God Mode*).
+- **Fitur & Kemampuan Detail**:
+  - **Manajemen Akun Pengguna (`/admin/users`)**:
+    - **Bisa**: Membuat akun admin baru, memilih hak akses (`SUPER_ADMIN`, `ADMIN`, `EDITOR`), mengubah nama, email, mereset password pengguna, mengaktifkan/menonaktifkan akun (`isActive`), dan **menghapus akun pengguna**.
+    - **Akses Eksklusif**: Hanya SUPER_ADMIN yang dapat mengakses halaman `/admin/users` dan memanggil server actions pengguna.
+  - **Log Audit Sistem (`/admin/audit-log`)**:
+    - **Bisa**: Memeriksa seluruh rekaman jejak digital mutasi database secara kronologis (siapa yang mengubah apa, ID entitas, timestamp, alamat IP, dan metadata perubahan).
+    - **Integritas**: Log bersifat *append-only* (tidak ada fitur hapus bahkan untuk SUPER_ADMIN demi kepatuhan audit).
+  - **Pengaturan Situs & Video Profil (`/admin/settings`)**:
+    - **Bisa**: Memperbarui URL video profil YouTube tahunan yang tampil di homepage, nama organisasi, slogan, generasi kepengurusan aktif, rangkuman sejarah, alamat sekretariat, email resmi, dan status visibilitas tiap pengaturan.
+  - **Seluruh Modul Operasional**:
+    - Memiliki kendali penuh (*Create*, *Read*, *Update*, *Delete*) atas Berita, Peluang Lomba, Galeri Media, Departemen, Program Kerja, Struktur Anggota, Periode Kepengurusan, Keuangan Kas, Statistik, dan Kotak Pesan Masuk.
+
+#### 2. ADMIN (Administrator Operasional / BPH)
+- **Karakteristik**: Role operasional untuk pengurus harian organisasi. Mengelola seluruh konten, struktur organisasi, dan keuangan kas, tetapi **dilarang menyentuh hak akses akun pengguna lain atau konfigurasi kritis**.
+- **Fitur & Kemampuan Detail**:
+  - **Keuangan Kas Organisasi (`/admin/finance`)**:
+    - **Bisa**: Melihat ringkasan saldo kas (total pemasukan, pengeluaran, saldo bersih), mencatat transaksi masuk/keluar baru, mengunggah bukti nota kuitansi, menyunting catatan transaksi, **menghapus transaksi keliru**, memfilter per periode kepengurusan, dan mengekspor pembukuan ke CSV.
+  - **Postingan Berita & Kegiatan (`/admin/posts`)**:
+    - **Bisa**: Membuat artikel berita baru, menyunting artikel, mengatur cover gambar, menentukan status (`DRAFT`, `PUBLISHED`, `ARCHIVED`), dan **menghapus postingan**.
+  - **Peluang Lomba & Beasiswa (`/admin/opportunities`)**:
+    - **Bisa**: Mempublikasikan info lomba/beasiswa/seminar/magang baru, menyunting deadline pendaftaran, mengubah poster, dan **menghapus peluang**.
+  - **Departemen & Program Kerja (`/admin/departments` & `/admin/work-programs`)**:
+    - **Bisa**: Menambah departemen baru, mengedit profil departemen, membuat proker, memperbarui progres pelaksanaan proker, mengunggah dokumentasi kegiatan, dan **menghapus departemen/proker**.
+  - **Struktur Fungsionaris & Periode (`/admin/members` & `/admin/periods`)**:
+    - **Bisa**: Mendaftarkan fungsionaris dan dewan pembina, mengatur urutan hirarki bagan organogram, membuat periode kepengurusan baru, serta menetapkan periode aktif organisasi.
+  - **Galeri Media (`/admin/gallery`) & Pesan Masuk (`/admin/inbox`)**:
+    - **Bisa**: Mengunggah berkas media langsung ke Cloudflare R2, membaca pesan dari pengunjung situs, menandai pesan sudah dibaca, dan **menghapus pesan**.
+  - **Batasan Tegas (Apa yang DILARANG untuk ADMIN)**:
+    - ❌ **DILARANG membuat akun pengguna baru** (`can(admin, "create", "users") === false`).
+    - ❌ **DILARANG menghapus akun pengguna** (`can(admin, "delete", "users") === false`).
+    - ❌ **DILARANG mengakses menu Pengguna & Akses** (menu `/admin/users` disembunyikan dari sidebar).
+    - ❌ **DILARANG mengakses Log Audit Sistem** (menu `/admin/audit-log` disembunyikan dari sidebar).
+    - ❌ **DILARANG mengelola parameter sistem tingkat root** (`action: "manage"` pada settings ditolak).
+
+#### 3. EDITOR (Editor Konten / Penulis Artikel)
+- **Karakteristik**: Role terisolasi khusus penulisan dan penyebaran informasi ilmiah tanpa akses struktural atau administratif.
+- **Fitur & Kemampuan Detail**:
+  - **Postingan Berita (`/admin/posts`)**:
+    - **Bisa**: Membuat draf berita baru, menyunting teks artikel menggunakan Rich Text Editor, mengunggah cover artikel, dan memperbarui tulisan miliknya.
+    - ❌ **DILARANG MENGHAPUS BERITA**: Tombol hapus disembunyikan dan server action `deletePostAction` menolak role EDITOR secara otomatis (`can(editor, "delete", "posts") === false`).
+  - **Peluang & Lomba (`/admin/opportunities`)**:
+    - **Bisa**: Menambahkan agenda lomba baru, mengedit rincian lomba, memperbarui tautan pendaftaran.
+    - ❌ **DILARANG MENGHAPUS PELUANG**: Server action `deleteOpportunityAction` memblokir akses hapus untuk EDITOR.
+  - **Galeri Media (`/admin/gallery`)**:
+    - **Bisa**: Mengunggah gambar/foto dokumentasi untuk kebutuhan artikel.
+    - ❌ **DILARANG MENGHAPUS MEDIA**: Hak hapus aset media di-block.
+  - **Batasan Keras (Apa yang DILARANG untuk EDITOR)**:
+    - ❌ **DILARANG TOTAL mengakses Keuangan Kas**: Menu `Keuangan Kas` (`/admin/finance`) **otomatis disembunyikan dari sidebar**. Direct access URL diblokir di level halaman dan Server Actions (`can(editor, *, "finance") === false`).
+    - ❌ **DILARANG mengubah Struktur Organisasi**: Departemen, Program Kerja, Struktur Anggota, dan Periode hanya bisa dilihat (*read-only*), tidak ada tombol tambah/edit/hapus.
+    - ❌ **DILARANG mengakses Pengaturan Sistem, Manajemen Pengguna, dan Log Audit**: Seluruh menu sistem ini disembunyikan dan dibentengi otorisasi ganda.
+
+#### 4. PUBLIK / MAHASISWA UMUM (Unauthenticated Visitors)
+- **Karakteristik**: Pengguna tanpa login yang mengakses portal informasi web.
+- **Fitur & Kemampuan**:
+  - **Bisa**: Membaca artikel kegiatan, melihat feed peluang lomba & beasiswa terkurasi, menjelajahi bagan organogram kepengurusan & dewan pembina, menonton video profil organisasi, dan mengirim pesan konsultasi melalui formulir kontak.
+  - **Perlindungan**: Form kontak publik dilindungi oleh **Cloudflare Turnstile token validation** dan **IP sliding rate limiter** (maksimum 5 pengiriman per 10 menit).
+  - ❌ **DILARANG TOTAL masuk ke area Admin**: Seluruh akses ke `/admin/*` otomatis dicegat oleh middleware session guard dan di-redirect ke `/admin/login`.
+
+---
+
+### 22.4. Enforcing Architecture in Code
+
+1. **Policy Engine (`src/lib/permissions.ts`)**:
+   Fungsi murni deterministik `can(user, action, resource)` yang dieksekusi sebelum mutasi database dilakukan.
+2. **Session Verification (`src/lib/auth.ts`)**:
+   Setiap Server Action wajib meng-`await getSession()`. Jika sesi tidak valid atau `user.isActive === false`, request langsung digugurkan (*unauthorized*).
+3. **Sidebar Dynamic Visibility (`src/components/layout/AdminSidebar.tsx`)**:
+   Sidebar memfilter rute dengan flag `superAdminOnly` (Users, Audit Log) dan `adminOrSuperOnly` (Finance) sehingga item menu terlarang bahkan tidak dirender di DOM bagi role yang tidak berhak.
+4. **Audit Trail Accountability (`src/lib/audit.ts`)**:
+   Semua tindakan mutasi sukses dari SUPER_ADMIN, ADMIN, dan EDITOR otomatis dicatat ke tabel `T_Audit_Log` beserta `id_user`, `nama_lengkap`, jenis aksi, dan ID rekaman target.
 
 ---
 
