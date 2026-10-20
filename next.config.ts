@@ -68,13 +68,42 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-
       {
-        source: "/:path*(maskot|logoperisaii|logoperisaidengantulisan|og-default).(png|webp|jpg)",
+        // Static assets (images, fonts, icons) -> Immutable cache di browser & Cloudflare CDN
+        source: "/:path*\\.(png|webp|jpg|jpeg|svg|ico|woff|woff2)",
         headers: [
           {
             key: "Cache-Control",
-            value: "public, max-age=86400, stale-while-revalidate=604800",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        // Public content pages & homepage: Cache di Cloudflare Edge CDN selama 2 menit, stale-while-revalidate 10 menit
+        source: "/:path((?:tentang|kabar|peluang).*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, s-maxage=120, stale-while-revalidate=600",
+          },
+        ],
+      },
+      {
+        source: "/",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, s-maxage=120, stale-while-revalidate=600",
+          },
+        ],
+      },
+      {
+        // Admin routes & sensitive APIs: NEVER cache di CDN
+        source: "/(admin|api/auth)/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "private, no-cache, no-store, max-age=0, must-revalidate",
           },
         ],
       },

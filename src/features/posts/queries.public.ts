@@ -10,15 +10,48 @@ export interface GetPublishedPostsParams {
   isFeatured?: boolean;
 }
 
+export interface PublishedPostsResult {
+  items: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    category: string;
+    excerpt: string | null;
+    content: string | null;
+    coverImageUrl: string;
+    status: string;
+    publishedAt: string | null;
+    isFeatured: boolean;
+    department: { id: string; name: string } | null;
+    author: { name: string };
+    readTime: number;
+  }>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  categories: Array<{ name: string; count: number }>;
+}
+
+const postsCache = new Map<string, { data: PublishedPostsResult; expiry: number }>();
+const POSTS_TTL_MS = 3 * 60 * 1000; // 3 menit cache
+
 export const getPublishedPosts = cache(async function getPublishedPosts({
   page = 1,
   pageSize = 9,
   category,
   search,
   isFeatured,
-}: GetPublishedPostsParams = {}) {
-  const skip = (page - 1) * pageSize;
+}: GetPublishedPostsParams = {}): Promise<PublishedPostsResult> {
+  const cacheKey = `${page}:${pageSize}:${category || ""}:${search || ""}:${isFeatured}`;
   const now = Math.floor(Date.now() / 1000);
+  const cached = postsCache.get(cacheKey);
+
+  if (cached && cached.expiry > Date.now()) {
+    return cached.data;
+  }
+
+  const skip = (page - 1) * pageSize;
 
   const where: Record<string, unknown> = {
     status: "published",
@@ -104,7 +137,7 @@ export const getPublishedPosts = cache(async function getPublishedPosts({
       readTime: Math.max(2, Math.ceil((p.ringkasan ? p.ringkasan.split(/\s+/).length : 60) / 40)),
     }));
 
-    return {
+    const result: PublishedPostsResult = {
       items,
       total,
       page,
@@ -112,8 +145,12 @@ export const getPublishedPosts = cache(async function getPublishedPosts({
       totalPages: Math.max(1, Math.ceil(total / pageSize)),
       categories: Object.entries(categoryCounts).map(([name, count]) => ({ name, count })),
     };
+
+    postsCache.set(cacheKey, { data: result, expiry: Date.now() + POSTS_TTL_MS });
+    return result;
   } catch (err) {
     console.warn("Notice: failed to load T_Berita:", err);
+    if (cached) return cached.data;
     return {
       items: [],
       total: 0,
