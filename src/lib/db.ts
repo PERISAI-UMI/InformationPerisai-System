@@ -15,6 +15,7 @@ import { PrismaLibSql } from "@prisma/adapter-libsql/web";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  libsqlAdapter: PrismaLibSql | undefined;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,10 +61,26 @@ function createPrismaClient(): PrismaClient {
       );
     }
 
-    const adapter = new PrismaLibSql({
-      url: tursoUrl || "libsql://perisai-dev-psdm.aws-ap-northeast-1.turso.io",
-      authToken: process.env.TURSO_AUTH_TOKEN || undefined,
-    });
+    // Gunakan custom fetch wrapper dengan keepalive: true agar TCP/TLS connection reuse aktif
+    // ke Turso edge nodes sehingga meminimalkan latensi dan zero buffering
+    const optimizedFetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      return fetch(input, {
+        ...init,
+        keepalive: true,
+      });
+    };
+
+    const adapter =
+      globalForPrisma.libsqlAdapter ||
+      new PrismaLibSql({
+        url: tursoUrl || "libsql://perisai-dev-psdm.aws-ap-northeast-1.turso.io",
+        authToken: process.env.TURSO_AUTH_TOKEN || undefined,
+        intMode: "number",
+        concurrency: 20,
+        fetch: optimizedFetch,
+      });
+
+    globalForPrisma.libsqlAdapter = adapter;
 
     return new PrismaClientClass({
       adapter,
@@ -92,6 +109,7 @@ function createPrismaClient(): PrismaClient {
     );
     const adapter = new PrismaLibSql({
       url: process.env.DATABASE_URL || "file:./psdm-db.db",
+      intMode: "number",
     });
     return new PrismaClientClass({ adapter, log: ["error", "warn"] });
   }
@@ -99,14 +117,13 @@ function createPrismaClient(): PrismaClient {
 
 // Singleton instance per V8 isolate agar koneksi Turso LibSQL tidak dibuat ulang
 // pada setiap baris query di Route Handlers maupun Server Actions.
-let cachedClient: PrismaClient | undefined = globalForPrisma.prisma;
-
 function getDbInstance(): PrismaClient {
-  if (!cachedClient) {
-    cachedClient = createPrismaClient();
-    globalForPrisma.prisma = cachedClient;
+  if (globalForPrisma.prisma) {
+    return globalForPrisma.prisma;
   }
-  return cachedClient;
+  const client = createPrismaClient();
+  globalForPrisma.prisma = client;
+  return client;
 }
 
 export const prisma: PrismaClient = new Proxy({} as PrismaClient, {

@@ -21,6 +21,11 @@ import {
   type PutObjectCommandInput,
 } from "@aws-sdk/client-s3";
 
+const globalForS3 = globalThis as unknown as {
+  s3Client?: S3Client;
+  s3ClientFingerprint?: string;
+};
+
 export class S3StorageDriver {
   private client: S3Client | null = null;
   private endpoint: string;
@@ -60,16 +65,28 @@ export class S3StorageDriver {
       "";
 
     if (accessKeyId && secretAccessKey && this.bucket) {
-      this.client = new S3Client({
-        region: this.region,
-        endpoint: this.endpoint || undefined,
-        credentials: {
-          accessKeyId,
-          secretAccessKey,
-        },
-        // Cloudflare R2 memerlukan path-style URL
-        forcePathStyle: false,
-      });
+      // Fingerprint configuration to enable safe reuse of S3Client
+      const fingerprint = `${accessKeyId}:${this.endpoint}:${this.region}`;
+
+      if (globalForS3.s3Client && globalForS3.s3ClientFingerprint === fingerprint) {
+        this.client = globalForS3.s3Client;
+      } else {
+        const isR2 = this.endpoint.includes("r2.cloudflarestorage.com");
+        this.client = new S3Client({
+          region: this.region,
+          endpoint: this.endpoint || undefined,
+          credentials: {
+            accessKeyId,
+            secretAccessKey,
+          },
+          // R2 direct endpoint uses path style
+          forcePathStyle: isR2 || false,
+          maxAttempts: 3,
+        });
+
+        globalForS3.s3Client = this.client;
+        globalForS3.s3ClientFingerprint = fingerprint;
+      }
     }
   }
 
