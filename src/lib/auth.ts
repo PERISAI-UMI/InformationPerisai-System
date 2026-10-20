@@ -88,10 +88,7 @@ export async function getSession(): Promise<Session | null> {
       include: {
         akun: {
           include: {
-            role: {
-              // Membaca nama role, permissions JSON dinamis, dan flag isSystem
-              select: { namaRole: true, permissions: true, isSystem: true },
-            },
+            role: true,
             anggota: {
               select: {
                 idPerisai: true,
@@ -133,7 +130,9 @@ export async function getSession(): Promise<Session | null> {
       return null;
     }
 
-    const { akun } = sessionRecord;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sessionAny = sessionRecord as any;
+    const akun = sessionAny.akun;
     if (!akun || !akun.isActive || akun.isActive !== 1 || !akun.anggota) {
       return null;
     }
