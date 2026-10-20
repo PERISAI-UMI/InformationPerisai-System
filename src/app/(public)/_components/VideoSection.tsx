@@ -31,7 +31,7 @@ export function VideoSection({ videoProfileEmbedUrl, videoProfileWatchUrl }: Vid
                 src={`${videoProfileEmbedUrl}?rel=0&modestbranding=1`}
                 title="Video Profil Resmi UKM PERISAI UMI"
                 className="relative z-10 h-full w-full rounded-3xl border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
                 loading="lazy"
