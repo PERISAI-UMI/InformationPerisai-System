@@ -42,7 +42,7 @@ async function verifyDynamicRoleSession() {
   const editorAccount = (await prisma.mAkun.findFirst({
     where: { role: { namaRole: "EDITOR" }, isActive: 1 },
     include: {
-      role: { select: { namaRole: true, permissions: true, isSystem: true } },
+      role: true,
       anggota: { select: { idPerisai: true, namaLengkap: true, email: true } },
     },
   })) as any;
