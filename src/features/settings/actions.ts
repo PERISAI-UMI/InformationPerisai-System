@@ -6,6 +6,7 @@ import { can } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
 import type { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
+import { invalidateSettingsCache } from "./queries.public";
 
 export async function updateSettingsAction(
   settings: Array<{ key: string; value: string; isPublic?: boolean }>
@@ -34,6 +35,7 @@ export async function updateSettingsAction(
       details: { count: settings.length },
     });
 
+    invalidateSettingsCache();
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };

@@ -16,6 +16,8 @@ import { NewsMarqueeSection, MarqueeItem } from "./_components/NewsMarqueeSectio
 import { OpportunitiesMarqueeSection, OpportunityMarqueeItem } from "./_components/OpportunitiesMarqueeSection";
 import { PerisaiStoreSection } from "./_components/PerisaiStoreSection";
 
+export const revalidate = 60;
+
 export default async function HomePage() {
   const [postsData, workPrograms, statistics, activeMembers, opportunitiesData, publicSettings] = await Promise.all([
     getPublishedPosts({ pageSize: 6 }),
