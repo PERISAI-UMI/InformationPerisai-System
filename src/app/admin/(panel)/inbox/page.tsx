@@ -1,12 +1,14 @@
 import { getAdminInbox } from "@/features/inbox/queries.admin";
 import { InboxTable } from "@/features/inbox/components/InboxTable";
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminInboxPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requirePermission("inbox:read");
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminInbox({ page });

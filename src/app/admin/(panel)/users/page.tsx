@@ -1,20 +1,15 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
 import { getAdminUsers } from "@/features/users/queries.admin";
 import { UserTable } from "@/features/users/components/UserTable";
-
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminUsersPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  const session = await getSession();
-  if (!session || session.user.role !== "SUPER_ADMIN") {
-    redirect("/admin");
-  }
+  await requirePermission("users:read");
 
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);

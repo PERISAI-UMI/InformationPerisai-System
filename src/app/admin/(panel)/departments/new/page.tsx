@@ -1,6 +1,8 @@
 import { DepartmentForm } from "@/features/departments/components/DepartmentForm";
+import { requirePermission } from "@/lib/permissions";
 
-export default function AdminNewDepartmentPage() {
+export default async function AdminNewDepartmentPage() {
+  await requirePermission("departments:manage");
   return (
     <div className="space-y-6">
       <div>

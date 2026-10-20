@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getAdminPeriods } from "@/features/periods/queries.admin";
 import { PeriodTable } from "@/features/periods/components/PeriodTable";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminPeriodsPage() {
+  await requirePermission("departments:read");
   const periods = await getAdminPeriods();
 
   return (

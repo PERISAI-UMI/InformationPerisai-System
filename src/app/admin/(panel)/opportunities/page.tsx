@@ -2,12 +2,14 @@ import Link from "next/link";
 import { getAdminOpportunities } from "@/features/opportunities/queries.admin";
 import { OpportunityTable } from "@/features/opportunities/components/OpportunityTable";
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminOpportunitiesPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requirePermission("opportunities:read");
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminOpportunities({ page });

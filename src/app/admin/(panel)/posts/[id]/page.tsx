@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
 import { getAdminPostById } from "@/features/posts/queries.admin";
 import { PostForm } from "@/features/posts/components/PostForm";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminEditPostPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("posts:update");
   const { id } = await params;
   const post = await getAdminPostById(id);
 

@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions";
 import {
   getFinanceSummary,
   getTransactions,
@@ -24,10 +22,7 @@ interface AdminFinancePageProps {
 }
 
 export default async function AdminFinancePage({ searchParams }: AdminFinancePageProps) {
-  const session = await getSession();
-  if (!session || !can(session.user, "read", "finance")) {
-    redirect("/admin");
-  }
+  const session = await requirePermission("finance:read");
 
   const resolvedParams = await searchParams;
   const page = parseInt(resolvedParams.page || "1", 10);

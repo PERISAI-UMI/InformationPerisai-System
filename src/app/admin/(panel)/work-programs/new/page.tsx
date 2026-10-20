@@ -1,8 +1,10 @@
 import { getAdminDepartments } from "@/features/departments/queries.admin";
 import { getAdminPeriods } from "@/features/periods/queries.admin";
 import { WorkProgramForm } from "@/features/work-programs/components/WorkProgramForm";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminNewWorkProgramPage() {
+  await requirePermission("programs:create");
   const [departments, periods] = await Promise.all([
     getAdminDepartments(),
     getAdminPeriods(),

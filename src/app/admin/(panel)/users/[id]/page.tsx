@@ -1,17 +1,14 @@
-import { redirect, notFound } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import { getAdminUserById } from "@/features/users/queries.admin";
 import { UserForm } from "@/features/users/components/UserForm";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminEditUserPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await getSession();
-  if (!session || session.user.role !== "SUPER_ADMIN") {
-    redirect("/admin");
-  }
+  await requirePermission("users:update");
 
   const { id } = await params;
   const user = await getAdminUserById(id);

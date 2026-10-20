@@ -3,6 +3,7 @@ import { GalleryUploader } from "@/features/gallery/components/GalleryUploader";
 import { Pagination } from "@/components/common/Pagination";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
 import { deleteMediaAction } from "@/features/gallery/actions";
+import { requirePermission } from "@/lib/permissions";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -11,6 +12,7 @@ export default async function AdminGalleryPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requirePermission("gallery:read");
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminGallery({ page, pageSize: 10 });

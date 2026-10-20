@@ -2,12 +2,14 @@ import Link from "next/link";
 import { getAdminPosts } from "@/features/posts/queries.admin";
 import { PostTable } from "@/features/posts/components/PostTable";
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminPostsPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string; q?: string }>;
 }) {
+  await requirePermission("posts:read");
   const { page: pageStr, q: search } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminPosts({ page, search });

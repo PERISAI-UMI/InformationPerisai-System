@@ -2,12 +2,14 @@ import Link from "next/link";
 import { getAdminWorkPrograms } from "@/features/work-programs/queries.admin";
 import { WorkProgramTable } from "@/features/work-programs/components/WorkProgramTable";
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminWorkProgramsPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requirePermission("programs:read");
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminWorkPrograms({ page });

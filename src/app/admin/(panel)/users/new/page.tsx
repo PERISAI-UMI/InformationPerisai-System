@@ -1,12 +1,8 @@
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
 import { UserForm } from "@/features/users/components/UserForm";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminNewUserPage() {
-  const session = await getSession();
-  if (!session || session.user.role !== "SUPER_ADMIN") {
-    redirect("/admin");
-  }
+  await requirePermission("users:create");
 
   return (
     <div className="space-y-6">

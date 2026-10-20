@@ -1,18 +1,14 @@
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
 import { getAdminAuditLogs } from "@/features/audit/queries.admin";
 import { AuditTable } from "@/features/audit/components/AuditTable";
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminAuditLogPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  const session = await getSession();
-  if (!session || session.user.role !== "SUPER_ADMIN") {
-    redirect("/admin");
-  }
+  await requirePermission("audit:read");
 
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);

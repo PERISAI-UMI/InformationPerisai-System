@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { getAdminMembers } from "@/features/members/queries.admin";
 import { MemberTable } from "@/features/members/components/MemberTable";
-
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminMembersPage({
   searchParams,
 }: {
   searchParams: Promise<{ periodId?: string; page?: string }>;
 }) {
+  await requirePermission("members:read");
   const { periodId, page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminMembers({ periodId, page, pageSize: 8 });

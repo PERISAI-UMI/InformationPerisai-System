@@ -99,8 +99,13 @@ export async function getSession(): Promise<Session | null> {
                 kepengurusan: {
                   where: { status: "aktif" },
                   select: {
+                    idDepartemen: true,
+                    tier: true,
                     departemen: {
-                      select: { slug: true },
+                      select: { idDepartemen: true, slug: true },
+                    },
+                    jabatan: {
+                      select: { namaJabatan: true },
                     },
                   },
                   take: 1,
@@ -134,6 +139,15 @@ export async function getSession(): Promise<Session | null> {
 
     const { anggota, role } = akun;
     const cmsRole = mapRoleToCmsRole(role.namaRole);
+    const kep = anggota.kepengurusan[0];
+    const deptSlug = kep?.departemen?.slug || undefined;
+    const deptNum = kep?.departemen?.idDepartemen ?? kep?.idDepartemen ?? null;
+    const posTitle = kep?.jabatan?.namaJabatan || undefined;
+    const tier = kep?.tier || undefined;
+
+    // Impor dinamis atau komputasi permissions untuk cache sesi
+    const { computeDefaultPermissions } = await import("./permissions");
+    const permissions = computeDefaultPermissions(cmsRole, posTitle, deptSlug);
 
     return {
       user: {
@@ -142,7 +156,11 @@ export async function getSession(): Promise<Session | null> {
         email: anggota.email,
         role: cmsRole,
         isActive: Boolean(akun.isActive),
-        departmentId: anggota.kepengurusan[0]?.departemen?.slug || undefined,
+        departmentId: deptSlug,
+        departmentNumericId: deptNum,
+        positionTitle: posTitle,
+        tier,
+        permissions,
       },
       expires: new Date(sessionRecord.expiresAt * 1000).toISOString(),
     };

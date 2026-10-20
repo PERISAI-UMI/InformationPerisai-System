@@ -1,7 +1,9 @@
 import { getAdminSettings } from "@/features/settings/queries.admin";
 import { SettingsForm } from "@/features/settings/components/SettingsForm";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminSettingsPage() {
+  await requirePermission("settings:read");
   const settings = await getAdminSettings();
 
   return (

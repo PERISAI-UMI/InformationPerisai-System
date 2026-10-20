@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAdminDepartmentById } from "@/features/departments/queries.admin";
 import { DepartmentForm } from "@/features/departments/components/DepartmentForm";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function AdminEditDepartmentPage({
   params,
@@ -8,6 +9,7 @@ export default async function AdminEditDepartmentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  await requirePermission("departments:update", { departmentId: id });
   const department = await getAdminDepartmentById(id);
 
   if (!department) {
