@@ -1,6 +1,8 @@
 import { OpportunityForm } from "@/features/opportunities/components/OpportunityForm";
+import { requirePermission } from "@/lib/permissions.server";
 
-export default function AdminNewOpportunityPage() {
+export default async function AdminNewOpportunityPage() {
+  await requirePermission("opportunities:create");
   return (
     <div className="space-y-6">
       <div>

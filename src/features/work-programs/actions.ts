@@ -2,16 +2,29 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { slugify, generateUniqueSlug } from "@/lib/slug";
 import { writeAuditLog } from "@/lib/audit";
 import { workProgramSchema, type WorkProgramInput } from "./schema";
-import type { ActionResponse } from "@/types";
+import type { ActionResponse, AuthUser } from "@/types";
 import { revalidatePath } from "next/cache";
+
+/**
+ * Validasi apakah pengguna adalah Kepala Departemen (Kadep)
+ */
+function isKadep(user: AuthUser): boolean {
+  if (user.role === "SUPER_ADMIN") return false;
+  const title = (user.positionTitle || "").toLowerCase();
+  return (
+    user.tier === "departemen" ||
+    title.includes("kadep") ||
+    title.includes("kepala departemen")
+  );
+}
 
 export async function createWorkProgramAction(data: WorkProgramInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "create", "work_programs")) {
+  if (!session || !hasPermission(session.user, "programs:create")) {
     return { success: false, message: "Akses ditolak: Anda tidak memiliki izin mengelola program kerja." };
   }
 
@@ -20,11 +33,22 @@ export async function createWorkProgramAction(data: WorkProgramInput): Promise<A
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
   }
 
+  const deptId = parseInt(parsed.data.departmentId, 10);
+
+  // Department Scoping Guard: Kadep hanya boleh membuat proker untuk departemennya sendiri
+  if (isKadep(session.user)) {
+    if (session.user.departmentNumericId && deptId !== session.user.departmentNumericId) {
+      return {
+        success: false,
+        message: "Akses ditolak: Kepala Departemen hanya dapat mengelola program kerja departemennya sendiri.",
+      };
+    }
+  }
+
   const slug = await generateUniqueSlug("tProker", parsed.data.slug || parsed.data.name);
 
   try {
     const now = Math.floor(Date.now() / 1000);
-    const deptId = parseInt(parsed.data.departmentId, 10);
     let periodId = parseInt(parsed.data.periodId, 10);
 
     if (isNaN(periodId)) {
@@ -66,7 +90,7 @@ export async function createWorkProgramAction(data: WorkProgramInput): Promise<A
 
 export async function updateWorkProgramAction(id: string, data: WorkProgramInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "update", "work_programs")) {
+  if (!session || !hasPermission(session.user, "programs:update")) {
     return { success: false, message: "Akses ditolak." };
   }
 
@@ -81,9 +105,30 @@ export async function updateWorkProgramAction(id: string, data: WorkProgramInput
   }
 
   try {
+    const existing = await prisma.tProker.findUnique({ where: { idProker: idNum } });
+    if (!existing) {
+      return { success: false, message: "Program kerja tidak ditemukan." };
+    }
+
     const now = Math.floor(Date.now() / 1000);
     const deptId = parseInt(parsed.data.departmentId, 10);
     let periodId = parseInt(parsed.data.periodId, 10);
+
+    // Department Scoping Guard: Kadep hanya boleh mengedit proker departemennya sendiri
+    if (isKadep(session.user)) {
+      if (session.user.departmentNumericId && existing.idDepartemen !== session.user.departmentNumericId) {
+        return {
+          success: false,
+          message: "Akses ditolak: Kepala Departemen hanya dapat mengelola program kerja departemennya sendiri.",
+        };
+      }
+      if (!isNaN(deptId) && session.user.departmentNumericId && deptId !== session.user.departmentNumericId) {
+        return {
+          success: false,
+          message: "Akses ditolak: Tidak dapat memindahkan program kerja ke departemen lain.",
+        };
+      }
+    }
 
     const updateData: {
       namaProker: string;
@@ -132,7 +177,7 @@ export async function updateWorkProgramAction(id: string, data: WorkProgramInput
 
 export async function deleteWorkProgramAction(id: string): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "delete", "work_programs")) {
+  if (!session || !hasPermission(session.user, "programs:delete")) {
     return { success: false, message: "Akses ditolak." };
   }
 
@@ -142,6 +187,21 @@ export async function deleteWorkProgramAction(id: string): Promise<ActionRespons
   }
 
   try {
+    const existing = await prisma.tProker.findUnique({ where: { idProker: idNum } });
+    if (!existing) {
+      return { success: false, message: "Program kerja tidak ditemukan." };
+    }
+
+    // Department Scoping Guard: Kadep hanya boleh menghapus proker departemennya sendiri
+    if (isKadep(session.user)) {
+      if (session.user.departmentNumericId && existing.idDepartemen !== session.user.departmentNumericId) {
+        return {
+          success: false,
+          message: "Akses ditolak: Kepala Departemen hanya dapat menghapus program kerja departemennya sendiri.",
+        };
+      }
+    }
+
     await prisma.tProker.delete({ where: { idProker: idNum } });
     await writeAuditLog({
       userId: session.user.id,

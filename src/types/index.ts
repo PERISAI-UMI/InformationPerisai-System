@@ -1,3 +1,6 @@
+import type { PermissionKey } from "./permissions";
+export * from "./permissions";
+
 export type Role = "SUPER_ADMIN" | "ADMIN" | "EDITOR";
 
 export type PostStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
@@ -13,6 +16,10 @@ export interface AuthUser {
   role: Role;
   isActive: boolean;
   departmentId?: string;
+  departmentNumericId?: number | null;
+  positionTitle?: string;
+  tier?: string;
+  permissions?: PermissionKey[];
 }
 
 export interface Session {
@@ -34,6 +41,7 @@ export type PermissionResource =
   | "inbox"
   | "settings"
   | "users"
+  | "finance"
   | "audit_log";
 
 export interface ActionResponse<T = unknown> {

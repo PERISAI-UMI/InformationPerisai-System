@@ -3,6 +3,8 @@ import { GalleryUploader } from "@/features/gallery/components/GalleryUploader";
 import { Pagination } from "@/components/common/Pagination";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
 import { deleteMediaAction } from "@/features/gallery/actions";
+import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -11,6 +13,11 @@ export default async function AdminGalleryPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  const session = await requirePermission("gallery:read");
+  const user = session.user;
+  const canUpload = hasPermission(user, "gallery:upload");
+  const canDelete = hasPermission(user, "gallery:delete");
+
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminGallery({ page, pageSize: 10 });
@@ -27,7 +34,7 @@ export default async function AdminGalleryPage({
       </div>
 
       {/* Komponen Unggah Banyak File */}
-      <GalleryUploader />
+      {canUpload && <GalleryUploader />}
 
       {/* Grid Media Terdaftar */}
       <div className="space-y-4">
@@ -67,21 +74,29 @@ export default async function AdminGalleryPage({
                   <p className="truncate text-xs font-semibold text-white" title={media.originalName || "Media"}>
                     {media.originalName || "Berkas Media"}
                   </p>
-                  <div className="mt-2.5 flex items-center justify-between text-xs">
+                  <div className="mt-2.5 flex items-center justify-between gap-2 text-xs">
                     <Link
                       href={`/admin/gallery/${media.id}`}
-                      className="text-[#FFB22C] font-semibold hover:text-[#FFA000] transition-colors"
+                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#FFB22C] bg-[#FFB22C]/10 border border-[#FFB22C]/25 hover:bg-[#FFB22C]/20 hover:border-[#FFB22C]/40 hover:text-[#FFC85A] transition-all shadow-sm ${
+                        !canDelete ? "w-full justify-center" : ""
+                      }`}
                     >
-                      Detail
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      <span>Detail</span>
                     </Link>
-                    <ConfirmDelete
-                      onConfirm={async () => {
-                        "use server";
-                        await deleteMediaAction(media.id);
-                      }}
-                      title="Hapus Media"
-                      description={`Hapus berkas "${media.originalName || "ini"}"?`}
-                    />
+                    {canDelete && (
+                      <ConfirmDelete
+                        onConfirm={async () => {
+                          "use server";
+                          await deleteMediaAction(media.id);
+                        }}
+                        title="Hapus Media"
+                        description={`Hapus berkas "${media.originalName || "ini"}"?`}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

@@ -3,10 +3,16 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-const url = process.env.TURSO_DATABASE_URL || "libsql://perisai-dev-psdm.aws-ap-northeast-1.turso.io";
-const authToken = process.env.TURSO_AUTH_TOKEN || "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTEzOTY1MzMsImlkIjoiMDFhMTE3OGQtMGIwMS03NTc4LTgzMjctYmQ3MmExMGZkYzU0Iiwia2lkIjoiYnhxbm5VQ1Vrd1U0ZzRFakJoc0xxOXo0ZHZrdlF5NXJNbHdKVGIyb0NtZyIsInJpZCI6IjEzMGZkNzhmLTAyNWMtNDQzZi04ODUxLWQ0YzkyMTFiZWNkNyJ9.jB-8X5V7nHjl5IsTnc1ZmTR1jhaZG6MGayuNJmWrqBe7K4FiPQeRSjr32oKoNhCIVPCAfeY-MChdvwfQH26mDg";
+const url = process.env.TURSO_DATABASE_URL;
+const authToken = process.env.TURSO_AUTH_TOKEN;
+
+if (!url || !authToken) {
+  console.error("❌ Kesalahan: TURSO_DATABASE_URL dan TURSO_AUTH_TOKEN wajib diatur di .env sebelum menjalankan skrip ini.");
+  process.exit(1);
+}
 
 const client = createClient({ url, authToken });
+
 
 const rawMembers = [
   { "ID PERISAI":"PRN 0238", "Generasi":10, "Tugas dan Tanggung Jawab":"Ketua Umum", "NamaLengkap":"Aisyah Ramadhani Muchlis", "Tempat, Tanggal Lahir":"Wamena, 02 Oktober 2004 ", "Fakultas":"FEB", "Program Studi/Jurusan":"Manajemen", "NIM/Stambuk":"2220230181", "Angkatan":2023, "Email":"aisyahramadhani.m@gmail.com ", "No. Telepon/WA":"6281244899985", "Alamat":"BTP Blok G Baru ", "Linkedn":"linkedin.com/in/aisyahmuchlis", "Instagram":"instagram.com/aisyahmuchliis", "Hobi":"Organizing " },
@@ -180,16 +186,14 @@ async function main() {
     }
   }
 
-  // Departemen
+  // Departemen (6 Departemen Resmi UKM PERISAI UMI)
   const daftarDept = [
-    { nama: "Badan Pengurus Harian", singkatan: "BPH", slug: "bph", tupoksi: "Pimpinan eksekutif dan pemegang kendali arah kebijakan organisasi.", urutan: 1 },
-    { nama: "Pengembangan Sumber Daya Manusia", singkatan: "PSDM", slug: "psdm", tupoksi: "Kaderisasi, pengembangan kepemimpinan, dan kesejahteraan seluruh fungsionaris.", urutan: 2 },
-    { nama: "Media dan Informasi", singkatan: "MEDIA", slug: "media", tupoksi: "Pusat kreasi visual, dokumentasi kegiatan, dan pengelolaan kanal digital.", urutan: 3 },
+    { nama: "Penalaran dan Keilmuan", singkatan: "PENALARAN", slug: "penalaran", tupoksi: "Pengembangan budaya berpikir kritis, kajian ilmiah, dan forum diskusi akademis.", urutan: 1 },
+    { nama: "Media dan Informasi", singkatan: "MEDIA", slug: "media", tupoksi: "Pusat kreasi visual, dokumentasi kegiatan, dan pengelolaan kanal digital.", urutan: 2 },
+    { nama: "Riset dan Teknologi", singkatan: "RISTEK", slug: "ristek", tupoksi: "Pusat inovasi rekayasa teknologi, penelitian terapan, dan hilirisasi karya riset.", urutan: 3 },
     { nama: "Kompetisi dan Prestasi", singkatan: "KOMPRES", slug: "kompres", tupoksi: "Mewadahi bimbingan perlombaan ilmiah, delegasi kompetisi, dan rekognisi prestasi.", urutan: 4 },
-    { nama: "Hubungan Masyarakat", singkatan: "HUMAS", slug: "humas", tupoksi: "Menjalin relasi strategis, kemitraan lembaga, dan publikasi citra organisasi.", urutan: 5 },
-    { nama: "Riset dan Teknologi", singkatan: "RISTEK", slug: "ristek", tupoksi: "Pusat inovasi rekayasa teknologi, penelitian terapan, dan hilirisasi karya riset.", urutan: 6 },
-    { nama: "Penalaran dan Keilmuan", singkatan: "PENALARAN", slug: "penalaran", tupoksi: "Pengembangan budaya berpikir kritis, kajian ilmiah, dan forum diskusi akademis.", urutan: 7 },
-    { nama: "Trisula Riset Strategis", singkatan: "TRISULA", slug: "trisula", tupoksi: "Garda khusus pengembangan riset strategis dan pengawalan prestasi unggulan.", urutan: 8 },
+    { nama: "Pengembangan Sumber Daya Manusia", singkatan: "PSDM", slug: "psdm", tupoksi: "Kaderisasi, pengembangan kepemimpinan, dan kesejahteraan seluruh fungsionaris.", urutan: 5 },
+    { nama: "Hubungan Masyarakat", singkatan: "HUMAS", slug: "humas", tupoksi: "Menjalin relasi strategis, kemitraan lembaga, dan publikasi citra organisasi.", urutan: 6 },
   ];
 
   const deptMap = {};
@@ -215,11 +219,11 @@ async function main() {
 
   // Roles
   const daftarRoles = [
-    { nama: "SUPER_ADMIN", label: "Super Administrator", desc: "Akses penuh seluruh sistem" },
-    { nama: "BPH", label: "Badan Pengurus Harian", desc: "Akses pimpinan eksekutif dan keuangan" },
+    { nama: "SUPER_ADMIN", label: "Administrator Teknis / Webmaster", desc: "Akses penuh seluruh sistem" },
+    { nama: "ADMIN", label: "Pengurus Inti & Kepala Departemen", desc: "Akses pimpinan operasional dan departemen" },
     { nama: "KADEP", label: "Kepala Departemen", desc: "Akses program kerja dan anggota divisi" },
-    { nama: "EDITOR", label: "Editor Konten", desc: "Akses artikel berita dan galeri" },
-    { nama: "ANGGOTA", label: "Anggota Fungsionaris", desc: "Akses profil pribadi" },
+    { nama: "EDITOR", label: "Staf Ahli / Editor Konten", desc: "Akses artikel berita dan galeri" },
+    { nama: "ANGGOTA", label: "Anggota Biasa", desc: "Akses profil pribadi" },
   ];
   const roleMap = {};
   for (const r of daftarRoles) {
@@ -305,16 +309,16 @@ async function main() {
 
     if (tugas === "Ketua Umum") {
       jabatanId = jabatanMap["Ketua Umum"];
-      deptId = deptMap["BPH"];
+      deptId = null;
       roleId = roleMap["SUPER_ADMIN"];
     } else if (tugas === "Sekretaris Umum") {
       jabatanId = jabatanMap["Sekretaris Umum"];
-      deptId = deptMap["BPH"];
-      roleId = roleMap["BPH"];
+      deptId = null;
+      roleId = roleMap["ADMIN"] || roleMap["SUPER_ADMIN"];
     } else if (tugas === "Bendahara Umum") {
       jabatanId = jabatanMap["Bendahara Umum"];
-      deptId = deptMap["BPH"];
-      roleId = roleMap["BPH"];
+      deptId = null;
+      roleId = roleMap["ADMIN"] || roleMap["SUPER_ADMIN"];
     } else if (tugas.startsWith("Kepala Departemen")) {
       jabatanId = jabatanMap["Kepala Departemen"];
       roleId = roleMap["KADEP"];
@@ -402,12 +406,12 @@ async function main() {
   for (const row of kepengurusanRes.rows) {
     let tier = "staf";
     if (row.nama_jabatan === "Ketua Umum" || row.nama_jabatan === "Sekretaris Umum" || row.nama_jabatan === "Bendahara Umum") {
-      tier = "bph";
+      tier = "inti";
     } else if (row.nama_jabatan === "Kepala Departemen") {
       tier = "kadep";
     }
 
-    const posTitle = row.nama_jabatan + (row.singkatan && row.singkatan !== "BPH" ? ` ${row.singkatan}` : "");
+    const posTitle = tier === "inti" ? row.nama_jabatan : (row.singkatan ? `${row.nama_jabatan} ${row.singkatan}` : row.nama_jabatan);
 
     await client.execute({
       sql: `INSERT INTO web_members (id, period_id, department_id, name, position, tier, linkedin_url, sort_order, is_active)

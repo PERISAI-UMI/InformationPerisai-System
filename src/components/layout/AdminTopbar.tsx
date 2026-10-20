@@ -38,7 +38,7 @@ export function AdminTopbar({ user }: { user?: AuthUser }) {
                   {user.role === "SUPER_ADMIN"
                     ? "Super Admin Utama"
                     : user.role === "ADMIN"
-                    ? "Pengurus Harian (BPH)"
+                    ? "Pengurus Inti & Kadep"
                     : "Editor Konten"}
                 </p>
               </div>

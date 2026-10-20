@@ -1,17 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/Toast";
+import { Turnstile, type TurnstileRef } from "@/components/common/Turnstile";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileRef = useRef<TurnstileRef>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,28 +29,37 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: identifier, password }),
+        body: JSON.stringify({
+          email: identifier,
+          password,
+          turnstileToken,
+          "cf-turnstile-response": turnstileToken,
+        }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        toast.success("Login berhasil!", { duration: 2000 });
-        router.push("/admin");
-        router.refresh();
+        toast.success("Login berhasil! Mengalihkan ke panel...", { duration: 2000 });
+        window.location.href = "/admin";
       } else {
         const errorMsg = data.error || "ID/Email atau kata sandi tidak cocok.";
         setError(errorMsg);
         toast.error(errorMsg);
+        turnstileRef.current?.reset();
+        setTurnstileToken("");
       }
     } catch {
       const netMsg = "Terjadi kesalahan jaringan. Periksa koneksi Anda.";
       setError(netMsg);
       toast.error(netMsg);
+      turnstileRef.current?.reset();
+      setTurnstileToken("");
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#141417] px-4 py-12 relative selection:bg-[#FFB22C] selection:text-[#141417]">
@@ -145,14 +158,23 @@ export default function AdminLoginPage() {
             </div>
           </div>
 
+          {/* Cloudflare Turnstile Verification */}
+          <Turnstile
+            ref={turnstileRef}
+            id="admin-login-turnstile"
+            onVerify={(token) => setTurnstileToken(token)}
+            onExpire={() => setTurnstileToken("")}
+          />
+
           {/* Submit Button (Clean & Simpel, Tanpa Tanda Panah) */}
           <Button
             type="submit"
             variant="primary"
             size="lg"
-            className="w-full mt-6 bg-[#FFB22C] text-[#141417] font-bold hover:bg-[#ffa71a] transition duration-150"
+            className="w-full mt-4 bg-[#FFB22C] text-[#141417] font-bold hover:bg-[#ffa71a] transition duration-150"
             isLoading={isLoading}
           >
+
             {isLoading ? "Memverifikasi..." : "Login"}
           </Button>
         </form>

@@ -15,6 +15,7 @@ export interface SettingsFormProps {
     isPublic: boolean;
     description?: string | null;
   }>;
+  canUpdate?: boolean;
 }
 
 interface SettingMeta {
@@ -81,7 +82,10 @@ const SETTING_METADATA: Record<string, SettingMeta> = {
   },
 };
 
-export function SettingsForm({ initialSettings }: SettingsFormProps) {
+export function SettingsForm({
+  initialSettings,
+  canUpdate = true,
+}: SettingsFormProps) {
   // Pastikan video_profile_url selalu ada di daftar pengaturan
   const normalizedInitial = [...initialSettings];
   if (!normalizedInitial.some((s) => s.key === "video_profile_url")) {
@@ -147,25 +151,23 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
     return s.key !== "video_profile_url" && (!meta || meta.category === "lainnya");
   });
 
-  const renderSettingItem = (item: (typeof settings)[0]) => {
+  const renderSettingItem = (item: (typeof settings)[0], isFullWidth = false) => {
     const meta = SETTING_METADATA[item.key] || {
       label: item.key,
       description: item.description || "Pengaturan kustom aplikasi.",
       placeholder: "",
     };
 
-    const isVideo = item.key === "video_profile_url";
-
     return (
       <div
         key={item.key}
-        className={`rounded-2xl border ${
-          isVideo ? "border-[#FFB22C]/40 bg-[#1e1e26]" : "border-white/10 bg-[#202026]"
-        } p-5 space-y-3 shadow-lg transition-all`}
+        className={`rounded-2xl border border-white/10 bg-[#202026] p-5 sm:p-6 space-y-3.5 shadow-lg hover:border-white/20 transition-all flex flex-col justify-between ${
+          isFullWidth ? "md:col-span-2" : "col-span-1"
+        }`}
       >
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-bold text-white tracking-wide">
                 {meta.label}
               </span>
@@ -178,18 +180,18 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
             </p>
           </div>
 
-          <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer select-none shrink-0 pt-0.5">
+          <label className="flex items-center gap-1.5 text-xs text-zinc-400 cursor-pointer select-none shrink-0 pt-0.5 hover:text-zinc-200 transition-colors">
             <input
               type="checkbox"
               checked={item.isPublic}
               onChange={(e) => handleTogglePublic(item.key, e.target.checked)}
               className="rounded border-white/20 bg-[#16161a] text-[#FFB22C] accent-[#FFB22C] focus:ring-[#FFB22C] h-4 w-4"
             />
-            Publik
+            <span>Publik</span>
           </label>
         </div>
 
-        <div>
+        <div className="pt-1">
           <Input
             value={item.value}
             onChange={(e) => handleChange(item.key, e.target.value)}
@@ -197,55 +199,12 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
             className="w-full text-sm"
           />
         </div>
-
-        {/* Khusus Video Profile: Tampilkan Live Preview Player */}
-        {isVideo && (
-          <div className="mt-4 pt-3 border-t border-white/10">
-            {detectedVideoId ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#FFB22C] flex items-center gap-2">
-                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Video YouTube Terverifikasi (ID: <code className="text-white font-mono">{detectedVideoId}</code>)</span>
-                  </span>
-                  <a
-                    href={`https://www.youtube.com/watch?v=${detectedVideoId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-zinc-400 hover:text-[#FFB22C] text-xs underline inline-flex items-center gap-1"
-                  >
-                    <span>Uji Putar di YouTube</span>
-                    <span>↗</span>
-                  </a>
-                </div>
-
-                {/* Player Frame Preview */}
-                <div className="group relative aspect-video w-full max-w-lg overflow-hidden rounded-xl border border-[#FFB22C]/30 bg-black shadow-xl">
-                  <iframe
-                    src={`https://www.youtube.com/embed/${detectedVideoId}?rel=0`}
-                    title="Live Preview Video Profil UKM PERISAI UMI"
-                    className="h-full w-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-                <p className="text-[11px] text-zinc-400">
-                  Video di atas akan langsung ditayangkan di bagian <strong>Video Profile</strong> beranda publik.
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-300">
-                ⚠️ ID video YouTube belum terdeteksi. Silakan tempelkan tautan yang valid (contoh: <code>https://youtu.be/JWg_p9PfnTg</code> atau <code>https://www.youtube.com/watch?v=...</code>).
-              </div>
-            )}
-          </div>
-        )}
       </div>
     );
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-3xl">
+    <form onSubmit={handleSubmit} className="space-y-8 w-full">
       {statusMessage && (
         <Alert
           variant={statusMessage.type === "success" ? "success" : "error"}
@@ -257,22 +216,119 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
       )}
 
       {/* 1. SEKSI VIDEO PROFIL RESMI */}
-      <div className="space-y-4">
-        <div className="border-b border-white/10 pb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🎬</span>
-            <h2 className="text-base font-bold text-white tracking-wide">
-              Video Profil Resmi Organisasi (Update Tahunan)
-            </h2>
-          </div>
-          <p className="text-xs text-zinc-400 mt-1">
-            Ganti atau perbarui tautan video YouTube ini setiap pergantian periode kepengurusan untuk memperbarui video di beranda situs.
-          </p>
-        </div>
+      {videoSetting && (
         <div className="space-y-4">
-          {videoSettings.map(renderSettingItem)}
+          <div className="border-b border-white/10 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🎬</span>
+              <h2 className="text-base font-bold text-white tracking-wide">
+                Video Profil Resmi Organisasi (Update Tahunan)
+              </h2>
+            </div>
+            <p className="text-xs text-zinc-400 mt-1">
+              Ganti atau perbarui tautan video YouTube ini setiap pergantian periode kepengurusan untuk memperbarui video di beranda situs.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-[#FFB22C]/35 bg-[#1e1e24] p-5 sm:p-7 shadow-xl space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm sm:text-base font-bold text-white tracking-wide">
+                    URL Video Profil Resmi (YouTube)
+                  </span>
+                  <code className="text-[10px] text-zinc-500 font-mono bg-white/5 px-2 py-0.5 rounded">
+                    video_profile_url
+                  </code>
+                </div>
+                <p className="text-xs text-zinc-400 mt-1 max-w-2xl leading-relaxed">
+                  Tautan video profil resmi YouTube tahunan (mendukung format link pendek https://youtu.be/..., reguler watch?v=..., embed, maupun iframe). Video ini langsung terhubung ke pemutar video di beranda utama website.
+                </p>
+              </div>
+
+              <label className="flex items-center gap-2 text-xs text-zinc-300 font-medium cursor-pointer select-none shrink-0 pt-0.5">
+                <input
+                  type="checkbox"
+                  checked={videoSetting.isPublic}
+                  onChange={(e) => handleTogglePublic(videoSetting.key, e.target.checked)}
+                  className="rounded border-white/20 bg-[#16161a] text-[#FFB22C] accent-[#FFB22C] focus:ring-[#FFB22C] h-4 w-4"
+                />
+                <span>Publik</span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              <div className="lg:col-span-5 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+                    Tautan Video YouTube
+                  </label>
+                  <Input
+                    value={videoSetting.value}
+                    onChange={(e) => handleChange(videoSetting.key, e.target.value)}
+                    placeholder="Contoh: https://youtu.be/JWg_p9PfnTg atau https://www.youtube.com/watch?v=..."
+                    className="w-full text-sm"
+                  />
+                </div>
+
+                {detectedVideoId ? (
+                  <div className="space-y-2 p-3.5 rounded-xl border border-emerald-500/25 bg-emerald-950/20">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-emerald-400 flex items-center gap-2">
+                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>Video YouTube Terverifikasi</span>
+                      </span>
+                      <a
+                        href={`https://www.youtube.com/watch?v=${detectedVideoId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-zinc-400 hover:text-[#FFB22C] text-xs underline inline-flex items-center gap-1"
+                      >
+                        <span>Uji Putar di YouTube</span>
+                        <span>↗</span>
+                      </a>
+                    </div>
+                    <p className="text-[11px] font-mono text-zinc-400">
+                      ID Video: <span className="text-white font-bold">{detectedVideoId}</span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-300">
+                    ⚠️ ID video YouTube belum terdeteksi. Silakan tempelkan tautan yang valid (contoh: <code>https://youtu.be/JWg_p9PfnTg</code>).
+                  </div>
+                )}
+              </div>
+
+              <div className="lg:col-span-7 flex flex-col items-center justify-center">
+                {detectedVideoId ? (
+                  <div className="w-full">
+                    <div className="group relative aspect-video w-full overflow-hidden rounded-2xl border border-[#FFB22C]/30 bg-black shadow-2xl">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${detectedVideoId}?rel=0`}
+                        title="Live Preview Video Profil UKM PERISAI UMI"
+                        className="h-full w-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                    <p className="mt-2 text-center text-[11px] text-zinc-400">
+                      Video di atas akan langsung ditayangkan di bagian <strong>Video Profile</strong> beranda publik.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="aspect-video w-full rounded-2xl border border-dashed border-white/10 bg-[#16161a] flex flex-col items-center justify-center text-center p-6 text-zinc-500">
+                    <svg className="w-12 h-12 mb-2 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-xs font-semibold text-zinc-400">Pratinjau Pemutar Video</p>
+                    <p className="text-[11px] text-zinc-500 mt-1">Masukkan URL YouTube di sebelah kiri untuk melihat pratinjau live video.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 2. SEKSI IDENTITAS & PROFIL */}
       {identitasSettings.length > 0 && (
@@ -288,8 +344,10 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
               Pengaturan nama resmi, generasi kepengurusan aktif, dan ringkasan profil.
             </p>
           </div>
-          <div className="space-y-4">
-            {identitasSettings.map(renderSettingItem)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {identitasSettings.map((item) =>
+              renderSettingItem(item, item.key === "history_content")
+            )}
           </div>
         </div>
       )}
@@ -308,8 +366,10 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
               Informasi narahubung sekretariat, nomor telepon WhatsApp, dan tautan sosial media.
             </p>
           </div>
-          <div className="space-y-4">
-            {kontakSettings.map(renderSettingItem)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {kontakSettings.map((item) =>
+              renderSettingItem(item, item.key === "address")
+            )}
           </div>
         </div>
       )}
@@ -325,26 +385,29 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
               </h2>
             </div>
           </div>
-          <div className="space-y-4">
-            {otherSettings.map(renderSettingItem)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {otherSettings.map((item) => renderSettingItem(item))}
           </div>
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-4 border-t border-white/10">
-        <p className="text-xs text-zinc-500">
-          Semua perubahan langsung diterapkan ke halaman publik.
-        </p>
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          className="bg-gradient-to-r from-[#FFB22C] to-[#FFA000] text-[#141417] font-bold hover:brightness-110 shadow-lg shadow-[#FFB22C]/20 transition-all"
-          isLoading={isLoading}
-        >
-          {isLoading ? "Menyimpan Perubahan..." : "Simpan Semua Pengaturan"}
-        </Button>
-      </div>
+      {/* Sticky Bottom Action Bar */}
+      {canUpdate && (
+        <div className="sticky bottom-4 z-10 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border border-white/15 bg-[#1b1b22]/95 backdrop-blur-md shadow-2xl">
+          <p className="text-xs text-zinc-400 text-center sm:text-left">
+            Semua perubahan konfigurasi langsung diterapkan secara instan ke halaman publik.
+          </p>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full sm:w-auto px-6 bg-gradient-to-r from-[#FFB22C] to-[#FFA000] text-[#141417] font-extrabold hover:brightness-110 shadow-lg shadow-[#FFB22C]/20 transition-all shrink-0"
+            isLoading={isLoading}
+          >
+            {isLoading ? "Menyimpan Perubahan..." : "Simpan Semua Pengaturan"}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { deleteDepartmentAction } from "../actions";
@@ -20,10 +21,17 @@ export interface DepartmentTableProps {
       workPrograms?: number;
     };
   }>;
+  canManage?: boolean;
+  canUpdate?: boolean;
 }
 
-export function DepartmentTable({ departments }: DepartmentTableProps) {
+export function DepartmentTable({
+  departments,
+  canManage = true,
+  canUpdate = true,
+}: DepartmentTableProps) {
   const router = useRouter();
+  const showActionColumn = canUpdate || canManage;
 
   const handleDelete = async (id: string) => {
     try {
@@ -45,10 +53,14 @@ export function DepartmentTable({ departments }: DepartmentTableProps) {
         type="empty"
         title="Belum Ada Departemen"
         description="Belum ada divisi atau departemen bidang riset yang ditambahkan ke sistem."
-        action={{
-          label: "Tambah Departemen Baru",
-          href: "/admin/departments/new",
-        }}
+        action={
+          canManage
+            ? {
+                label: "Tambah Departemen Baru",
+                href: "/admin/departments/new",
+              }
+            : undefined
+        }
       />
     );
   }
@@ -62,30 +74,33 @@ export function DepartmentTable({ departments }: DepartmentTableProps) {
           <TableHead>Kode</TableHead>
           <TableHead>Jumlah Pengurus</TableHead>
           <TableHead>Jumlah Proker</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          {showActionColumn && (
+            <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
         {departments.map((dept) => (
           <TableRow key={dept.id}>
             <TableCell className="w-16 font-mono text-xs text-zinc-400">{dept.orderIndex}</TableCell>
-            <TableCell className="font-bold text-white">{dept.name}</TableCell>
+            <TableCell className="font-bold text-white min-w-[180px]">{dept.name}</TableCell>
             <TableCell className="text-zinc-300 font-mono text-xs">{dept.code || "-"}</TableCell>
             <TableCell className="text-zinc-300">{dept._count?.members ?? 0} orang</TableCell>
             <TableCell className="text-zinc-300">{dept._count?.workPrograms ?? 0} program</TableCell>
-            <TableCell className="text-right space-x-3">
-              <Link
-                href={`/admin/departments/${dept.id}`}
-                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
-              >
-                Ubah
-              </Link>
-              <ConfirmDelete
-                onConfirm={() => handleDelete(dept.id)}
-                title="Hapus Departemen"
-                description={`Apakah Anda yakin ingin menghapus departemen "${dept.name}"?`}
-              />
-            </TableCell>
+            {showActionColumn && (
+              <TableCell className="text-right whitespace-nowrap">
+                <div className="inline-flex items-center justify-end gap-1.5">
+                  {canUpdate && <EditLink href={`/admin/departments/${dept.id}`} />}
+                  {canManage && (
+                    <ConfirmDelete
+                      onConfirm={() => handleDelete(dept.id)}
+                      title="Hapus Departemen"
+                      description={`Apakah Anda yakin ingin menghapus departemen "${dept.name}"?`}
+                    />
+                  )}
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

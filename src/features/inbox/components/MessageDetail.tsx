@@ -15,7 +15,7 @@ export interface MessageDetailProps {
 
 export function MessageDetail({ message }: MessageDetailProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#202026] p-6 max-w-3xl space-y-6 shadow-xl">
+    <div className="rounded-2xl border border-white/10 bg-[#202026] p-6 sm:p-8 w-full space-y-6 shadow-xl">
       <div className="border-b border-white/10 pb-4">
         <h2 className="text-xl font-bold tracking-tight text-white">
           {message.subject}

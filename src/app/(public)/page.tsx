@@ -16,6 +16,8 @@ import { NewsMarqueeSection, MarqueeItem } from "./_components/NewsMarqueeSectio
 import { OpportunitiesMarqueeSection, OpportunityMarqueeItem } from "./_components/OpportunitiesMarqueeSection";
 import { PerisaiStoreSection } from "./_components/PerisaiStoreSection";
 
+export const revalidate = 60;
+
 export default async function HomePage() {
   const [postsData, workPrograms, statistics, activeMembers, opportunitiesData, publicSettings] = await Promise.all([
     getPublishedPosts({ pageSize: 6 }),
@@ -31,8 +33,8 @@ export default async function HomePage() {
   const videoProfileWatchUrl = toYouTubeWatchUrl(videoProfileUrl);
 
   const alumniStat =
-    statistics.find((s) => s.label.toLowerCase().includes("alumni"))?.value || "100";
-  const pengurusCount = activeMembers.length > 0 ? activeMembers.length : "58";
+    statistics.find((s) => s.label.toLowerCase().includes("alumni"))?.value || "300+";
+  const pengurusCount = activeMembers.length > 0 ? activeMembers.length : "40";
 
   const featuredProker = workPrograms[0] || {
     id: "proker-fgd",

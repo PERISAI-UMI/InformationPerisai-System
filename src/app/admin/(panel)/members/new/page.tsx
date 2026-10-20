@@ -1,8 +1,10 @@
 import { getAdminPeriods } from "@/features/periods/queries.admin";
 import { getAdminDepartments } from "@/features/departments/queries.admin";
 import { MemberForm } from "@/features/members/components/MemberForm";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminNewMemberPage() {
+  await requirePermission("members:create");
   const [periods, departments] = await Promise.all([
     getAdminPeriods(),
     getAdminDepartments(),

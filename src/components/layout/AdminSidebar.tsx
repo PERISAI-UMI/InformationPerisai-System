@@ -4,11 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { hasPermission } from "@/lib/permissions";
+import type { AuthUser, PermissionKey } from "@/types";
 
 interface NavItem {
   label: string;
   href: string;
-  superAdminOnly?: boolean;
+  requiredPermission?: PermissionKey;
   icon: (props: { className?: string }) => React.JSX.Element;
 }
 
@@ -17,7 +19,13 @@ interface NavSection {
   items: NavItem[];
 }
 
-export function AdminSidebar({ userRole }: { userRole?: string }) {
+export function AdminSidebar({
+  user,
+  userRole,
+}: {
+  user?: AuthUser | null;
+  userRole?: string;
+}) {
   const pathname = usePathname();
 
   const navSections: NavSection[] = [
@@ -41,6 +49,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {
           label: "Postingan Berita",
           href: "/admin/posts",
+          requiredPermission: "posts:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
@@ -50,15 +59,17 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {
           label: "Peluang & Lomba",
           href: "/admin/opportunities",
+          requiredPermission: "opportunities:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.003 0H9.497m5.003 0a7.5 7.5 0 00-5.003 0M12 3v3.75m-6.75 3a4.5 4.5 0 019 0v.75H5.25v-.75z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z" />
             </svg>
           ),
         },
         {
           label: "Galeri Media",
           href: "/admin/gallery",
+          requiredPermission: "gallery:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -73,6 +84,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {
           label: "Departemen",
           href: "/admin/departments",
+          requiredPermission: "departments:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -82,6 +94,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {
           label: "Program Kerja",
           href: "/admin/work-programs",
+          requiredPermission: "programs:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -91,6 +104,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {
           label: "Struktur Anggota",
           href: "/admin/members",
+          requiredPermission: "members:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -100,6 +114,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {
           label: "Periode",
           href: "/admin/periods",
+          requiredPermission: "departments:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -107,8 +122,19 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
           ),
         },
         {
+          label: "Keuangan Kas",
+          href: "/admin/finance",
+          requiredPermission: "finance:read",
+          icon: ({ className }) => (
+            <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ),
+        },
+        {
           label: "Statistik",
           href: "/admin/statistics",
+          requiredPermission: "settings:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -123,6 +149,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {
           label: "Pesan Masuk",
           href: "/admin/inbox",
+          requiredPermission: "inbox:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -137,6 +164,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {
           label: "Pengaturan",
           href: "/admin/settings",
+          requiredPermission: "settings:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -147,7 +175,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {
           label: "Pengguna & Akses",
           href: "/admin/users",
-          superAdminOnly: true,
+          requiredPermission: "users:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -155,9 +183,19 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
           ),
         },
         {
+          label: "Peran & Hak Akses",
+          href: "/admin/roles",
+          requiredPermission: "users:assign_role",
+          icon: ({ className }) => (
+            <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+          ),
+        },
+        {
           label: "Log Audit",
           href: "/admin/audit-log",
-          superAdminOnly: true,
+          requiredPermission: "audit:read",
           icon: ({ className }) => (
             <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -198,9 +236,10 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         {/* Navigation Groups */}
         <div className="px-3 py-4 space-y-6">
           {navSections.map((section) => {
-            const visibleItems = section.items.filter(
-              (item) => !item.superAdminOnly || userRole === "SUPER_ADMIN"
-            );
+            const visibleItems = section.items.filter((item) => {
+              if (!item.requiredPermission) return true;
+              return hasPermission(user, item.requiredPermission);
+            });
 
             if (visibleItems.length === 0) return null;
 
@@ -248,13 +287,21 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
 
       {/* Bottom Status Card */}
       <div className="p-4 border-t border-white/10 m-3 rounded-2xl bg-white/[0.03] border border-white/5">
-        <div className="flex items-center justify-between text-[11px]">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between text-[11px] gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-zinc-300 font-medium">Sistem Aktif</span>
           </div>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFB22C]/10 text-[#FFB22C] border border-[#FFB22C]/30">
-            {userRole === "SUPER_ADMIN" ? "Super Admin" : userRole === "BPH" ? "BPH" : "Editor"}
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFB22C]/10 text-[#FFB22C] border border-[#FFB22C]/30 truncate max-w-[120px]"
+            title={user?.positionTitle || userRole}
+          >
+            {user?.positionTitle ||
+              (userRole === "SUPER_ADMIN"
+                ? "Super Admin"
+                : userRole === "ADMIN"
+                ? "Pengurus"
+                : "Editor")}
           </span>
         </div>
       </div>

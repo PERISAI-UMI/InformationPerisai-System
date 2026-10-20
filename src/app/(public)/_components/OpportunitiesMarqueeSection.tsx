@@ -60,7 +60,7 @@ export function OpportunitiesMarqueeSection({
                   {/* Watermark Icon in background */}
                   <div className="pointer-events-none absolute right-3 bottom-10 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity select-none text-zinc-100">
                     <svg className="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-6.75a1.125 1.125 0 01-1.125-1.125V18.75m12.75-9.75v-1.5a3 3 0 00-3-3h-1.5m-9 0H7.5a3 3 0 00-3 3v1.5m0 0a3 3 0 003 3h9a3 3 0 003-3m-15 0v3a6 6 0 006 6h3a6 6 0 006-6v-3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z" />
                     </svg>
                   </div>
 
@@ -85,7 +85,7 @@ export function OpportunitiesMarqueeSection({
                   <div className="relative z-10 my-auto flex flex-col items-center justify-center py-2">
                     <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl sm:rounded-3xl border border-[#FFB22C]/30 bg-[#FFB22C]/10 text-[#FFB22C] shadow-lg backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:border-[#FFB22C]/60 group-hover:bg-[#FFB22C]/20 group-hover:shadow-[0_0_20px_rgba(255,178,44,0.25)]">
                       <svg className="h-7 w-7 sm:h-9 sm:w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-6.75a1.125 1.125 0 01-1.125-1.125V18.75m12.75-9.75v-1.5a3 3 0 00-3-3h-1.5m-9 0H7.5a3 3 0 00-3 3v1.5m0 0a3 3 0 003 3h9a3 3 0 003-3m-15 0v3a6 6 0 006 6h3a6 6 0 006-6v-3" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z" />
                       </svg>
                     </div>
                     {card.organizer && (

@@ -1,6 +1,8 @@
 import { PostForm } from "@/features/posts/components/PostForm";
+import { requirePermission } from "@/lib/permissions.server";
 
-export default function AdminNewPostPage() {
+export default async function AdminNewPostPage() {
+  await requirePermission("posts:create");
   return (
     <div className="space-y-6">
       <div>

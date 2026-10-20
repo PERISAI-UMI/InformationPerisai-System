@@ -1,4 +1,4 @@
-import { can } from "../src/lib/permissions";
+import { can, hasPermission } from "../src/lib/permissions";
 import type { AuthUser } from "../src/types";
 
 function runTest(name: string, fn: () => void) {
@@ -78,4 +78,49 @@ runTest("Role SUPER_ADMIN memiliki akses penuh ke seluruh sumber daya", () => {
   assert(can(superAdmin, "manage", "settings") === true, "Super admin boleh mengelola settings");
 });
 
+// Test 6: hasPermission dengan dynamic permissions dari role
+runTest("hasPermission menghormati array permissions dinamis pada AuthUser", () => {
+  const customUser: AuthUser = {
+    id: "usr_custom",
+    name: "Pengurus Kustom",
+    email: "custom@perisai.org",
+    role: "ADMIN",
+    isActive: true,
+    permissions: ["finance:read", "finance:create", "programs:read"],
+  };
+
+  assert(hasPermission(customUser, "finance:read") === true, "User kustom harus diizinkan finance:read");
+  assert(hasPermission(customUser, "finance:create") === true, "User kustom harus diizinkan finance:create");
+  assert(hasPermission(customUser, "finance:delete") === false, "User kustom ditolak finance:delete");
+  assert(hasPermission(customUser, "posts:create") === false, "User kustom ditolak posts:create");
+});
+
+// Test 7: Isolasi batas wilayah departemen
+runTest("hasPermission menegakkan isolasi kepemilikan departemen untuk Kadep", () => {
+  const kadepMedia: AuthUser = {
+    id: "usr_kadep_media",
+    name: "Kadep Media",
+    email: "kadep.media@perisai.org",
+    role: "ADMIN",
+    isActive: true,
+    departmentId: "media",
+    departmentNumericId: 2,
+    positionTitle: "Kepala Departemen Media",
+    tier: "departemen",
+    permissions: ["programs:read", "programs:create", "programs:update"],
+  };
+
+  // Departemen sendiri -> Izinkan
+  assert(
+    hasPermission(kadepMedia, "programs:update", { departmentId: 2 }) === true,
+    "Kadep boleh mengelola proker departemennya sendiri"
+  );
+  // Departemen orang lain -> Tolak
+  assert(
+    hasPermission(kadepMedia, "programs:update", { departmentId: 3 }) === false,
+    "Kadep tidak boleh mengelola proker departemen lain"
+  );
+});
+
 console.log("🎉 All permission tests passed successfully!\n");
+

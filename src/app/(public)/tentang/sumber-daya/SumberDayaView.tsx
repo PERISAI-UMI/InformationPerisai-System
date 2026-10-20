@@ -1158,7 +1158,7 @@ export function SumberDayaView() {
           <div className="w-0.5 h-6 sm:h-8 bg-gradient-to-b from-[#FFB22C] to-[#FFB22C]/80 shadow-[0_0_8px_rgba(255,178,44,0.6)] mx-auto my-1.5 sm:my-2" />
         </div>
 
-        {/* ---------------- LEVEL 2: BPH (KETUA LEBIH TINGGI DARI BENDAHARA & SEKRETARIS) ---------------- */}
+        {/* ---------------- LEVEL 2: PIMPINAN UTAMA & PIMPINAN SEKRETARIAT/KEUANGAN (KETUA LEBIH TINGGI DARI BENDAHARA & SEKRETARIS) ---------------- */}
         <div className="relative my-3 sm:my-4">
           <Sparkle className="top-10 left-[6%]" size={22} delay={1.1} float />
           <Sparkle className="top-14 right-[6%]" size={20} delay={2.3} />

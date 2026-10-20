@@ -1,7 +1,24 @@
 import { cache } from "react";
 import prisma from "@/lib/db";
 
-export const getPublicStatistics = cache(async function getPublicStatistics() {
+export interface PublicStatisticItem {
+  id: string;
+  label: string;
+  value: string;
+  description: string;
+  orderIndex: number;
+  isActive: boolean;
+}
+
+let cachedStatistics: { data: PublicStatisticItem[]; expiry: number } | null = null;
+const STATS_TTL_MS = 10 * 60 * 1000; // 10 minutes cache
+
+export const getPublicStatistics = cache(async function getPublicStatistics(): Promise<PublicStatisticItem[]> {
+  const now = Date.now();
+  if (cachedStatistics && cachedStatistics.expiry > now) {
+    return cachedStatistics.data;
+  }
+
   try {
     const [totalPengurus, totalDept, totalPrestasi, totalProker] = await Promise.all([
       prisma.tKepengurusan.count({
@@ -17,11 +34,11 @@ export const getPublicStatistics = cache(async function getPublicStatistics() {
       prisma.tProker.count(),
     ]);
 
-    return [
+    const result = [
       {
         id: "stat-pengurus",
         label: "Pengurus Aktif",
-        value: totalPengurus > 0 ? String(totalPengurus) : "42",
+        value: totalPengurus > 0 ? String(totalPengurus) : "40",
         description: "Fungsionaris Aktif Periode Berjalan",
         orderIndex: 1,
         isActive: true,
@@ -51,13 +68,20 @@ export const getPublicStatistics = cache(async function getPublicStatistics() {
         isActive: true,
       },
     ];
+
+    cachedStatistics = { data: result, expiry: now + STATS_TTL_MS };
+    return result;
   } catch (error) {
     console.error("Gagal menghitung statistik real:", error);
+    if (cachedStatistics?.data) {
+      return cachedStatistics.data;
+    }
     return [
-      { id: "stat-1", label: "Pengurus Aktif", value: "42", description: "Fungsionaris Generasi 11", orderIndex: 1, isActive: true },
+      { id: "stat-1", label: "Pengurus Aktif", value: "40", description: "Fungsionaris Kabinet Berjalan", orderIndex: 1, isActive: true },
       { id: "stat-2", label: "Departemen & Badan", value: "8", description: "Pilar keilmuan dan riset", orderIndex: 2, isActive: true },
       { id: "stat-3", label: "Prestasi Ilmiah", value: "50+", description: "Tingkat nasional & regional", orderIndex: 3, isActive: true },
       { id: "stat-4", label: "Karya & Inovasi", value: "25+", description: "Prototipe, KTI, dan PKM didanai", orderIndex: 4, isActive: true },
     ];
   }
 });
+

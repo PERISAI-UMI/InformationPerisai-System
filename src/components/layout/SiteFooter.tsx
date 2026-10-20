@@ -26,30 +26,12 @@ export function SiteFooter() {
             />
           </Link>
 
-          {/* Horizontal Nav Links */}
-          <nav className="flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm font-semibold text-zinc-300">
-            <Link href="/" className="hover:text-[#FFB22C] transition">
-              Beranda
-            </Link>
-            <Link href="/tentang" className="hover:text-[#FFB22C] transition">
-              Tentang
-            </Link>
-            <Link href="/activity" className="hover:text-[#FFB22C] transition">
-              Activity
-            </Link>
-            <Link href="/competition" className="hover:text-[#FFB22C] transition">
-              Competition
-            </Link>
-            <Link href="/kontak" className="hover:text-[#FFB22C] transition">
-              Kontak
-            </Link>
-          </nav>
 
           {/* Social Icons (SVGs with Gold Hover Glow) */}
           <div className="flex items-center gap-2.5 shrink-0">
             {/* Instagram */}
             <a
-              href="https://instagram.com/ukmperisai_umi"
+              href="https://instagram.com/perisaiumi"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2b2b31] border border-white/10 text-zinc-300 hover:border-[#FFB22C] hover:bg-[#FFB22C] hover:text-[#1b1b1f] hover:scale-110 hover:shadow-[0_0_15px_rgba(255,178,44,0.35)] transition-all duration-300"
@@ -62,7 +44,7 @@ export function SiteFooter() {
 
             {/* YouTube */}
             <a
-              href="https://youtube.com/@ukmperisaiumi"
+              href="https://youtube.com/@perisaiumi"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2b2b31] border border-white/10 text-zinc-300 hover:border-[#FFB22C] hover:bg-[#FFB22C] hover:text-[#1b1b1f] hover:scale-110 hover:shadow-[0_0_15px_rgba(255,178,44,0.35)] transition-all duration-300"
@@ -115,7 +97,7 @@ export function SiteFooter() {
               <p>GOR UMI Ruangan No. 10 / Kampus II UMI</p>
               <p>Jl. Urip Sumoharjo KM 5, Panaikang, Panakkukang, Makassar, Sulawesi Selatan 90231</p>
               <p className="pt-1 font-semibold" style={{ color: "#FFC85A" }}>
-                Email: ukmperisai@umi.ac.id | Narahubung: +62 812-3456-7890
+                Email: perisaiumi@umi.ac.id | Narahubung: +62 812-3456-7890
               </p>
             </div>
           </div>

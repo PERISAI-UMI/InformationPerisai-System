@@ -1,7 +1,27 @@
 import { cache } from "react";
 import prisma from "@/lib/db";
 
-export const getPublicActiveMembers = cache(async function getPublicActiveMembers() {
+export interface PublicMemberItem {
+  id: string;
+  name: string;
+  position: string;
+  tier: string;
+  photoUrl: string | null;
+  linkedinUrl: string | null;
+  instagramUsername?: string | null;
+  department: { id: string; name: string } | null;
+  orderIndex: number;
+}
+
+let cachedMembers: { data: PublicMemberItem[]; expiry: number } | null = null;
+const MEMBERS_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+export const getPublicActiveMembers = cache(async function getPublicActiveMembers(): Promise<PublicMemberItem[]> {
+  const now = Date.now();
+  if (cachedMembers && cachedMembers.expiry > now) {
+    return cachedMembers.data;
+  }
+
   try {
     // Eksekusi query Pembina dan Fungsionaris secara paralel untuk memangkas latensi SSR
     const [pembinaList, kepengurusan] = await Promise.all([
@@ -81,7 +101,7 @@ export const getPublicActiveMembers = cache(async function getPublicActiveMember
         const deptName = k.nama_dept || k.singkatan || "";
         const posTitle =
           k.nama_jabatan +
-          (k.singkatan && k.singkatan !== "BPH" ? ` ${k.singkatan}` : "");
+          (k.singkatan && k.level_hirarki > 2 ? ` ${k.singkatan}` : "");
 
         return {
           id: k.id_perisai,
@@ -96,12 +116,18 @@ export const getPublicActiveMembers = cache(async function getPublicActiveMember
         };
       });
 
-      return [...pembinaMembers, ...pengurusMembers];
+      const result = [...pembinaMembers, ...pengurusMembers];
+      cachedMembers = { data: result, expiry: now + MEMBERS_TTL_MS };
+      return result;
     }
 
+    cachedMembers = { data: pembinaMembers, expiry: now + MEMBERS_TTL_MS };
     return pembinaMembers;
   } catch (err) {
     console.error("Gagal memuat anggota publik:", err);
+    if (cachedMembers?.data) {
+      return cachedMembers.data;
+    }
     return [];
   }
 });

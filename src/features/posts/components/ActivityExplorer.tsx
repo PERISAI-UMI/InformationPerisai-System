@@ -93,7 +93,7 @@ export function ActivityExplorer({ initialItems }: ActivityExplorerProps) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari aktivitas atau riset..."
-            className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-2.5 pl-10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C] transition"
+            className="w-full rounded-xl border border-white/10 bg-[#16161a] px-4 py-2.5 pl-10 text-xs sm:text-sm text-white placeholder-zinc-500 transition hover:border-white/20 focus:border-[#FFB22C] focus:outline-none focus:ring-1 focus:ring-[#FFB22C]"
           />
           <svg
             className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400"

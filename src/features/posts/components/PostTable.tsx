@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { formatDateIndonesian } from "@/lib/dates";
@@ -19,10 +20,19 @@ export interface PostTableProps {
     createdAt: Date | string;
     author?: { name: string; email?: string } | null;
   }>;
+  canCreate?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
 }
 
-export function PostTable({ posts }: PostTableProps) {
+export function PostTable({
+  posts,
+  canCreate = true,
+  canUpdate = true,
+  canDelete = true,
+}: PostTableProps) {
   const router = useRouter();
+  const showActionColumn = canUpdate || canDelete;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -57,10 +67,14 @@ export function PostTable({ posts }: PostTableProps) {
         type="empty"
         title="Belum Ada Postingan Berita"
         description="Belum ada artikel atau rilis berita yang dibuat. Tambahkan postingan pertama untuk dipublikasikan."
-        action={{
-          label: "Tambah Postingan Baru",
-          href: "/admin/posts/new",
-        }}
+        action={
+          canCreate
+            ? {
+                label: "Tambah Postingan Baru",
+                href: "/admin/posts/new",
+              }
+            : undefined
+        }
       />
     );
   }
@@ -73,31 +87,34 @@ export function PostTable({ posts }: PostTableProps) {
           <TableHead>Penulis</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Dibuat Pada</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          {showActionColumn && (
+            <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
         {posts.map((post) => (
           <TableRow key={post.id}>
-            <TableCell className="font-bold text-white max-w-xs truncate">
+            <TableCell className="font-bold text-white min-w-[200px] max-w-xs md:max-w-md lg:max-w-xl truncate">
               {post.title}
             </TableCell>
             <TableCell className="text-zinc-300">{post.author?.name || "-"}</TableCell>
             <TableCell>{getStatusBadge(post.status)}</TableCell>
             <TableCell className="text-zinc-400 font-light">{formatDateIndonesian(post.createdAt)}</TableCell>
-            <TableCell className="text-right space-x-3">
-              <Link
-                href={`/admin/posts/${post.id}`}
-                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
-              >
-                Ubah
-              </Link>
-              <ConfirmDelete
-                onConfirm={() => handleDelete(post.id)}
-                title="Hapus Postingan"
-                description={`Apakah Anda yakin ingin menghapus "${post.title}"?`}
-              />
-            </TableCell>
+            {showActionColumn && (
+              <TableCell className="text-right whitespace-nowrap">
+                <div className="inline-flex items-center justify-end gap-1.5">
+                  {canUpdate && <EditLink href={`/admin/posts/${post.id}`} />}
+                  {canDelete && (
+                    <ConfirmDelete
+                      onConfirm={() => handleDelete(post.id)}
+                      title="Hapus Postingan"
+                      description={`Apakah Anda yakin ingin menghapus "${post.title}"?`}
+                    />
+                  )}
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

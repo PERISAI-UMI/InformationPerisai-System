@@ -45,10 +45,9 @@ bash deploy/backup.sh
      ```bash
      turso db create <new-db-name> --from-dump <backup-file.sql>
      ```
-   - **PostgreSQL (opsional jika aktif)**:
-     ```bash
-     gunzip -c /var/backups/perisai-umi/pg_backup_YYYYMMDD_HHMMSS.sql.gz | psql -U $DB_USER -d $DB_NAME
-     ```
+   - **Catatan Legasi PostgreSQL**:
+     Sistem saat ini murni menggunakan SQLite 3 (lokal) dan Turso Cloud LibSQL (produksi). Panduan dan riwayat migrasi PostgreSQL lama telah diarsipkan pada [`docs/archive/POSTGRESQL_MIGRATION_HISTORY.md`](./archive/POSTGRESQL_MIGRATION_HISTORY.md).
+
 3. Verifikasi skema dengan guard sebelum menjalankan kembali sistem:
    ```bash
    node db/guard.mjs live

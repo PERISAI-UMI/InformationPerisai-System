@@ -79,7 +79,7 @@ export function MemberForm({ periods, departments, initialData }: MemberFormProp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+    <form onSubmit={handleSubmit} className="space-y-6 w-full">
       {errorMessage && (
         <div className="animate-shake">
           <Alert variant="error" title="Gagal Menyimpan" onClose={() => setErrorMessage("")}>
@@ -130,7 +130,7 @@ export function MemberForm({ periods, departments, initialData }: MemberFormProp
             value={departmentId}
             onChange={(e) => setDepartmentId(e.target.value)}
             options={[
-              { label: "-- Tanpa Departemen / BPH --", value: "" },
+              { label: "-- Tanpa Departemen (Pengurus Inti) --", value: "" },
               ...departments.map((d) => ({ label: d.name, value: d.id })),
             ]}
           />

@@ -1,20 +1,19 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
 import { getAdminUsers } from "@/features/users/queries.admin";
 import { UserTable } from "@/features/users/components/UserTable";
-
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 
 export default async function AdminUsersPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  const session = await getSession();
-  if (!session || session.user.role !== "SUPER_ADMIN") {
-    redirect("/admin");
-  }
+  const session = await requirePermission("users:read");
+  const user = session.user;
+  const canCreate = hasPermission(user, "users:create");
+  const canUpdate = hasPermission(user, "users:update");
 
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
@@ -31,15 +30,21 @@ export default async function AdminUsersPage({
             Khusus Super Admin: kelola akun pengurus, status aktif, dan role pengguna.
           </p>
         </div>
-        <Link
-          href="/admin/users/new"
-          className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-sm font-bold text-[#16161a] shadow-lg shadow-[#FFB22C]/10 hover:from-[#FFA000] hover:to-[#FF8F00] transition"
-        >
-          + Tambah Pengguna Baru
-        </Link>
+        {canCreate && (
+          <Link
+            href="/admin/users/new"
+            className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-sm font-bold text-[#16161a] shadow-lg shadow-[#FFB22C]/10 hover:from-[#FFA000] hover:to-[#FF8F00] transition"
+          >
+            + Tambah Pengguna Baru
+          </Link>
+        )}
       </div>
 
-      <UserTable users={data.items} />
+      <UserTable
+        users={data.items}
+        canCreate={canCreate}
+        canUpdate={canUpdate}
+      />
 
       <Pagination
         currentPage={data.page}

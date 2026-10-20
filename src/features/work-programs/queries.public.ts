@@ -1,9 +1,39 @@
 import { cache } from "react";
 import prisma from "@/lib/db";
 
+export interface PublicWorkProgramItem {
+  id: string;
+  name: string;
+  title: string;
+  slug: string;
+  summary: string | null;
+  description: string;
+  status: string;
+  coverImageUrl: string | null;
+  documentationUrl: string | null;
+  department: {
+    id: string;
+    name: string;
+    slug: string;
+    code: string | null;
+  };
+  period: {
+    name: string;
+  };
+}
+
+let cachedWorkPrograms: { data: PublicWorkProgramItem[]; expiry: number; key: string } | null = null;
+const PROKER_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export const getPublicWorkPrograms = cache(async function getPublicWorkPrograms({
   departmentSlug,
-}: { departmentSlug?: string } = {}) {
+}: { departmentSlug?: string } = {}): Promise<PublicWorkProgramItem[]> {
+  const cacheKey = departmentSlug || "__all__";
+  const now = Date.now();
+  if (cachedWorkPrograms && cachedWorkPrograms.key === cacheKey && cachedWorkPrograms.expiry > now) {
+    return cachedWorkPrograms.data;
+  }
+
   const whereClause: {
     status: string;
     departemen?: { slug: string };
@@ -38,7 +68,7 @@ export const getPublicWorkPrograms = cache(async function getPublicWorkPrograms(
       orderBy: { urutan: "asc" },
     });
 
-    return programs.map((p) => ({
+    const result = programs.map((p) => ({
       id: String(p.idProker),
       name: p.namaProker,
       title: p.namaProker,
@@ -58,8 +88,14 @@ export const getPublicWorkPrograms = cache(async function getPublicWorkPrograms(
         name: "Periode Berjalan",
       },
     }));
+
+    cachedWorkPrograms = { data: result, expiry: now + PROKER_TTL_MS, key: cacheKey };
+    return result;
   } catch (err) {
     console.warn("Notice: failed to load T_Proker:", err);
+    if (cachedWorkPrograms && cachedWorkPrograms.key === cacheKey) {
+      return cachedWorkPrograms.data;
+    }
     return [];
   }
 });

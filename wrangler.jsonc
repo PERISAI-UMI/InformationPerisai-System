@@ -7,8 +7,8 @@
     "binding": "ASSETS"
   },
 
-  // Compatibility date: gunakan tanggal yang mendukung nodejs_compat stabil
-  "compatibility_date": "2024-09-23",
+  // Compatibility date: gunakan tanggal yang mendukung nodejs_compat dan workerd stabil
+  "compatibility_date": "2025-01-01",
   "compatibility_flags": [
     // WAJIB: mengaktifkan modul Node.js (crypto, buffer, stream) di Workers
     "nodejs_compat"
@@ -39,8 +39,9 @@
   }
 
   // ============================================================
-  // PERINTAH UNTUK MENDAFTARKAN SECRETS (jalankan satu kali):
-  // Secrets TIDAK boleh ada di file ini. Daftarkan via CLI:
+  // PERINTAH UNTUK MENDAFTARKAN SECRETS:
+  // Secrets TIDAK boleh ada di file ini.
+  // Gunakan skrip otomatis: 'npm run secrets:setup' atau daftarkan via CLI:
   //
   //   npx wrangler secret put TURSO_DATABASE_URL
   //   npx wrangler secret put TURSO_AUTH_TOKEN
@@ -51,6 +52,10 @@
   //   npx wrangler secret put R2_PUBLIC_URL
   //   npx wrangler secret put AUTH_SECRET
   //   npx wrangler secret put NEXT_PUBLIC_APP_URL
+  //   npx wrangler secret put NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  //   npx wrangler secret put CLOUDFLARE_TURNSTILE_SECRET_KEY
+  //   npx wrangler secret put CLOUDFLARE_ZONE_ID
+  //   npx wrangler secret put CLOUDFLARE_API_TOKEN
   //
   // Verifikasi secrets yang terdaftar:
   //   npx wrangler secret list

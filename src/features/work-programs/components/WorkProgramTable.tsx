@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { deleteWorkProgramAction } from "../actions";
@@ -18,10 +19,19 @@ export interface WorkProgramTableProps {
     department?: { name: string } | null;
     period?: { name: string } | null;
   }>;
+  canCreate?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
 }
 
-export function WorkProgramTable({ programs }: WorkProgramTableProps) {
+export function WorkProgramTable({
+  programs,
+  canCreate = true,
+  canUpdate = true,
+  canDelete = true,
+}: WorkProgramTableProps) {
   const router = useRouter();
+  const showActionColumn = canUpdate || canDelete;
 
   const getBadge = (status: string) => {
     switch (status) {
@@ -56,10 +66,14 @@ export function WorkProgramTable({ programs }: WorkProgramTableProps) {
         type="empty"
         title="Belum Ada Program Kerja"
         description="Belum ada program kerja terdaftar untuk periode ini. Silakan tambahkan program kerja baru."
-        action={{
-          label: "Tambah Program Kerja",
-          href: "/admin/work-programs/new",
-        }}
+        action={
+          canCreate
+            ? {
+                label: "Tambah Program Kerja",
+                href: "/admin/work-programs/new",
+              }
+            : undefined
+        }
       />
     );
   }
@@ -72,29 +86,32 @@ export function WorkProgramTable({ programs }: WorkProgramTableProps) {
           <TableHead>Departemen</TableHead>
           <TableHead>Periode</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          {showActionColumn && (
+            <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
         {programs.map((p) => (
           <TableRow key={p.id}>
-            <TableCell className="font-bold text-white">{p.name}</TableCell>
+            <TableCell className="font-bold text-white min-w-[180px]">{p.name}</TableCell>
             <TableCell className="text-zinc-300">{p.department?.name || "-"}</TableCell>
             <TableCell className="text-zinc-400 font-light">{p.period?.name || "-"}</TableCell>
             <TableCell>{getBadge(p.status)}</TableCell>
-            <TableCell className="text-right space-x-3">
-              <Link
-                href={`/admin/work-programs/${p.id}`}
-                className="text-xs font-bold text-[#FFB22C] hover:text-[#FFC85A] transition-colors"
-              >
-                Ubah
-              </Link>
-              <ConfirmDelete
-                onConfirm={() => handleDelete(p.id)}
-                title="Hapus Program Kerja"
-                description={`Apakah Anda yakin ingin menghapus "${p.name}"?`}
-              />
-            </TableCell>
+            {showActionColumn && (
+              <TableCell className="text-right whitespace-nowrap">
+                <div className="inline-flex items-center justify-end gap-1.5">
+                  {canUpdate && <EditLink href={`/admin/work-programs/${p.id}`} />}
+                  {canDelete && (
+                    <ConfirmDelete
+                      onConfirm={() => handleDelete(p.id)}
+                      title="Hapus Program Kerja"
+                      description={`Apakah Anda yakin ingin menghapus "${p.name}"?`}
+                    />
+                  )}
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

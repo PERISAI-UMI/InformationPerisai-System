@@ -1,12 +1,19 @@
 import { getAdminInbox } from "@/features/inbox/queries.admin";
 import { InboxTable } from "@/features/inbox/components/InboxTable";
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 
 export default async function AdminInboxPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  const session = await requirePermission("inbox:read");
+  const user = session.user;
+  const canMarkRead = hasPermission(user, "inbox:mark_read");
+  const canDelete = hasPermission(user, "inbox:delete");
+
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminInbox({ page });
@@ -39,6 +46,8 @@ export default async function AdminInboxPage({
           isRead: Boolean(m.isRead),
           createdAt: new Date(m.createdAt * 1000),
         }))}
+        canMarkRead={canMarkRead}
+        canDelete={canDelete}
       />
 
       <Pagination

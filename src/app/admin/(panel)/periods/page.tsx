@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { getAdminPeriods } from "@/features/periods/queries.admin";
 import { PeriodTable } from "@/features/periods/components/PeriodTable";
+import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 
 export default async function AdminPeriodsPage() {
+  const session = await requirePermission("departments:read");
+  const user = session.user;
+  const canManage = hasPermission(user, "departments:manage");
+  const canUpdate = hasPermission(user, "departments:update");
+
   const periods = await getAdminPeriods();
 
   return (
@@ -16,13 +23,15 @@ export default async function AdminPeriodsPage() {
             Daftar masa bakti kepengurusan UKM PERISAI UMI (satu periode berstatus aktif).
           </p>
         </div>
-        <Link
-          href="/admin/periods/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-xs sm:text-sm font-extrabold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/20 hover:brightness-110 transition-all"
-        >
-          <span>+</span>
-          <span>Tambah Periode Baru</span>
-        </Link>
+        {canManage && (
+          <Link
+            href="/admin/periods/new"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-xs sm:text-sm font-extrabold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/20 hover:brightness-110 transition-all"
+          >
+            <span>+</span>
+            <span>Tambah Periode Baru</span>
+          </Link>
+        )}
       </div>
 
       <PeriodTable
@@ -37,6 +46,8 @@ export default async function AdminPeriodsPage() {
             workPrograms: 0,
           },
         }))}
+        canManage={canManage}
+        canUpdate={canUpdate}
       />
     </div>
   );

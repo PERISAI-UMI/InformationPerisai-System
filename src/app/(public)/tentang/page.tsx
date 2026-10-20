@@ -21,6 +21,8 @@ export const metadata: Metadata = {
     "Profil lengkap, sejarah pendirian 5 Mei 2015, visi, misi, dan struktur fungsionaris UKM PERISAI Universitas Muslim Indonesia.",
 };
 
+export const revalidate = 60;
+
 export default async function TentangPage() {
   const [members, settings] = await Promise.all([
     getPublicActiveMembers(),

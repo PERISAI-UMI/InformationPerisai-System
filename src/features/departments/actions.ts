@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { slugify, generateUniqueSlug } from "@/lib/slug";
 import { writeAuditLog } from "@/lib/audit";
 import { departmentSchema, type DepartmentInput } from "./schema";
@@ -11,8 +11,8 @@ import { revalidatePath } from "next/cache";
 
 export async function createDepartmentAction(data: DepartmentInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "create", "departments")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "departments:manage")) {
+    return { success: false, message: "Akses ditolak: Hanya Super Admin / Pimpinan yang dapat membuat departemen." };
   }
 
   const parsed = departmentSchema.safeParse(data);
@@ -55,18 +55,18 @@ export async function createDepartmentAction(data: DepartmentInput): Promise<Act
 
 export async function updateDepartmentAction(id: string, data: DepartmentInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "update", "departments")) {
-    return { success: false, message: "Akses ditolak." };
+  const idNum = parseInt(id, 10);
+  if (isNaN(idNum)) {
+    return { success: false, message: "ID departemen tidak valid." };
+  }
+
+  if (!session || !hasPermission(session.user, "departments:update", { departmentId: idNum })) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin memperbarui data departemen ini." };
   }
 
   const parsed = departmentSchema.safeParse(data);
   if (!parsed.success) {
     return { success: false, message: "Data tidak valid", errors: parsed.error.flatten().fieldErrors };
-  }
-
-  const idNum = parseInt(id, 10);
-  if (isNaN(idNum)) {
-    return { success: false, message: "ID departemen tidak valid." };
   }
 
   try {
@@ -103,8 +103,8 @@ export async function updateDepartmentAction(id: string, data: DepartmentInput):
 
 export async function deleteDepartmentAction(id: string): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "delete", "departments")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "departments:manage")) {
+    return { success: false, message: "Akses ditolak: Hanya Super Admin / Pimpinan yang dapat menonaktifkan departemen." };
   }
 
   const idNum = parseInt(id, 10);

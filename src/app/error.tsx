@@ -16,7 +16,27 @@ export default function GlobalError({
 
   useEffect(() => {
     console.error("Global Error Boundary caught:", error);
+    // Auto-reload jika terjadi ChunkLoadError akibat deployment rilis baru
+    if (
+      typeof window !== "undefined" &&
+      (error.name === "ChunkLoadError" || error.message?.includes("Loading chunk"))
+    ) {
+      const reloadKey = "chunk_failed_reload";
+      const hasReloaded = sessionStorage.getItem(reloadKey);
+      if (!hasReloaded) {
+        sessionStorage.setItem(reloadKey, "true");
+        window.location.reload();
+      }
+    }
   }, [error]);
+
+  const handleReset = () => {
+    if (error.name === "ChunkLoadError" || error.message?.includes("Loading chunk")) {
+      window.location.reload();
+    } else {
+      reset();
+    }
+  };
 
   const handleCopy = () => {
     const errorText = `PERISAI UMI Error Log:\nMessage: ${error.message}\nDigest: ${error.digest || "-"}\nStack: ${error.stack || "-"}`;
@@ -85,7 +105,7 @@ export default function GlobalError({
           <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
             <button
               type="button"
-              onClick={() => reset()}
+              onClick={handleReset}
               className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-6 py-3.5 text-xs sm:text-sm font-extrabold text-[#16161a] shadow-xl shadow-[#FFB22C]/20 hover:brightness-110 transition cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

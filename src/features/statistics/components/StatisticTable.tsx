@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { EditLink } from "@/components/common/ActionButtons";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "@/components/ui/Toast";
 import { deleteStatisticAction } from "../actions";
@@ -19,9 +20,13 @@ export interface StatisticTableProps {
     orderIndex: number;
     isActive: boolean;
   }>;
+  canUpdate?: boolean;
 }
 
-export function StatisticTable({ statistics }: StatisticTableProps) {
+export function StatisticTable({
+  statistics,
+  canUpdate = true,
+}: StatisticTableProps) {
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
@@ -44,10 +49,14 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
         type="empty"
         title="Belum Ada Indikator Statistik"
         description="Belum ada data capaian atau statistik lembaga yang ditampilkan di beranda publik."
-        action={{
-          label: "Tambah Statistik",
-          href: "/admin/statistics/new",
-        }}
+        action={
+          canUpdate
+            ? {
+                label: "Tambah Statistik",
+                href: "/admin/statistics/new",
+              }
+            : undefined
+        }
       />
     );
   }
@@ -61,7 +70,9 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
           <TableHead>Indikator</TableHead>
           <TableHead>Nilai</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
+          {canUpdate && (
+            <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -79,26 +90,25 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
                 </div>
               )}
             </TableCell>
-            <TableCell className="font-semibold text-white">{s.label}</TableCell>
+            <TableCell className="font-semibold text-white min-w-[180px]">{s.label}</TableCell>
             <TableCell className="font-mono font-bold text-[#FFB22C]">
               {s.value} {s.suffix || ""}
             </TableCell>
             <TableCell>
               {s.isActive ? <Badge variant="success">Aktif</Badge> : <Badge variant="neutral">Non-aktif</Badge>}
             </TableCell>
-            <TableCell className="text-right space-x-2">
-              <Link
-                href={`/admin/statistics/${s.id}`}
-                className="text-xs font-semibold text-[#FFB22C] hover:text-[#FFA000] transition-colors"
-              >
-                Ubah
-              </Link>
-              <ConfirmDelete
-                onConfirm={() => handleDelete(s.id)}
-                title="Hapus Statistik"
-                description={`Apakah Anda yakin ingin menghapus indikator "${s.label}"?`}
-              />
-            </TableCell>
+            {canUpdate && (
+              <TableCell className="text-right whitespace-nowrap">
+                <div className="inline-flex items-center justify-end gap-1.5">
+                  <EditLink href={`/admin/statistics/${s.id}`} />
+                  <ConfirmDelete
+                    onConfirm={() => handleDelete(s.id)}
+                    title="Hapus Statistik"
+                    description={`Apakah Anda yakin ingin menghapus indikator "${s.label}"?`}
+                  />
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

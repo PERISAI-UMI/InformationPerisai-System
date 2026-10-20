@@ -3,12 +3,14 @@ import { getAdminWorkProgramById } from "@/features/work-programs/queries.admin"
 import { getAdminDepartments } from "@/features/departments/queries.admin";
 import { getAdminPeriods } from "@/features/periods/queries.admin";
 import { WorkProgramForm } from "@/features/work-programs/components/WorkProgramForm";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminEditWorkProgramPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("programs:update");
   const { id } = await params;
   const [proker, departments, periods] = await Promise.all([
     getAdminWorkProgramById(id),

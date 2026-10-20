@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { slugify, generateUniqueSlug } from "@/lib/slug";
 import { writeAuditLog } from "@/lib/audit";
 import { opportunitySchema, type OpportunityInput } from "./schema";
@@ -11,7 +11,7 @@ import { revalidatePath } from "next/cache";
 
 export async function createOpportunityAction(data: OpportunityInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "create", "opportunities")) {
+  if (!session || !hasPermission(session.user, "opportunities:create")) {
     return { success: false, message: "Akses ditolak: Anda tidak memiliki izin menambah peluang." };
   }
 
@@ -64,7 +64,7 @@ export async function createOpportunityAction(data: OpportunityInput): Promise<A
 
 export async function updateOpportunityAction(id: string, data: OpportunityInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "update", "opportunities")) {
+  if (!session || !hasPermission(session.user, "opportunities:update")) {
     return { success: false, message: "Akses ditolak." };
   }
 
@@ -117,7 +117,7 @@ export async function updateOpportunityAction(id: string, data: OpportunityInput
 
 export async function deleteOpportunityAction(id: string): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "delete", "opportunities")) {
+  if (!session || !hasPermission(session.user, "opportunities:delete")) {
     return { success: false, message: "Akses ditolak." };
   }
 

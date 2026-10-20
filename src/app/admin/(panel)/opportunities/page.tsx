@@ -2,12 +2,20 @@ import Link from "next/link";
 import { getAdminOpportunities } from "@/features/opportunities/queries.admin";
 import { OpportunityTable } from "@/features/opportunities/components/OpportunityTable";
 import { Pagination } from "@/components/common/Pagination";
+import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 
 export default async function AdminOpportunitiesPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  const session = await requirePermission("opportunities:read");
+  const user = session.user;
+  const canCreate = hasPermission(user, "opportunities:create");
+  const canUpdate = hasPermission(user, "opportunities:update");
+  const canDelete = hasPermission(user, "opportunities:delete");
+
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminOpportunities({ page });
@@ -23,13 +31,15 @@ export default async function AdminOpportunitiesPage({
             Daftar lomba karya tulis ilmiah, PKM, seminar, dan beasiswa untuk mahasiswa.
           </p>
         </div>
-        <Link
-          href="/admin/opportunities/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-xs sm:text-sm font-extrabold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/20 hover:brightness-110 transition-all"
-        >
-          <span>+</span>
-          <span>Tambah Peluang Baru</span>
-        </Link>
+        {canCreate && (
+          <Link
+            href="/admin/opportunities/new"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-xs sm:text-sm font-extrabold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/20 hover:brightness-110 transition-all"
+          >
+            <span>+</span>
+            <span>Tambah Peluang Baru</span>
+          </Link>
+        )}
       </div>
 
       <OpportunityTable
@@ -41,6 +51,9 @@ export default async function AdminOpportunitiesPage({
           category: op.category || "LOMBA",
           deadlineAt: op.deadlineAt ? new Date(op.deadlineAt * 1000) : new Date(),
         }))}
+        canCreate={canCreate}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
       />
 
       <Pagination

@@ -63,7 +63,7 @@ export function GalleryUploader() {
           </svg>
         </div>
         <h4 className="text-base font-bold text-white">
-          Unggah Berkas Media & Dokumentasi
+          Unggah Media & Dokumentasi
         </h4>
         <p className="text-xs text-zinc-400 max-w-sm">
           Pilih satu atau beberapa berkas foto/gambar untuk ditambahkan ke galeri media UKM PERISAI UMI.
@@ -78,8 +78,19 @@ export function GalleryUploader() {
             onChange={handleMultipleUpload}
             disabled={isUploading}
           />
-          <Button type="button" variant="primary" size="md" isLoading={isUploading}>
-            {isUploading ? uploadProgress : "Pilih Berkas dari Komputer"}
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            isLoading={isUploading}
+            className="whitespace-nowrap px-5 gap-2 shadow-md"
+          >
+            {!isUploading && (
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            )}
+            <span>{isUploading ? uploadProgress : "Pilih Berkas dari Komputer"}</span>
           </Button>
         </label>
       </div>
