@@ -93,7 +93,7 @@ Dokumen ini mencatat keputusan-keputusan teknis fundamental dalam perancangan da
      - `T_Galeri` dihapus; aset media dikelola terpadu via `T_Media` dan lampiran dokumentasi proker/berita.
      - `T_Statistik` dihapus; seluruh metrik beranda (Pengurus Aktif, Departemen, Prestasi Ilmiah, Proker/Karya) dihitung dinamis secara *real-time* dari record aktual database (`prisma.tKepengurusan.count`, `prisma.mDepartemen.count`, `prisma.tPrestasi.count`, `prisma.tProker.count`).
   3. **Penghapusan SQL Views**: Seluruh 17 SQL views & triggers dihapus sementara untuk menjaga skema tetap ramping dan murni berorientasi tabel fisik (`psdm-db.db` & Turso LibSQL).
-  4. **Penghapusan Istilah "BPH Inti"**: Menghapus nomenklatur tidak resmi "BPH Inti" dan membakukan menjadi "BPH" atau "Badan Pengurus Harian (BPH)" sesuai AD/ART UKM PERISAI UMI.
+  4. **Penegakan Struktur Baku Organisasi (Tanpa Istilah "BPH")**: Menegaskan bahwa di UKM PERISAI UMI tidak ada istilah "BPH". Struktur baku terdiri dari Pengarah/Pengawas (Pembina & DPO), Pimpinan Utama (Ketua Umum), Pimpinan Sekretariat & Keuangan (Sekretaris Umum & Bendahara Umum), Kepala Departemen (6 Kadep), Staf Ahli, dan Anggota Biasa.
 - **Konsekuensi**: Skema database lebih ringkas (21 tabel fisik bersih), tidak ada redundansi tabel foto terpisah, performa query agregasi realtime akurat tanpa mismatch counter statistik, dan representasi struktur fungsionaris akurat 100%.
 
 

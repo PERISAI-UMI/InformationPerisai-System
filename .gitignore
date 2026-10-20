@@ -58,3 +58,7 @@ wrangler.jsonc.bak
 wrangler.toml.bak
 # Prisma generated client (di-generate saat build)
 /node_modules/.prisma/
+
+# Graphify analysis artifacts
+graphify-out/
+src/graphify-out/

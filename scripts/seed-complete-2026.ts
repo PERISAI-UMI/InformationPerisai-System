@@ -901,17 +901,15 @@ async function main() {
     }
   }
 
-  // C. Departemen
+  // C. Departemen (6 Departemen Resmi UKM PERISAI UMI)
   const deptMap: Record<string, number> = {};
   const daftarDept = [
-    { nama: "Badan Pengurus Harian", singkatan: "BPH", slug: "bph", tupoksi: "Pimpinan eksekutif dan pemegang kendali arah kebijakan organisasi.", urutan: 1 },
-    { nama: "Pengembangan Sumber Daya Manusia", singkatan: "PSDM", slug: "psdm", tupoksi: "Kaderisasi, pengembangan kepemimpinan, dan kesejahteraan seluruh fungsionaris.", urutan: 2 },
-    { nama: "Media dan Informasi", singkatan: "MEDIA", slug: "media", tupoksi: "Pusat kreasi visual, dokumentasi kegiatan, dan pengelolaan kanal digital.", urutan: 3 },
+    { nama: "Penalaran dan Keilmuan", singkatan: "PENALARAN", slug: "penalaran", tupoksi: "Pengembangan budaya berpikir kritis, kajian ilmiah, dan forum diskusi akademis.", urutan: 1 },
+    { nama: "Media dan Informasi", singkatan: "MEDIA", slug: "media", tupoksi: "Pusat kreasi visual, dokumentasi kegiatan, dan pengelolaan kanal digital.", urutan: 2 },
+    { nama: "Riset dan Teknologi", singkatan: "RISTEK", slug: "ristek", tupoksi: "Pusat inovasi rekayasa teknologi, penelitian terapan, dan hilirisasi karya riset.", urutan: 3 },
     { nama: "Kompetisi dan Prestasi", singkatan: "KOMPRES", slug: "kompres", tupoksi: "Mewadahi bimbingan perlombaan ilmiah, delegasi kompetisi, dan rekognisi prestasi.", urutan: 4 },
-    { nama: "Hubungan Masyarakat", singkatan: "HUMAS", slug: "humas", tupoksi: "Menjalin relasi strategis, kemitraan lembaga, dan publikasi citra organisasi.", urutan: 5 },
-    { nama: "Riset dan Teknologi", singkatan: "RISTEK", slug: "ristek", tupoksi: "Pusat inovasi rekayasa teknologi, penelitian terapan, dan hilirisasi karya riset.", urutan: 6 },
-    { nama: "Penalaran dan Keilmuan", singkatan: "PENALARAN", slug: "penalaran", tupoksi: "Pengembangan budaya berpikir kritis, kajian ilmiah, dan forum diskusi akademis.", urutan: 7 },
-    { nama: "Trisula Riset Strategis", singkatan: "TRISULA", slug: "trisula", tupoksi: "Garda khusus pengembangan riset strategis dan pengawalan prestasi unggulan.", urutan: 8 },
+    { nama: "Pengembangan Sumber Daya Manusia", singkatan: "PSDM", slug: "psdm", tupoksi: "Kaderisasi, pengembangan kepemimpinan, dan kesejahteraan seluruh fungsionaris.", urutan: 5 },
+    { nama: "Hubungan Masyarakat", singkatan: "HUMAS", slug: "humas", tupoksi: "Menjalin relasi strategis, kemitraan lembaga, dan publikasi citra organisasi.", urutan: 6 },
   ];
 
   for (const d of daftarDept) {
@@ -941,11 +939,11 @@ async function main() {
   // E. Roles
   const roleMap: Record<string, number> = {};
   const daftarRoles = [
-    { nama: "SUPER_ADMIN", label: "Super Administrator", desc: "Akses penuh seluruh sistem dan manajemen pengguna" },
-    { nama: "BPH", label: "Badan Pengurus Harian", desc: "Akses pimpinan eksekutif dan keuangan" },
-    { nama: "KADEP", label: "Kepala Departemen", desc: "Akses program kerja dan anggota divisi" },
-    { nama: "EDITOR", label: "Editor Konten", desc: "Akses artikel berita, kompetisi, dan galeri" },
-    { nama: "ANGGOTA", label: "Anggota Fungsionaris", desc: "Akses profil pribadi" },
+    { nama: "SUPER_ADMIN", label: "Administrator Teknis / Webmaster", desc: "Akses penuh seluruh sistem dan manajemen pengguna" },
+    { nama: "ADMIN", label: "Pengurus Inti & Kepala Departemen", desc: "Akses pimpinan operasional dan departemen" },
+    { nama: "KADEP", label: "Kepala Departemen", desc: "Akses program kerja dan fungsionaris departemen" },
+    { nama: "EDITOR", label: "Staf Ahli / Editor Konten", desc: "Akses artikel berita, kompetisi, dan galeri" },
+    { nama: "ANGGOTA", label: "Anggota Biasa", desc: "Akses profil pribadi" },
   ];
 
   for (const r of daftarRoles) {
@@ -1042,16 +1040,16 @@ async function main() {
 
     if (tugas === "Ketua Umum") {
       jabatanId = jabatanMap["Ketua Umum"];
-      deptId = deptMap["BPH"];
+      deptId = null;
       roleId = roleMap["SUPER_ADMIN"];
     } else if (tugas === "Sekretaris Umum") {
       jabatanId = jabatanMap["Sekretaris Umum"];
-      deptId = deptMap["BPH"];
-      roleId = roleMap["BPH"];
+      deptId = null;
+      roleId = roleMap["ADMIN"] || roleMap["SUPER_ADMIN"];
     } else if (tugas === "Bendahara Umum") {
       jabatanId = jabatanMap["Bendahara Umum"];
-      deptId = deptMap["BPH"];
-      roleId = roleMap["BPH"];
+      deptId = null;
+      roleId = roleMap["ADMIN"] || roleMap["SUPER_ADMIN"];
     } else if (tugas.startsWith("Kepala Departemen")) {
       jabatanId = jabatanMap["Kepala Departemen"];
       roleId = roleMap["KADEP"];
@@ -1157,7 +1155,7 @@ async function main() {
   for (const row of kepengurusanRows) {
     let tier = "staf";
     if (row.nama_jabatan === "Ketua Umum" || row.nama_jabatan === "Sekretaris Umum" || row.nama_jabatan === "Bendahara Umum") {
-      tier = "bph";
+      tier = "inti";
     } else if (row.nama_jabatan === "Kepala Departemen") {
       tier = "kadep";
     }
@@ -1171,7 +1169,7 @@ async function main() {
       `mem-${row.id_perisai.replace(/\s+/g, "_")}`,
       deptIdStr,
       row.nama_lengkap,
-      row.nama_jabatan + (row.singkatan && row.singkatan !== "BPH" ? ` ${row.singkatan}` : ""),
+      tier === "inti" ? row.nama_jabatan : (row.singkatan ? `${row.nama_jabatan} ${row.singkatan}` : row.nama_jabatan),
       tier,
       row.linkedin,
       row.urutan

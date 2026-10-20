@@ -256,7 +256,7 @@ export default function StrukturPage() {
                       style={{ animation: "pr-dash-flow 1.5s linear infinite" }}
                     />
 
-                    {/* 5. Garis Komando Solid: Ketua Umum (500, 207) -> BPH (Sekum & Bendum) */}
+                    {/* 5. Garis Komando Solid: Ketua Umum (500, 207) -> Pimpinan Inti (Sekum & Bendum) */}
                     <line
                       x1="500"
                       y1="207"
@@ -265,7 +265,7 @@ export default function StrukturPage() {
                       stroke={GOLD}
                       strokeWidth="3"
                     />
-                    {/* Cabang Horizontal BPH */}
+                    {/* Cabang Horizontal Pimpinan Sekretariat & Keuangan */}
                     <line
                       x1="340"
                       y1="230"
@@ -293,7 +293,7 @@ export default function StrukturPage() {
                       strokeWidth="3"
                     />
 
-                    {/* 6. Garis Komando Solid: BPH turun ke Garis Busur Kadep */}
+                    {/* 6. Garis Komando Solid: Pimpinan Utama turun ke Garis Busur Kadep */}
                     <line
                       x1="500"
                       y1="230"

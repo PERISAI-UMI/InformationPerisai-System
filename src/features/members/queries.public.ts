@@ -101,7 +101,7 @@ export const getPublicActiveMembers = cache(async function getPublicActiveMember
         const deptName = k.nama_dept || k.singkatan || "";
         const posTitle =
           k.nama_jabatan +
-          (k.singkatan && k.singkatan !== "BPH" ? ` ${k.singkatan}` : "");
+          (k.singkatan && k.level_hirarki > 2 ? ` ${k.singkatan}` : "");
 
         return {
           id: k.id_perisai,

@@ -16,7 +16,7 @@ Skema database UKM PERISAI UMI dirancang dengan normalisasi relasional tinggi, m
 | `M_Departemen` | Divisi/departemen & badan fungsionaris | `id_departemen` (PK), `nama_departemen`, `singkatan`, `slug`, `tupoksi_utama` |
 | `M_Jabatan` | Struktur jabatan fungsionaris | `id_jabatan` (PK), `id_departemen` (FK), `nama_jabatan`, `level_hirarki` |
 | `M_Periode` | Periode masa bakti kepengurusan | `id_periode` (PK), `nama_periode`, `tahun_mulai`, `tahun_selesai`, `is_active` |
-| `M_Role` | Hak akses otorisasi sistem (RBAC) | `id_role` (PK), `nama_role` (`Admin`, `BPH`, `Kadep`, `Staf Ahli`, `Anggota Biasa`) |
+| `M_Role` | Hak akses otorisasi sistem (RBAC) | `id_role` (PK), `nama_role` (`Super Admin`, `Pengurus Inti & Kadep`, `Editor`, `Anggota Biasa`) |
 | `M_Anggota` | Profil lengkap anggota dan pengurus | `id_perisai` (PK - contoh: `PRN0238`), `nama_lengkap`, `nim`, `tempat_lahir`, `tanggal_lahir`, `no_wa`, `email`, `linkedin`, `instagram`, `hobi`, `angkatan`, `gen` |
 | `M_Pembina` | Data Dewan Pembina / Penasihat Organisasi | `id_pembina` (PK), `nama`, `gelar`, `jabatan_struktural`, `foto_url`, `is_active` |
 | `M_Akun` | Kredensial autentikasi login fungsionaris | `id_akun` (PK), `id_perisai` (FK/Unique), `id_role` (FK), `password_hash` (SHA-256), `is_active`, `last_login` |
@@ -25,7 +25,7 @@ Skema database UKM PERISAI UMI dirancang dengan normalisasi relasional tinggi, m
 | Nama Tabel | Deskripsi | Keterangan Kunci |
 | :--- | :--- | :--- |
 | `T_Sesi` | Penyimpanan sesi aktif dan token cache | `id_sesi` (PK), `id_akun` (FK), `token` (Unique), `expires_at` |
-| `T_Kepengurusan` | Pemetaan penugasan anggota di periode aktif | `id_kepengurusan` (PK), `id_periode` (FK), `id_perisai` (FK), `id_jabatan` (FK), `id_departemen` (FK), `tier` (`bph`, `kadep`, `staf`) |
+| `T_Kepengurusan` | Pemetaan penugasan anggota di periode aktif | `id_kepengurusan` (PK), `id_periode` (FK), `id_perisai` (FK), `id_jabatan` (FK), `id_departemen` (FK), `tier` (`inti`, `kadep`, `staf`) |
 | `T_Proker` | Program kerja tahunan tiap departemen | `id_proker` (PK), `id_departemen` (FK), `id_periode` (FK), `nama_proker`, `slug`, `target_pelaksanaan`, `penanggung_jawab_id` |
 | `T_Proker_Dokumentasi` | Galeri multi-foto dokumentasi program kerja | `id_foto` (PK), `id_proker` (FK), `foto_url`, `keterangan`, `urutan` |
 | `T_Berita` | Publikasi berita, opini, dan kabar riset | `id_berita` (PK), `id_departemen` (FK), `penulis_id` (FK), `judul`, `slug`, `konten`, `foto_cover`, `status` |
@@ -61,7 +61,7 @@ Sistem menggunakan nomor registrasi **PRN (ID PERISAI)** sebagai identitas login
 ## 👥 Data Kepengurusan Riil Periode 2026–2027
 
 Basis data telah terisi dengan **42 fungsionaris resmi** UKM PERISAI UMI Generasi 11:
-1. **Badan Pengurus Harian (BPH)**:
+1. **Pengurus Inti (Pimpinan Utama, Sekretariat & Keuangan)**:
    - Ketua Umum: **Aisyah Ramadhani Muchlis** (`PRN 0238`)
    - Sekretaris Umum: **Baiq Indar Pirayati** (`PRN 0241`)
    - Bendahara Umum: **Muhammad Aidhil Aksan** (`PRN 0250`)

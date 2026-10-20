@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS M_Periode (
 -- 6. Master Role Akses Keamanan (RBAC)
 CREATE TABLE IF NOT EXISTS M_Role (
   id_role INTEGER PRIMARY KEY AUTOINCREMENT,
-  nama_role TEXT NOT NULL UNIQUE, -- SUPER_ADMIN, BPH, KADEP, EDITOR, ANGGOTA
+  nama_role TEXT NOT NULL UNIQUE, -- SUPER_ADMIN, ADMIN, KADEP, EDITOR, ANGGOTA
   label TEXT NOT NULL,
   deskripsi TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS T_Kepengurusan (
   id_perisai TEXT NOT NULL REFERENCES M_Anggota(id_perisai) ON DELETE CASCADE,
   id_jabatan INTEGER NOT NULL REFERENCES M_Jabatan(id_jabatan) ON DELETE RESTRICT,
   id_departemen INTEGER REFERENCES M_Departemen(id_departemen) ON DELETE SET NULL,
-  tier TEXT NOT NULL DEFAULT 'staf', -- bph, kadep, staf
+  tier TEXT NOT NULL DEFAULT 'staf', -- inti, kadep, staf
   status TEXT NOT NULL DEFAULT 'aktif', -- aktif, selesai, cuti
   urutan INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),

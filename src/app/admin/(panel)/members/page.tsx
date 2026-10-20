@@ -21,7 +21,7 @@ export default async function AdminMembersPage({
             Kelola Anggota Pengurus
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 font-light mt-1">
-            Daftar pengurus, BPH, dan fungsionaris departemen UKM PERISAI UMI.
+            Daftar pengurus inti, kepala departemen, dan staf fungsionaris UKM PERISAI UMI.
           </p>
         </div>
         <Link

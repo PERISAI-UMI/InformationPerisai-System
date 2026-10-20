@@ -267,7 +267,7 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
             <span className="text-zinc-300 font-medium">Sistem Aktif</span>
           </div>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFB22C]/10 text-[#FFB22C] border border-[#FFB22C]/30">
-            {userRole === "SUPER_ADMIN" ? "Super Admin" : userRole === "BPH" ? "BPH" : "Editor"}
+            {userRole === "SUPER_ADMIN" ? "Super Admin" : userRole === "ADMIN" ? "Pengurus & Kadep" : "Editor"}
           </span>
         </div>
       </div>

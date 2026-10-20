@@ -70,7 +70,7 @@ Website dirancang dengan konsep **Dark Luxury & Scientific Prestige** yang mence
 - **Skema Komprehensif 21 Tabel (`M_*` & `T_*`)**: Seluruh master referensi data akademik/organisasi dan transaksi dipetakan ke 21 tabel terstandarisasi:
   - **Tabel Master (`M_*`)**: `M_Fakultas`, `M_Jurusan`, `M_Departemen`, `M_Jabatan`, `M_Periode`, `M_Role`, `M_Anggota`, `M_Akun`.
   - **Tabel Transaksi & Konten (`T_*`)**: `T_Sesi`, `T_Kepengurusan`, `T_Proker`, `T_Berita`, `T_Kompetisi`, `T_Prestasi`, `T_Keuangan`, `T_Galeri`, `T_Pesan_Masuk`, `T_Statistik`, `T_Pengaturan`, `T_Audit_Log`, `T_Media`.
-- **Kepengurusan Riil Periode 2026–2027**: 42 fungsionaris aktif (BPH dan 6 departemen) terdata lengkap di `M_Anggota` dan `T_Kepengurusan`, tersinkronisasi langsung ke tampilan publik profil organisasi.
+- **Kepengurusan Riil Periode 2026–2027**: 42 fungsionaris aktif (Pengurus Inti dan 6 departemen) terdata lengkap di `M_Anggota` dan `T_Kepengurusan`, tersinkronisasi langsung ke tampilan publik profil organisasi.
 - **Autentikasi Berbasis PRN (ID PERISAI)**: Seluruh pengurus memiliki akun di `M_Akun` dengan username menggunakan nomor registrasi anggota (contoh: `PRN 0238`) dan password default terenkripsi SHA-256 (`perisai2026`).
 - **Tabel PSDM Terlindungi (Read-Only)**: Tabel bawaan PSDM terdahulu (`users`, `departments`, dll.) tetap dilindungi dan tidak boleh diubah secara destruktif.
 - **Schema Safety Guard (`db/guard.mjs`)**: Sistem pencegah eksekusi SQL destruktif (`DROP TABLE`, `DROP COLUMN`, `ALTER TABLE` non-website).

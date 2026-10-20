@@ -26,19 +26,19 @@ export function OrganogramChart({ members = [] }: OrganogramChartProps) {
 
   const deptTabs = [
     { id: "all", label: "Semua Fungsionaris" },
-    { id: "bph", label: "Badan Pengurus Harian (BPH)" },
-    { id: "psdm", label: "PSDM" },
-    { id: "media", label: "Media" },
-    { id: "kompres", label: "KOMPRES" },
-    { id: "humas", label: "HUMAS" },
-    { id: "ristek", label: "RISTEK" },
+    { id: "inti", label: "Pengurus Inti" },
     { id: "penalaran", label: "Penalaran" },
+    { id: "media", label: "Media" },
+    { id: "ristek", label: "RISTEK" },
+    { id: "kompres", label: "KOMPRES" },
+    { id: "psdm", label: "PSDM" },
+    { id: "humas", label: "HUMAS" },
   ];
 
   // Filter members based on selected department tab
   const filteredMembers = members.filter((m) => {
     if (selectedDept === "all") return true;
-    if (selectedDept === "bph") {
+    if (selectedDept === "inti" || selectedDept === "bph") {
       const pos = m.position.toLowerCase();
       return pos.includes("ketua umum") || pos.includes("sekretaris umum") || pos.includes("bendahara umum");
     }
@@ -135,7 +135,7 @@ export function OrganogramChart({ members = [] }: OrganogramChartProps) {
           <div className="flex items-center gap-8 my-1">
             <div className="rounded-xl border border-[#FFB22C]/50 bg-[#2b2b31] px-6 py-2.5 text-center shadow-lg min-w-[200px]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#FFB22C] block">
-                BPH Pimpinan
+                Pimpinan Sekretariat
               </span>
               <span className="text-xs font-black text-white">
                 Sekretaris Umum
@@ -147,7 +147,7 @@ export function OrganogramChart({ members = [] }: OrganogramChartProps) {
 
             <div className="rounded-xl border border-[#FFB22C]/50 bg-[#2b2b31] px-6 py-2.5 text-center shadow-lg min-w-[200px]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#FFB22C] block">
-                BPH Pimpinan
+                Pimpinan Keuangan
               </span>
               <span className="text-xs font-black text-white">
                 Bendahara Umum
@@ -266,7 +266,7 @@ export function OrganogramChart({ members = [] }: OrganogramChartProps) {
         {/* Member Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredMembers.map((m) => {
-            const isBph =
+            const isInti =
               m.position.toLowerCase().includes("ketua umum") ||
               m.position.toLowerCase().includes("sekretaris umum") ||
               m.position.toLowerCase().includes("bendahara umum");
@@ -275,7 +275,7 @@ export function OrganogramChart({ members = [] }: OrganogramChartProps) {
               <div
                 key={m.id}
                 className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-5 backdrop-blur-md shadow-xl transition-all duration-300 hover:scale-[1.02] ${
-                  isBph
+                  isInti
                     ? "border-[#FFB22C] bg-gradient-to-b from-[#2b2b31] via-[#24242b] to-[#1c1c20] shadow-[0_0_20px_rgba(255,178,44,0.15)]"
                     : "border-white/10 bg-[#2b2b31]/80 hover:border-[#FFB22C]/50 hover:bg-[#2b2b31]"
                 }`}
@@ -286,7 +286,7 @@ export function OrganogramChart({ members = [] }: OrganogramChartProps) {
                     {m.id}
                   </span>
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
-                    {m.department?.name || "BPH"}
+                    {m.department?.name || "Pengurus Inti"}
                   </span>
                 </div>
 

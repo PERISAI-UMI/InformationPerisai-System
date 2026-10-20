@@ -159,8 +159,12 @@ export function mapRoleToCmsRole(namaRole: string): AuthUser["role"] {
   switch (namaRole.toUpperCase()) {
     case "SUPER_ADMIN":
       return "SUPER_ADMIN";
-    case "BPH":
+    // Pengurus Inti (Ketua Umum, Sekum, Bendum) & Kepala Departemen (Kadep)
+    case "ADMIN":
+    case "PENGURUS_INTI":
+    case "PIMPINAN":
     case "KADEP":
+    case "BPH": // fallback kompatibilitas data legacy database lama jika ada
       return "ADMIN";
     default:
       return "EDITOR";

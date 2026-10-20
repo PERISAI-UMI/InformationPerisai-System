@@ -9,14 +9,14 @@ export function can(
     return false;
   }
 
-  // Super Admin memiliki akses penuh ke segala sumber daya dan aksi
+  // 1. SUPER_ADMIN: Administrator Teknis / Webmaster (Akses Penuh Mutlak)
   if (user.role === "SUPER_ADMIN") {
     return true;
   }
 
-  // Admin Pengurus
+  // 2. ADMIN: Pengurus Inti & Kepala Departemen (Ketua Umum, Sekum, Bendum, & 6 Kadep)
   if (user.role === "ADMIN") {
-    // Admin tidak diperkenankan mengelola akun user atau audit log (khusus SUPER_ADMIN)
+    // Pengurus Inti & Kadep tidak diperkenankan mengelola akun user atau audit log (khusus SUPER_ADMIN)
     if (resource === "users" && (action === "create" || action === "delete" || action === "manage")) {
       return false;
     }
@@ -29,7 +29,7 @@ export function can(
     return true;
   }
 
-  // Editor Konten
+  // 3. EDITOR: Staf Ahli Departemen (khususnya Media & Humas) atau Kontributor Penulis
   if (user.role === "EDITOR") {
     // Editor tidak berhak mengakses manajemen keuangan kas
     if (resource === "finance") {
@@ -42,5 +42,6 @@ export function can(
     return action === "read";
   }
 
+  // 4. PUBLIC / Anonim: Anggota Biasa, Civitas Akademika UMI, & Pengunjung Umum (Otomatis ditolak untuk mutasi)
   return false;
 }

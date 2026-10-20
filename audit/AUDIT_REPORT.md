@@ -54,7 +54,7 @@ A defining architectural constraint is its **Shared Database Model** with the in
 | **Undergraduate Students** | Mobile-first visitors seeking competition deadlines, PKM mentoring, and organizational updates. | Public Portal (`/`, `/kabar`, `/peluang`, `/tentang`) |
 | **Prospective Partners & Dosen** | Institutional evaluators seeking official contacts, organizational history, and research track records. | Public Portal & Contact Form (`/kontak`, `/tentang`) |
 | **Fungsionaris / Departemen** | Active department officers updating work programs and publishing event recaps. | Admin CMS (`/admin/posts`, `/admin/opportunities`) |
-| **BPH (Badan Pengurus Harian)** | Core executives overseeing organizational data, financial logs, and inbox inquiries. | Admin CMS (`/admin/inbox`, `/admin/members`, `/admin/periods`) |
+| **Pengurus Inti & Kadep** | Core leadership (Ketua Umum, Sekum, Bendum) and department heads overseeing organizational data, financial logs, and inbox inquiries. | Admin CMS (`/admin/inbox`, `/admin/members`, `/admin/periods`) |
 | **Super Administrator** | Technical leads managing user accounts, permission roles, site configurations, and audit logs. | Admin CMS (`/admin/users`, `/admin/settings`, `/admin/audit-log`) |
 
 ---
@@ -122,7 +122,7 @@ Three explicit CMS roles are implemented in `src/lib/permissions.ts` and mapped 
 1. **`SUPER_ADMIN`**:
    - Master authority. Has unrestricted access to all resources and mutation operations.
    - Exclusive access to: User Account Management (`/admin/users`), Global Site Settings (`/admin/settings`), and Audit Log Purging.
-2. **`ADMIN`** (Maps to BPH & Kadep):
+2. **`ADMIN`** (Maps to Pengurus Inti & Kadep):
    - Operational manager. Can view and modify posts, competitions, work programs, members, inbox messages, departments, and media.
    - Forbidden from: Creating/deleting user accounts, modifying system settings, and altering audit logs.
 3. **`EDITOR`** (Maps to Staf Ahli / Kontributor):
@@ -440,7 +440,7 @@ The system implements a strict, multi-layered **Role-Based Access Control (RBAC)
 
 The system distinguishes four privilege tiers:
 1. **SUPER_ADMIN (Admin Utama)**: Full system sovereignty. Intended for the organization's technical leads or chief administrators.
-2. **ADMIN (Administrator Operasional)**: Day-to-day organizational management. Intended for BPH (Badan Pengurus Harian) executives managing programs, members, media, and finance.
+2. **ADMIN (Administrator Operasional)**: Day-to-day organizational management. Intended for Pengurus Inti (Ketua Umum, Sekretaris Umum, Bendahara Umum) and Kepala Departemen (Kadep) managing programs, members, media, and finance.
 3. **EDITOR (Editor Konten)**: Public information curation. Intended for publication staff and department writers creating news and opportunities without administrative or destructive privileges.
 4. **PUBLIC / ANONYMOUS**: Unauthenticated visitors and general students browsing the public website.
 
@@ -512,8 +512,8 @@ The system distinguishes four privilege tiers:
   - **Seluruh Modul Operasional**:
     - Memiliki kendali penuh (*Create*, *Read*, *Update*, *Delete*) atas Berita, Peluang Lomba, Galeri Media, Departemen, Program Kerja, Struktur Anggota, Periode Kepengurusan, Keuangan Kas, Statistik, dan Kotak Pesan Masuk.
 
-#### 2. ADMIN (Administrator Operasional / BPH)
-- **Karakteristik**: Role operasional untuk pengurus harian organisasi. Mengelola seluruh konten, struktur organisasi, dan keuangan kas, tetapi **dilarang menyentuh hak akses akun pengguna lain atau konfigurasi kritis**.
+#### 2. ADMIN (Administrator Operasional / Pengurus Inti & Kadep)
+- **Karakteristik**: Role operasional untuk pengurus organisasi (Ketua Umum, Sekretaris Umum, Bendahara Umum, dan para Kadep). Mengelola seluruh konten, struktur organisasi, dan keuangan kas, tetapi **dilarang menyentuh hak akses akun pengguna lain atau konfigurasi kritis**.
 - **Fitur & Kemampuan Detail**:
   - **Keuangan Kas Organisasi (`/admin/finance`)**:
     - **Bisa**: Melihat ringkasan saldo kas (total pemasukan, pengeluaran, saldo bersih), mencatat transaksi masuk/keluar baru, mengunggah bukti nota kuitansi, menyunting catatan transaksi, **menghapus transaksi keliru**, memfilter per periode kepengurusan, dan mengekspor pembukuan ke CSV.

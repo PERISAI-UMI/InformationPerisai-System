@@ -225,14 +225,12 @@ async function migrateAndSeedTarget(name, executor) {
   }
 
   const daftarDept = [
-    { nama: "Badan Pengurus Harian", singkatan: "BPH", slug: "bph", tupoksi: "Pimpinan eksekutif dan pemegang kendali arah kebijakan organisasi.", urutan: 1 },
-    { nama: "Pengembangan Sumber Daya Manusia", singkatan: "PSDM", slug: "psdm", tupoksi: "Kaderisasi, pengembangan kepemimpinan, dan kesejahteraan seluruh fungsionaris.", urutan: 2 },
-    { nama: "Media dan Informasi", singkatan: "MEDIA", slug: "media", tupoksi: "Pusat kreasi visual, dokumentasi kegiatan, dan pengelolaan kanal digital.", urutan: 3 },
+    { nama: "Penalaran dan Keilmuan", singkatan: "PENALARAN", slug: "penalaran", tupoksi: "Pengembangan budaya berpikir kritis, kajian ilmiah, dan forum diskusi akademis.", urutan: 1 },
+    { nama: "Media dan Informasi", singkatan: "MEDIA", slug: "media", tupoksi: "Pusat kreasi visual, dokumentasi kegiatan, dan pengelolaan kanal digital.", urutan: 2 },
+    { nama: "Riset dan Teknologi", singkatan: "RISTEK", slug: "ristek", tupoksi: "Pusat inovasi rekayasa teknologi, penelitian terapan, dan hilirisasi karya riset.", urutan: 3 },
     { nama: "Kompetisi dan Prestasi", singkatan: "KOMPRES", slug: "kompres", tupoksi: "Mewadahi bimbingan perlombaan ilmiah, delegasi kompetisi, dan rekognisi prestasi.", urutan: 4 },
-    { nama: "Hubungan Masyarakat", singkatan: "HUMAS", slug: "humas", tupoksi: "Menjalin relasi strategis, kemitraan lembaga, dan publikasi citra organisasi.", urutan: 5 },
-    { nama: "Riset dan Teknologi", singkatan: "RISTEK", slug: "ristek", tupoksi: "Pusat inovasi rekayasa teknologi, penelitian terapan, dan hilirisasi karya riset.", urutan: 6 },
-    { nama: "Penalaran dan Keilmuan", singkatan: "PENALARAN", slug: "penalaran", tupoksi: "Pengembangan budaya berpikir kritis, kajian ilmiah, dan forum diskusi akademis.", urutan: 7 },
-    { nama: "Trisula Riset Strategis", singkatan: "TRISULA", slug: "trisula", tupoksi: "Garda khusus pengembangan riset strategis dan pengawalan prestasi unggulan.", urutan: 8 },
+    { nama: "Pengembangan Sumber Daya Manusia", singkatan: "PSDM", slug: "psdm", tupoksi: "Kaderisasi, pengembangan kepemimpinan, dan kesejahteraan seluruh fungsionaris.", urutan: 5 },
+    { nama: "Hubungan Masyarakat", singkatan: "HUMAS", slug: "humas", tupoksi: "Menjalin relasi strategis, kemitraan lembaga, dan publikasi citra organisasi.", urutan: 6 },
   ];
 
   for (const d of daftarDept) {
@@ -255,11 +253,11 @@ async function migrateAndSeedTarget(name, executor) {
 
   // Roles
   const daftarRoles = [
-    { nama: "SUPER_ADMIN", label: "Super Administrator", desc: "Akses penuh seluruh sistem" },
-    { nama: "BPH", label: "Badan Pengurus Harian", desc: "Akses pimpinan eksekutif dan keuangan" },
+    { nama: "SUPER_ADMIN", label: "Administrator Teknis / Webmaster", desc: "Akses penuh seluruh sistem" },
+    { nama: "ADMIN", label: "Pengurus Inti & Kepala Departemen", desc: "Akses pimpinan operasional dan departemen" },
     { nama: "KADEP", label: "Kepala Departemen", desc: "Akses program kerja dan anggota divisi" },
-    { nama: "EDITOR", label: "Editor Konten", desc: "Akses artikel berita dan galeri" },
-    { nama: "ANGGOTA", label: "Anggota Fungsionaris", desc: "Akses profil pribadi" },
+    { nama: "EDITOR", label: "Staf Ahli / Editor Konten", desc: "Akses artikel berita dan galeri" },
+    { nama: "ANGGOTA", label: "Anggota Biasa", desc: "Akses profil pribadi" },
   ];
   for (const r of daftarRoles) {
     await executor(
@@ -346,25 +344,25 @@ async function migrateAndSeedTarget(name, executor) {
     // Pemetaan Jabatan & Departemen
     const tugas = m["Tugas dan Tanggung Jawab"].trim();
     let jabatanId = jabMap["Anggota"];
-    let deptId = deptMap["BPH"];
+    let deptId = null;
     let roleId = roleMap["ANGGOTA"];
     let tier = "staf";
 
     if (tugas === "Ketua Umum") {
       jabatanId = jabMap["Ketua Umum"];
-      deptId = deptMap["BPH"];
+      deptId = null;
       roleId = roleMap["SUPER_ADMIN"];
-      tier = "bph";
+      tier = "inti";
     } else if (tugas === "Sekretaris Umum") {
       jabatanId = jabMap["Sekretaris Umum"];
-      deptId = deptMap["BPH"];
-      roleId = roleMap["BPH"];
-      tier = "bph";
+      deptId = null;
+      roleId = roleMap["ADMIN"] || roleMap["SUPER_ADMIN"];
+      tier = "inti";
     } else if (tugas === "Bendahara Umum") {
       jabatanId = jabMap["Bendahara Umum"];
-      deptId = deptMap["BPH"];
-      roleId = roleMap["BPH"];
-      tier = "bph";
+      deptId = null;
+      roleId = roleMap["ADMIN"] || roleMap["SUPER_ADMIN"];
+      tier = "inti";
     } else if (tugas.startsWith("Kepala Departemen")) {
       jabatanId = jabMap["Kepala Departemen"];
       roleId = roleMap["KADEP"];
