@@ -1,5 +1,5 @@
 import { OpportunityForm } from "@/features/opportunities/components/OpportunityForm";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminNewOpportunityPage() {
   await requirePermission("opportunities:create");

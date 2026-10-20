@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAdminDepartments } from "@/features/departments/queries.admin";
 import { DepartmentTable } from "@/features/departments/components/DepartmentTable";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminDepartmentsPage() {
   await requirePermission("departments:read");

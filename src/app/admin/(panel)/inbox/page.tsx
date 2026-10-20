@@ -1,7 +1,7 @@
 import { getAdminInbox } from "@/features/inbox/queries.admin";
 import { InboxTable } from "@/features/inbox/components/InboxTable";
 import { Pagination } from "@/components/common/Pagination";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminInboxPage({
   searchParams,

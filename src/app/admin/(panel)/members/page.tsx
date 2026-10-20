@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAdminMembers } from "@/features/members/queries.admin";
 import { MemberTable } from "@/features/members/components/MemberTable";
 import { Pagination } from "@/components/common/Pagination";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminMembersPage({
   searchParams,

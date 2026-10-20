@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAdminWorkPrograms } from "@/features/work-programs/queries.admin";
 import { WorkProgramTable } from "@/features/work-programs/components/WorkProgramTable";
 import { Pagination } from "@/components/common/Pagination";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminWorkProgramsPage({
   searchParams,

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAdminPosts } from "@/features/posts/queries.admin";
 import { PostTable } from "@/features/posts/components/PostTable";
 import { Pagination } from "@/components/common/Pagination";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminPostsPage({
   searchParams,

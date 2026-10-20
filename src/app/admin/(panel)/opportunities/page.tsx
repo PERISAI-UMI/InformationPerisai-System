@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAdminOpportunities } from "@/features/opportunities/queries.admin";
 import { OpportunityTable } from "@/features/opportunities/components/OpportunityTable";
 import { Pagination } from "@/components/common/Pagination";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminOpportunitiesPage({
   searchParams,

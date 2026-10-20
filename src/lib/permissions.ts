@@ -1,9 +1,7 @@
-import { redirect } from "next/navigation";
 import type {
   AuthUser,
   PermissionAction,
   PermissionResource,
-  Session,
   PermissionKey,
   PermissionContext,
 } from "@/types";
@@ -245,27 +243,7 @@ export function hasPermission(
   return true;
 }
 
-/**
- * Guard Server Component: Memeriksa izin akses halaman panel admin secara ketat.
- * Mengarahkan ke /admin/login jika belum login, atau ke /admin?error=unauthorized jika hak akses tidak terpenuhi.
- */
-export async function requirePermission(
-  key: PermissionKey,
-  context?: PermissionContext
-): Promise<Session> {
-  const { getSession } = await import("@/lib/auth");
-  const session = await getSession();
 
-  if (!session) {
-    redirect("/admin/login");
-  }
-
-  if (!hasPermission(session.user, key, context)) {
-    redirect("/admin?error=unauthorized");
-  }
-
-  return session;
-}
 
 /**
  * Kebijakan legacy RBAC can() untuk kompatibilitas ke belakang (backward compatibility).

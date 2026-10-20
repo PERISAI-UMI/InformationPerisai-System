@@ -1,5 +1,5 @@
 import { UserForm } from "@/features/users/components/UserForm";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminNewUserPage() {
   await requirePermission("users:create");

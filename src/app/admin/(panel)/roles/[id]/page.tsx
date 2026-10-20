@@ -1,4 +1,4 @@
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRoleById, getEligibleUsers } from "@/features/roles/queries.server";

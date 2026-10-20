@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAdminOpportunityById } from "@/features/opportunities/queries.admin";
 import { OpportunityForm } from "@/features/opportunities/components/OpportunityForm";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminEditOpportunityPage({
   params,

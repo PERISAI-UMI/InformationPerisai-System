@@ -1,4 +1,4 @@
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 import {
   getFinanceSummary,
   getTransactions,

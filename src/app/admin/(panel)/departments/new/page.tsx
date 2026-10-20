@@ -1,5 +1,5 @@
 import { DepartmentForm } from "@/features/departments/components/DepartmentForm";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminNewDepartmentPage() {
   await requirePermission("departments:manage");

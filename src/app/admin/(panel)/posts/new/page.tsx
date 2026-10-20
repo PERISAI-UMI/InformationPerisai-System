@@ -1,5 +1,5 @@
 import { PostForm } from "@/features/posts/components/PostForm";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminNewPostPage() {
   await requirePermission("posts:create");

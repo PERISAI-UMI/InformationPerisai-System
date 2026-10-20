@@ -1,7 +1,7 @@
 import { getAdminAuditLogs } from "@/features/audit/queries.admin";
 import { AuditTable } from "@/features/audit/components/AuditTable";
 import { Pagination } from "@/components/common/Pagination";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminAuditLogPage({
   searchParams,

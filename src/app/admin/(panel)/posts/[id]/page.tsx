@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAdminPostById } from "@/features/posts/queries.admin";
 import { PostForm } from "@/features/posts/components/PostForm";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminEditPostPage({
   params,

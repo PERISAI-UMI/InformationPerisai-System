@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAdminUserById } from "@/features/users/queries.admin";
 import { UserForm } from "@/features/users/components/UserForm";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminEditUserPage({
   params,

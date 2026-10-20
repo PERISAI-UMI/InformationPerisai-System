@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAdminUsers } from "@/features/users/queries.admin";
 import { UserTable } from "@/features/users/components/UserTable";
 import { Pagination } from "@/components/common/Pagination";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 
 export default async function AdminUsersPage({
   searchParams,

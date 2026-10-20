@@ -3,7 +3,7 @@ import { GalleryUploader } from "@/features/gallery/components/GalleryUploader";
 import { Pagination } from "@/components/common/Pagination";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
 import { deleteMediaAction } from "@/features/gallery/actions";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission } from "@/lib/permissions.server";
 import Image from "next/image";
 import Link from "next/link";
 
