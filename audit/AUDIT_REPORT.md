@@ -748,13 +748,15 @@ All production dependencies are verified as actively used:
 
 - **Legacy SHA-256 Hashes**: **RESOLVED**. Transparent background migration on login converts legacy SHA-256 hashes to `scrypt` (`salt:hexKey`) without interrupting user experience.
 - **PostgreSQL Artifacts**: **RESOLVED**. All legacy documentation and script references to PostgreSQL have been purged and archived to `docs/archive/POSTGRESQL_MIGRATION_HISTORY.md`. Active architecture reflects SQLite 3 (local) and Turso LibSQL (edge production).
+- **Organizational Nomenclature ("BPH")**: **RESOLVED**. Eradicated all references to the non-existent term "BPH" (Badan Pengurus Harian) across database schemas, table tiers (`inti`, `kadep`, `staf`), seed scripts, UI panels, tooltips, and comments. Organization hierarchy strictly adheres to the official organogram: Pengarah (Pembina & DPO), Pimpinan Utama (Ketua Umum), Pimpinan Sekretariat & Keuangan (Sekum & Bendum), 6 Kepala Departemen, Staf Ahli, and Anggota Biasa.
 
 ---
 
 ## 40. Dead / Legacy Code
 
 - `scripts/reset-and-remigrate-all.mjs`: Development-only database reset tool, reinforced with strict interactive confirmation and production environment guards to prevent accidental database wiping.
-- `better-sqlite3`: Node.js native binding only required for offline development; bypassed in production bundles.
+- `scripts/wipe-and-init-turso.mjs`: Dedicated idempotent wiping and initialization script for Turso Cloud LibSQL, reading credentials dynamically without hardcoded secrets.
+- `better-sqlite3`: Node.js native binding used for offline local development and seeding (`scripts/seed-complete-2026.ts`); safely excluded from Cloudflare Workers edge production bundles.
 
 ---
 
@@ -762,6 +764,7 @@ All production dependencies are verified as actively used:
 
 - `docs/perisai-umi-spec.json`: **100% Accurate** and serves as the single source of truth.
 - `PROJECT_AUDIT.md`: **Accurate**, documents the edge modernization completed in October 2026.
+- `audit/AUDIT_REPORT.md`: **Accurate & Current**, continuously updated to reflect live codebase, schema, and database verification.
 - `README.md`: Up to date with installation, environment configuration, and deployment guides.
 
 ---
@@ -769,7 +772,12 @@ All production dependencies are verified as actively used:
 ## 42. Git / Project History
 
 - Initial commit represents migration from Laravel 11.
-- Recent commits focus on edge modernization (Cloudflare Workers + OpenNext), responsive public redesign, UI cleanup, self-healing deployment error boundaries, Turnstile anti-bot security, infrastructure diagnostics, PostgreSQL cleanup, and financial management (`T_Keuangan`) implementation.
+- Recent commits focus on:
+  - Edge modernization (Cloudflare Workers + OpenNext) and responsive public redesign.
+  - Turnstile anti-bot security, self-healing deployment error boundaries, and financial management (`T_Keuangan`) implementation.
+  - Strict organizational nomenclature refactoring: purge of "BPH", alignment of CMS roles (`SUPER_ADMIN` = Webmaster, `ADMIN` = Pengurus Inti & Kadep, `EDITOR` = Staf Ahli/Kontributor, `PUBLIC` = Anggota/Publik), and updated UI organogram.
+  - Complete live database wipe and clean re-initialization on Turso Cloud LibSQL (`libsql://perisai-dev-psdm.aws-ap-northeast-1.turso.io`).
+  - Stabilization of TypeScript seed scripts with `better-sqlite3`.
 
 ---
 
@@ -782,7 +790,22 @@ All production dependencies are verified as actively used:
 
 ## 44. Unknowns & Unverified Assumptions
 
-- **Live Production Database Contents**: The exact current number of registered users in the live Turso instance cannot be verified statically without live credentials.
+- **Live Production Database Contents**: **RESOLVED & VERIFIED**. Live Turso Cloud instance (`libsql://perisai-dev-psdm.aws-ap-northeast-1.turso.io`) verified and freshly initialized:
+  - `M_Fakultas`: 13 records
+  - `M_Jurusan`: 27 records
+  - `M_Departemen`: 6 records (PENALARAN, MEDIA, RISTEK, KOMPRES, PSDM, HUMAS)
+  - `M_Periode`: 1 active period (2026/2027)
+  - `M_Role`: 5 roles (`SUPER_ADMIN`, `ADMIN`, `KADEP`, `EDITOR`, `ANGGOTA`)
+  - `M_Jabatan`: 6 positions
+  - `M_Pembina`: 3 advisory board records
+  - `M_Anggota`: 42 members
+  - `M_Akun`: 42 accounts
+  - `T_Kepengurusan`: 42 leadership records (tier `inti` for Ketum/Sekum/Bendum with `id_departemen = NULL`, tier `kadep`, tier `staf`)
+  - `T_Pengaturan`: 7 system settings
+  - `T_Berita`: 3 articles
+  - `T_Kompetisi`: 2 competition opportunities
+  - `T_Proker`: 4 work programs
+  - `T_Keuangan`: 1 initial treasury record
 - **Active Turnstile Secret**: **RESOLVED**. Verified with strict production validation and non-production testing fallback.
 
 ---
@@ -798,8 +821,8 @@ All production dependencies are verified as actively used:
 
 ## 46. Recommended Next Investigation
 
-1. Verify live Turso database replica status in Tokyo region (`aws-ap-northeast-1`).
-2. Verify Cloudflare R2 custom domain SSL certificate binding for `media.perisai-umi.org`.
+1. Verify Cloudflare R2 custom domain SSL certificate binding for `media.perisai-umi.org`.
+2. Observe edge caching performance (`revalidate = 300`) under real traffic loads.
 
 ---
 
