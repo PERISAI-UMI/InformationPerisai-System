@@ -166,10 +166,10 @@ export async function getEligibleUsers(): Promise<EligibleUser[]> {
 
   return akuns.map((a) => ({
     idPerisai: a.idPerisai,
-    namaLengkap: a.anggota.namaLengkap,
-    email: a.anggota.email,
-    fotoUrl: a.anggota.fotoUrl,
-    currentRole: a.role.namaRole,
-    idRole: a.role.idRole,
+    namaLengkap: a.anggota?.namaLengkap || "Tanpa Nama",
+    email: a.anggota?.email || a.idPerisai,
+    fotoUrl: a.anggota?.fotoUrl || null,
+    currentRole: a.role?.namaRole || "Anggota",
+    idRole: a.role?.idRole || a.idRole || 0,
   }));
 }

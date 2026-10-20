@@ -1,5 +1,6 @@
 import { cache } from "react";
 import prisma from "@/lib/db";
+import { parseDate } from "@/lib/dates";
 
 export interface GetPublicOpportunitiesParams {
   type?: string;
@@ -100,7 +101,7 @@ export const getPublicOpportunities = cache(async function getPublicOpportunitie
           category: op.kategori || "KOMPETISI",
           organizer: op.penyelenggara || "PERISAI UMI",
           description: op.deskripsi || "",
-          deadlineAt: deadlineSec ? new Date(deadlineSec * 1000).toISOString() : null,
+          deadlineAt: parseDate(deadlineSec)?.toISOString() || null,
           registrationUrl: op.linkPendaftaran || null,
           coverImageUrl: op.linkPoster || "/og-default.webp",
           status: op.status,
@@ -184,7 +185,7 @@ export const getPublicOpportunityBySlug = cache(async function getPublicOpportun
         slug: ro.slug,
         category: ro.kategori || "KOMPETISI",
         organizer: ro.penyelenggara || "PERISAI UMI",
-        deadlineAt: rDeadline ? new Date(rDeadline * 1000).toISOString() : null,
+        deadlineAt: parseDate(rDeadline)?.toISOString() || null,
         coverImageUrl: ro.linkPoster || "/og-default.jpg",
         isOpen: rIsOpen,
         daysLeft: rDaysLeft,
@@ -199,7 +200,7 @@ export const getPublicOpportunityBySlug = cache(async function getPublicOpportun
       category: op.kategori || "KOMPETISI",
       organizer: op.penyelenggara || "PERISAI UMI",
       description: op.deskripsi || "",
-      deadlineAt: deadlineSec ? new Date(deadlineSec * 1000).toISOString() : null,
+      deadlineAt: parseDate(deadlineSec)?.toISOString() || null,
       registrationUrl: op.linkPendaftaran || null,
       coverImageUrl: op.linkPoster || "/og-default.webp",
       status: op.status,

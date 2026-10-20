@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getAdminPeriodById } from "@/features/periods/queries.admin";
 import { PeriodForm } from "@/features/periods/components/PeriodForm";
 
+import { parseDate } from "@/lib/dates";
+
 export default async function AdminEditPeriodPage({
   params,
 }: {
@@ -14,14 +16,9 @@ export default async function AdminEditPeriodPage({
     notFound();
   }
  
-  const safeDate = (ts: number | null | undefined) => {
-    if (!ts || isNaN(ts)) return "";
-    try {
-      const d = new Date(ts * 1000);
-      return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
-    } catch {
-      return "";
-    }
+  const safeDate = (ts: unknown) => {
+    const d = parseDate(ts);
+    return d ? d.toISOString().split("T")[0] : "";
   };
 
   const initialData = {

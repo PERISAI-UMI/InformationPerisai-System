@@ -1,5 +1,6 @@
 import { cache } from "react";
 import prisma from "@/lib/db";
+import { parseDate } from "@/lib/dates";
 
 export interface GetPublishedPostsParams {
   page?: number;
@@ -96,7 +97,7 @@ export const getPublishedPosts = cache(async function getPublishedPosts({
       content: p.ringkasan, // Menggunakan ringkasan untuk listing untuk menghemat transfer data
       coverImageUrl: p.fotoCover || "/og-default.webp",
       status: p.status,
-      publishedAt: p.tanggalPublish ? new Date(p.tanggalPublish * 1000).toISOString() : null,
+      publishedAt: parseDate(p.tanggalPublish)?.toISOString() || null,
       isFeatured: Boolean(p.isFeatured),
       department: p.departemen ? { id: String(p.departemen.idDepartemen), name: p.departemen.namaDepartemen } : null,
       author: { name: p.departemen?.namaDepartemen || "Pengurus PERISAI UMI" },
@@ -171,7 +172,7 @@ export const getPublishedPostBySlug = cache(async function getPublishedPostBySlu
       category: rp.kategori || "Berita",
       excerpt: rp.ringkasan,
       coverImageUrl: rp.fotoCover || "/og-default.jpg",
-      publishedAt: rp.tanggalPublish ? new Date(rp.tanggalPublish * 1000).toISOString() : null,
+      publishedAt: parseDate(rp.tanggalPublish)?.toISOString() || null,
       department: rp.departemen ? { id: String(rp.departemen.idDepartemen), name: rp.departemen.namaDepartemen } : null,
       author: { name: rp.departemen?.namaDepartemen || "Pengurus PERISAI UMI" },
       readTime: Math.max(2, Math.ceil((rp.ringkasan ? rp.ringkasan.split(/\s+/).length : 60) / 40)),
@@ -186,7 +187,7 @@ export const getPublishedPostBySlug = cache(async function getPublishedPostBySlu
       content: p.konten,
       coverImageUrl: p.fotoCover || "/og-default.webp",
       status: p.status,
-      publishedAt: p.tanggalPublish ? new Date(p.tanggalPublish * 1000).toISOString() : null,
+      publishedAt: parseDate(p.tanggalPublish)?.toISOString() || null,
       isFeatured: Boolean(p.isFeatured),
       department: p.departemen ? { id: String(p.departemen.idDepartemen), name: p.departemen.namaDepartemen } : null,
       author: { name: p.departemen?.namaDepartemen || "Pengurus PERISAI UMI" },

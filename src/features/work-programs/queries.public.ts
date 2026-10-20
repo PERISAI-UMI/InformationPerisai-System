@@ -78,12 +78,19 @@ export const getPublicWorkPrograms = cache(async function getPublicWorkPrograms(
       status: p.status,
       coverImageUrl: p.fotoCover || null,
       documentationUrl: p.fotoDokumentasi || null,
-      department: {
-        id: String(p.departemen.idDepartemen),
-        name: p.departemen.namaDepartemen,
-        slug: p.departemen.slug,
-        code: p.departemen.singkatan,
-      },
+      department: p.departemen
+        ? {
+            id: String(p.departemen.idDepartemen),
+            name: p.departemen.namaDepartemen,
+            slug: p.departemen.slug,
+            code: p.departemen.singkatan,
+          }
+        : {
+            id: "0",
+            name: "Umum",
+            slug: "umum",
+            code: null,
+          },
       period: {
         name: "Periode Berjalan",
       },
@@ -134,12 +141,19 @@ export const getPublicWorkProgramBySlug = cache(async function getPublicWorkProg
       description: p.deskripsi || "",
       status: p.status,
       coverImageUrl: p.fotoCover || null,
-      department: {
-        id: String(p.departemen.idDepartemen),
-        name: p.departemen.namaDepartemen,
-        slug: p.departemen.slug,
-        code: p.departemen.singkatan,
-      },
+      department: p.departemen
+        ? {
+            id: String(p.departemen.idDepartemen),
+            name: p.departemen.namaDepartemen,
+            slug: p.departemen.slug,
+            code: p.departemen.singkatan,
+          }
+        : {
+            id: "0",
+            name: "Umum",
+            slug: "umum",
+            code: null,
+          },
       period: {
         name: "Periode Berjalan",
       },

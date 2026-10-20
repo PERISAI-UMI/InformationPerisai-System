@@ -2,7 +2,7 @@ import { getDashboardOverview } from "@/features/dashboard/queries.admin";
 import { StatCard } from "@/features/dashboard/components/StatCard";
 import { ClosingSoonList } from "@/features/dashboard/components/ClosingSoonList";
 import Link from "next/link";
-import { formatDateIndonesian } from "@/lib/dates";
+import { formatDateIndonesian, parseDate } from "@/lib/dates";
 
 export default async function AdminDashboardPage() {
   const { stats, closingSoonOpportunities, recentPosts } = await getDashboardOverview();
@@ -97,9 +97,9 @@ export default async function AdminDashboardPage() {
                     >
                       {post.title}
                     </Link>
-                    <p className="text-[11px] text-zinc-400 mt-0.5 truncate font-light">
+                    <p className="text-[11px] text-zinc-400 mt-0.5 truncate font-light" suppressHydrationWarning>
                       {formatDateIndonesian(new Date(post.createdAt * 1000))} • Oleh:{" "}
-                      <strong className="text-zinc-300 font-medium">{post.author.name}</strong>
+                      <strong className="text-zinc-300 font-medium">{post.author?.name || "Pengurus"}</strong>
                     </p>
                   </div>
 
@@ -128,7 +128,7 @@ export default async function AdminDashboardPage() {
               title: op.title,
               organizer: op.organizer || "PERISAI UMI",
               category: op.category || "LOMBA",
-              deadlineAt: op.deadlineAt ? new Date(op.deadlineAt * 1000).toISOString() : new Date().toISOString(),
+              deadlineAt: (parseDate(op.deadlineAt) || new Date()).toISOString(),
             }))}
           />
         </div>

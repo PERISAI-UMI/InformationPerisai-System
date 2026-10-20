@@ -103,14 +103,16 @@ export const getPublicDepartmentBySlug = cache(async function getPublicDepartmen
       description: dept.tupoksiUtama,
       vision: dept.visi,
       mission: dept.misi,
-      members: dept.kepengurusan.map((k) => ({
-        id: k.anggota.idPerisai,
-        name: k.anggota.namaLengkap,
-        position: k.jabatan.namaJabatan,
-        linkedinUrl: k.anggota.linkedin,
-        instagramUsername: k.anggota.instagram,
-        photoUrl: k.anggota.fotoUrl,
-      })),
+      members: dept.kepengurusan
+        .filter((k) => Boolean(k.anggota))
+        .map((k) => ({
+          id: k.anggota?.idPerisai || "",
+          name: k.anggota?.namaLengkap || "Anggota",
+          position: k.jabatan?.namaJabatan || "Pengurus",
+          linkedinUrl: k.anggota?.linkedin || null,
+          instagramUsername: k.anggota?.instagram || null,
+          photoUrl: k.anggota?.fotoUrl || null,
+        })),
       workPrograms: dept.proker.map((p) => ({
         id: String(p.idProker),
         title: p.namaProker,

@@ -19,10 +19,27 @@ export default function AdminError({
     console.error("Admin Panel Error caught by ErrorBoundary:", error);
   }, [error]);
 
+  const isNetworkOrDb =
+    error.message?.includes("connect") ||
+    error.message?.includes("fetch") ||
+    error.message?.includes("UND_ERR") ||
+    error.message?.includes("PrismaClient");
+
+  const isRscStreamAbort =
+    error.message?.includes("412") ||
+    error.message?.includes("stream") ||
+    error.message?.includes("503");
+
   const handleRetry = () => {
     setIsRetrying(true);
+    if (isRscStreamAbort) {
+      window.location.reload();
+      return;
+    }
     try {
       reset();
+    } catch {
+      window.location.reload();
     } finally {
       setTimeout(() => setIsRetrying(false), 1200);
     }
@@ -34,12 +51,6 @@ export default function AdminError({
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
-
-  const isNetworkOrDb =
-    error.message?.includes("connect") ||
-    error.message?.includes("fetch") ||
-    error.message?.includes("UND_ERR") ||
-    error.message?.includes("PrismaClient");
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center py-10 px-4">
