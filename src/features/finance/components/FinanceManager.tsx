@@ -30,11 +30,10 @@ interface FinanceManagerProps {
 }
 
 function formatRupiah(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const isNegative = amount < 0;
+  const absAmount = Math.round(Math.abs(amount || 0));
+  const parts = absAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${isNegative ? "-Rp " : "Rp "}${parts}`;
 }
 
 export function FinanceManager({
@@ -420,11 +419,12 @@ export function FinanceManager({
                       </td>
 
                       {/* Nominal */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap font-bold">
+                      <td className="py-3 px-4 text-right whitespace-nowrap font-bold" suppressHydrationWarning>
                         <span
                           className={
                             isPemasukan ? "text-emerald-400" : "text-rose-400"
                           }
+                          suppressHydrationWarning
                         >
                           {isPemasukan ? "+" : "-"}
                           {formatRupiah(item.nominal)}

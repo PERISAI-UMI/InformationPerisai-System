@@ -5,12 +5,11 @@ interface FinanceSummaryCardsProps {
   summary: FinanceSummary;
 }
 
-function formatRupiah(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(amount);
+export function formatRupiah(amount: number): string {
+  const isNegative = amount < 0;
+  const absAmount = Math.round(Math.abs(amount || 0));
+  const parts = absAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${isNegative ? "-Rp " : "Rp "}${parts}`;
 }
 
 export function FinanceSummaryCards({ summary }: FinanceSummaryCardsProps) {
@@ -29,7 +28,7 @@ export function FinanceSummaryCards({ summary }: FinanceSummaryCardsProps) {
           </div>
         </div>
         <div className="mt-3">
-          <p className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <p className="text-2xl sm:text-3xl font-black text-white tracking-tight" suppressHydrationWarning>
             {formatRupiah(summary.saldoAkhir)}
           </p>
           <p className="mt-1 text-[11px] text-zinc-400">
@@ -51,7 +50,7 @@ export function FinanceSummaryCards({ summary }: FinanceSummaryCardsProps) {
           </div>
         </div>
         <div className="mt-3">
-          <p className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
+          <p className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight" suppressHydrationWarning>
             +{formatRupiah(summary.totalPemasukan)}
           </p>
           <p className="mt-1 text-[11px] text-zinc-400">
@@ -73,7 +72,7 @@ export function FinanceSummaryCards({ summary }: FinanceSummaryCardsProps) {
           </div>
         </div>
         <div className="mt-3">
-          <p className="text-2xl sm:text-3xl font-black text-rose-400 tracking-tight">
+          <p className="text-2xl sm:text-3xl font-black text-rose-400 tracking-tight" suppressHydrationWarning>
             -{formatRupiah(summary.totalPengeluaran)}
           </p>
           <p className="mt-1 text-[11px] text-zinc-400">

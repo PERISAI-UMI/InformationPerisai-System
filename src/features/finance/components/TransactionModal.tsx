@@ -43,9 +43,7 @@ export function TransactionModal({
   const [kategori, setKategori] = useState<string>(DEFAULT_FINANCE_CATEGORIES[0]);
   const [customKategori, setCustomKategori] = useState<string>("");
   const [nominal, setNominal] = useState<string>("");
-  const [tanggalTransaksi, setTanggalTransaksi] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [tanggalTransaksi, setTanggalTransaksi] = useState<string>("");
   const [keterangan, setKeterangan] = useState<string>("");
   const [buktiNota, setBuktiNota] = useState<string>("");
 
