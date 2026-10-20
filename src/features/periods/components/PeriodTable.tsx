@@ -23,10 +23,17 @@ export interface PeriodTableProps {
       workPrograms?: number;
     };
   }>;
+  canManage?: boolean;
+  canUpdate?: boolean;
 }
 
-export function PeriodTable({ periods }: PeriodTableProps) {
+export function PeriodTable({
+  periods,
+  canManage = true,
+  canUpdate = true,
+}: PeriodTableProps) {
   const router = useRouter();
+  const showActionColumn = canManage || canUpdate;
 
   const handleSetActive = async (id: string, periodName: string) => {
     try {
@@ -48,10 +55,14 @@ export function PeriodTable({ periods }: PeriodTableProps) {
         type="empty"
         title="Belum Ada Periode Kepengurusan"
         description="Belum ada periode kepengurusan yang ditambahkan ke sistem UKM PERISAI UMI."
-        action={{
-          label: "Tambah Periode Baru",
-          href: "/admin/periods/new",
-        }}
+        action={
+          canManage
+            ? {
+                label: "Tambah Periode Baru",
+                href: "/admin/periods/new",
+              }
+            : undefined
+        }
       />
     );
   }
@@ -65,7 +76,9 @@ export function PeriodTable({ periods }: PeriodTableProps) {
           <TableHead>Selesai</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Pengurus / Proker</TableHead>
-          <TableHead className="text-right w-44 whitespace-nowrap">Aksi</TableHead>
+          {showActionColumn && (
+            <TableHead className="text-right w-44 whitespace-nowrap">Aksi</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -84,21 +97,23 @@ export function PeriodTable({ periods }: PeriodTableProps) {
             <TableCell className="text-zinc-300">
               {p._count?.members ?? 0} orang / {p._count?.workPrograms ?? 0} proker
             </TableCell>
-            <TableCell className="text-right whitespace-nowrap">
-              <div className="inline-flex items-center justify-end gap-1.5">
-                {!p.isActive && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="px-2.5 py-1.5 text-xs rounded-lg"
-                    onClick={() => handleSetActive(p.id, p.name)}
-                  >
-                    Jadikan Aktif
-                  </Button>
-                )}
-                <EditLink href={`/admin/periods/${p.id}`} />
-              </div>
-            </TableCell>
+            {showActionColumn && (
+              <TableCell className="text-right whitespace-nowrap">
+                <div className="inline-flex items-center justify-end gap-1.5">
+                  {canManage && !p.isActive && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="px-2.5 py-1.5 text-xs rounded-lg"
+                      onClick={() => handleSetActive(p.id, p.name)}
+                    >
+                      Jadikan Aktif
+                    </Button>
+                  )}
+                  {canUpdate && <EditLink href={`/admin/periods/${p.id}`} />}
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

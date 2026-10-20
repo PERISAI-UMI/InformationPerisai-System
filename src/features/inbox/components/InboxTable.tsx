@@ -19,9 +19,15 @@ export interface InboxTableProps {
     isRead: boolean;
     createdAt: Date | string;
   }>;
+  canMarkRead?: boolean;
+  canDelete?: boolean;
 }
 
-export function InboxTable({ messages }: InboxTableProps) {
+export function InboxTable({
+  messages,
+  canMarkRead = true,
+  canDelete = true,
+}: InboxTableProps) {
   const router = useRouter();
 
   const handleMarkRead = async (id: string) => {
@@ -103,7 +109,7 @@ export function InboxTable({ messages }: InboxTableProps) {
                   </svg>
                   <span>Buka</span>
                 </Link>
-                {!msg.isRead && (
+                {canMarkRead && !msg.isRead && (
                   <button
                     onClick={() => handleMarkRead(msg.id)}
                     className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-300 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all cursor-pointer shrink-0"
@@ -111,11 +117,13 @@ export function InboxTable({ messages }: InboxTableProps) {
                     Tandai Dibaca
                   </button>
                 )}
-                <ConfirmDelete
-                  onConfirm={() => handleDelete(msg.id)}
-                  title="Hapus Pesan"
-                  description={`Apakah Anda yakin ingin menghapus pesan "${msg.subject}"?`}
-                />
+                {canDelete && (
+                  <ConfirmDelete
+                    onConfirm={() => handleDelete(msg.id)}
+                    title="Hapus Pesan"
+                    description={`Apakah Anda yakin ingin menghapus pesan "${msg.subject}"?`}
+                  />
+                )}
               </div>
             </TableCell>
           </TableRow>

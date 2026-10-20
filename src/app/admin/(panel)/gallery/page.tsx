@@ -4,6 +4,7 @@ import { Pagination } from "@/components/common/Pagination";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
 import { deleteMediaAction } from "@/features/gallery/actions";
 import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -12,7 +13,11 @@ export default async function AdminGalleryPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requirePermission("gallery:read");
+  const session = await requirePermission("gallery:read");
+  const user = session.user;
+  const canUpload = hasPermission(user, "gallery:upload");
+  const canDelete = hasPermission(user, "gallery:delete");
+
   const { page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminGallery({ page, pageSize: 10 });
@@ -29,7 +34,7 @@ export default async function AdminGalleryPage({
       </div>
 
       {/* Komponen Unggah Banyak File */}
-      <GalleryUploader />
+      {canUpload && <GalleryUploader />}
 
       {/* Grid Media Terdaftar */}
       <div className="space-y-4">
@@ -80,14 +85,16 @@ export default async function AdminGalleryPage({
                       </svg>
                       <span>Detail</span>
                     </Link>
-                    <ConfirmDelete
-                      onConfirm={async () => {
-                        "use server";
-                        await deleteMediaAction(media.id);
-                      }}
-                      title="Hapus Media"
-                      description={`Hapus berkas "${media.originalName || "ini"}"?`}
-                    />
+                    {canDelete && (
+                      <ConfirmDelete
+                        onConfirm={async () => {
+                          "use server";
+                          await deleteMediaAction(media.id);
+                        }}
+                        title="Hapus Media"
+                        description={`Hapus berkas "${media.originalName || "ini"}"?`}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

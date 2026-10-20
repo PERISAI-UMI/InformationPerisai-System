@@ -24,9 +24,15 @@ export interface UserTableProps {
       uploadedMedia?: number;
     };
   }>;
+  canCreate?: boolean;
+  canUpdate?: boolean;
 }
 
-export function UserTable({ users }: UserTableProps) {
+export function UserTable({
+  users,
+  canCreate = true,
+  canUpdate = true,
+}: UserTableProps) {
   const router = useRouter();
 
   const handleToggle = async (id: string, currentStatus: boolean) => {
@@ -66,10 +72,14 @@ export function UserTable({ users }: UserTableProps) {
         type="empty"
         title="Belum Ada Pengguna Terdaftar"
         description="Belum ada akun pengurus atau administrator yang terdaftar di dalam sistem."
-        action={{
-          label: "Tambah Akun Pengurus",
-          href: "/admin/users/new",
-        }}
+        action={
+          canCreate
+            ? {
+                label: "Tambah Akun Pengurus",
+                href: "/admin/users/new",
+              }
+            : undefined
+        }
       />
     );
   }
@@ -84,7 +94,9 @@ export function UserTable({ users }: UserTableProps) {
           <TableHead>Status</TableHead>
           <TableHead>Kontribusi</TableHead>
           <TableHead>Bergabung</TableHead>
-          <TableHead className="text-right w-44 whitespace-nowrap">Aksi</TableHead>
+          {canUpdate && (
+            <TableHead className="text-right w-44 whitespace-nowrap">Aksi</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -104,19 +116,21 @@ export function UserTable({ users }: UserTableProps) {
               {u._count?.posts ?? 0} artikel / {u._count?.uploadedMedia ?? 0} media
             </TableCell>
             <TableCell className="text-xs text-zinc-400">{formatDateIndonesian(u.createdAt)}</TableCell>
-            <TableCell className="text-right whitespace-nowrap">
-              <div className="inline-flex items-center justify-end gap-1.5">
-                <Button
-                  size="sm"
-                  variant={u.isActive ? "outline" : "primary"}
-                  className="px-2.5 py-1.5 text-xs rounded-lg"
-                  onClick={() => handleToggle(u.id, u.isActive)}
-                >
-                  {u.isActive ? "Nonaktifkan" : "Aktifkan"}
-                </Button>
-                <EditLink href={`/admin/users/${u.id}`} />
-              </div>
-            </TableCell>
+            {canUpdate && (
+              <TableCell className="text-right whitespace-nowrap">
+                <div className="inline-flex items-center justify-end gap-1.5">
+                  <Button
+                    size="sm"
+                    variant={u.isActive ? "outline" : "primary"}
+                    className="px-2.5 py-1.5 text-xs rounded-lg"
+                    onClick={() => handleToggle(u.id, u.isActive)}
+                  >
+                    {u.isActive ? "Nonaktifkan" : "Aktifkan"}
+                  </Button>
+                  <EditLink href={`/admin/users/${u.id}`} />
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

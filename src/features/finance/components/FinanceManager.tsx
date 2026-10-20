@@ -23,6 +23,10 @@ interface FinanceManagerProps {
   transactionsData: PaginatedResult<TransactionItem>;
   periods: Array<{ idPeriode: number; namaPeriode: string; isActive: number }>;
   filters: TransactionFilterParams;
+  canCreate?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
 }
 
 function formatRupiah(amount: number): string {
@@ -38,10 +42,15 @@ export function FinanceManager({
   transactionsData,
   periods,
   filters,
+  canCreate = true,
+  canUpdate = true,
+  canDelete = true,
+  canExport = true,
 }: FinanceManagerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const showActionColumn = canUpdate || canDelete;
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -198,29 +207,33 @@ export function FinanceManager({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleExportCSV}
-              className="border-white/10 text-zinc-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5"
-            >
-              <svg className="w-4 h-4 text-[#FFB22C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>Ekspor CSV</span>
-            </Button>
+            {canExport && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                className="border-white/10 text-zinc-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4 text-[#FFB22C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Ekspor CSV</span>
+              </Button>
+            )}
 
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={handleOpenCreateModal}
-              className="bg-gradient-to-r from-[#FFB22C] to-[#FFA000] text-[#1b1b1f] font-extrabold hover:brightness-110 flex items-center gap-1.5"
-            >
-              <span>+</span>
-              <span>Catat Transaksi</span>
-            </Button>
+            {canCreate && (
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={handleOpenCreateModal}
+                className="bg-gradient-to-r from-[#FFB22C] to-[#FFA000] text-[#1b1b1f] font-extrabold hover:brightness-110 flex items-center gap-1.5"
+              >
+                <span>+</span>
+                <span>Catat Transaksi</span>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -357,7 +370,7 @@ export function FinanceManager({
                   <th className="py-3 px-4 text-right">Nominal</th>
                   <th className="py-3 px-4 text-center">Nota</th>
                   <th className="py-3 px-4">Dicatat Oleh</th>
-                  <th className="py-3 px-4 text-right">Aksi</th>
+                  {showActionColumn && <th className="py-3 px-4 text-right">Aksi</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -442,32 +455,38 @@ export function FinanceManager({
                       </td>
 
                       {/* Aksi */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditModal(item)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#FFB22C] bg-[#FFB22C]/10 border border-[#FFB22C]/25 hover:bg-[#FFB22C]/20 hover:border-[#FFB22C]/40 hover:text-[#FFC85A] transition-all shadow-sm shrink-0 cursor-pointer"
-                            title="Ubah Transaksi Kas"
-                          >
-                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                      {showActionColumn && (
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {canUpdate && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditModal(item)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#FFB22C] bg-[#FFB22C]/10 border border-[#FFB22C]/25 hover:bg-[#FFB22C]/20 hover:border-[#FFB22C]/40 hover:text-[#FFC85A] transition-all shadow-sm shrink-0 cursor-pointer"
+                                title="Ubah Transaksi Kas"
+                              >
+                                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                  />
+                                </svg>
+                                <span>Ubah</span>
+                              </button>
+                            )}
+                            {canDelete && (
+                              <ConfirmDelete
+                                title="Hapus Transaksi Kas"
+                                description={`Apakah Anda yakin ingin menghapus catatan transaksi "${item.keterangan}" (${formatRupiah(item.nominal)})? Tindakan ini akan memperbarui saldo kas.`}
+                                onConfirm={() => handleDelete(item.idTransaksi)}
+                                triggerText="Hapus"
                               />
-                            </svg>
-                            <span>Ubah</span>
-                          </button>
-                          <ConfirmDelete
-                            title="Hapus Transaksi Kas"
-                            description={`Apakah Anda yakin ingin menghapus catatan transaksi "${item.keterangan}" (${formatRupiah(item.nominal)})? Tindakan ini akan memperbarui saldo kas.`}
-                            onConfirm={() => handleDelete(item.idTransaksi)}
-                            triggerText="Hapus"
-                          />
-                        </div>
-                      </td>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

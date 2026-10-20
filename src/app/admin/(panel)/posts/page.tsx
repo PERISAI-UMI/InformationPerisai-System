@@ -3,13 +3,19 @@ import { getAdminPosts } from "@/features/posts/queries.admin";
 import { PostTable } from "@/features/posts/components/PostTable";
 import { Pagination } from "@/components/common/Pagination";
 import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 
 export default async function AdminPostsPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string; q?: string }>;
 }) {
-  await requirePermission("posts:read");
+  const session = await requirePermission("posts:read");
+  const user = session.user;
+  const canCreate = hasPermission(user, "posts:create");
+  const canUpdate = hasPermission(user, "posts:update");
+  const canDelete = hasPermission(user, "posts:delete");
+
   const { page: pageStr, q: search } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminPosts({ page, search });
@@ -25,13 +31,15 @@ export default async function AdminPostsPage({
             Daftar seluruh rilis berita, artikel ilmiah, dan warta organisasi UKM PERISAI UMI.
           </p>
         </div>
-        <Link
-          href="/admin/posts/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-xs sm:text-sm font-extrabold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/20 hover:brightness-110 transition-all"
-        >
-          <span>+</span>
-          <span>Tambah Postingan Baru</span>
-        </Link>
+        {canCreate && (
+          <Link
+            href="/admin/posts/new"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-xs sm:text-sm font-extrabold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/20 hover:brightness-110 transition-all"
+          >
+            <span>+</span>
+            <span>Tambah Postingan Baru</span>
+          </Link>
+        )}
       </div>
 
       <PostTable
@@ -43,6 +51,9 @@ export default async function AdminPostsPage({
           createdAt: new Date(p.createdAt * 1000),
           author: { name: p.department?.nama || "Pengurus" },
         }))}
+        canCreate={canCreate}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
       />
 
       <Pagination

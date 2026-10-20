@@ -1,4 +1,5 @@
 import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 import {
   getFinanceSummary,
   getTransactions,
@@ -23,6 +24,11 @@ interface AdminFinancePageProps {
 
 export default async function AdminFinancePage({ searchParams }: AdminFinancePageProps) {
   const session = await requirePermission("finance:read");
+  const user = session.user;
+  const canCreate = hasPermission(user, "finance:create");
+  const canUpdate = hasPermission(user, "finance:update");
+  const canDelete = hasPermission(user, "finance:delete");
+  const canExport = hasPermission(user, "finance:export");
 
   const resolvedParams = await searchParams;
   const page = parseInt(resolvedParams.page || "1", 10);
@@ -73,6 +79,10 @@ export default async function AdminFinancePage({ searchParams }: AdminFinancePag
         transactionsData={transactionsData}
         periods={periods}
         filters={filters}
+        canCreate={canCreate}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
+        canExport={canExport}
       />
     </div>
   );

@@ -20,9 +20,13 @@ export interface StatisticTableProps {
     orderIndex: number;
     isActive: boolean;
   }>;
+  canUpdate?: boolean;
 }
 
-export function StatisticTable({ statistics }: StatisticTableProps) {
+export function StatisticTable({
+  statistics,
+  canUpdate = true,
+}: StatisticTableProps) {
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
@@ -45,10 +49,14 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
         type="empty"
         title="Belum Ada Indikator Statistik"
         description="Belum ada data capaian atau statistik lembaga yang ditampilkan di beranda publik."
-        action={{
-          label: "Tambah Statistik",
-          href: "/admin/statistics/new",
-        }}
+        action={
+          canUpdate
+            ? {
+                label: "Tambah Statistik",
+                href: "/admin/statistics/new",
+              }
+            : undefined
+        }
       />
     );
   }
@@ -62,7 +70,9 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
           <TableHead>Indikator</TableHead>
           <TableHead>Nilai</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
+          {canUpdate && (
+            <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -87,16 +97,18 @@ export function StatisticTable({ statistics }: StatisticTableProps) {
             <TableCell>
               {s.isActive ? <Badge variant="success">Aktif</Badge> : <Badge variant="neutral">Non-aktif</Badge>}
             </TableCell>
-            <TableCell className="text-right whitespace-nowrap">
-              <div className="inline-flex items-center justify-end gap-1.5">
-                <EditLink href={`/admin/statistics/${s.id}`} />
-                <ConfirmDelete
-                  onConfirm={() => handleDelete(s.id)}
-                  title="Hapus Statistik"
-                  description={`Apakah Anda yakin ingin menghapus indikator "${s.label}"?`}
-                />
-              </div>
-            </TableCell>
+            {canUpdate && (
+              <TableCell className="text-right whitespace-nowrap">
+                <div className="inline-flex items-center justify-end gap-1.5">
+                  <EditLink href={`/admin/statistics/${s.id}`} />
+                  <ConfirmDelete
+                    onConfirm={() => handleDelete(s.id)}
+                    title="Hapus Statistik"
+                    description={`Apakah Anda yakin ingin menghapus indikator "${s.label}"?`}
+                  />
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

@@ -3,13 +3,19 @@ import { getAdminMembers } from "@/features/members/queries.admin";
 import { MemberTable } from "@/features/members/components/MemberTable";
 import { Pagination } from "@/components/common/Pagination";
 import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 
 export default async function AdminMembersPage({
   searchParams,
 }: {
   searchParams: Promise<{ periodId?: string; page?: string }>;
 }) {
-  await requirePermission("members:read");
+  const session = await requirePermission("members:read");
+  const user = session.user;
+  const canCreate = hasPermission(user, "members:create");
+  const canUpdate = hasPermission(user, "members:update");
+  const canDelete = hasPermission(user, "members:delete");
+
   const { periodId, page: pageStr } = await searchParams;
   const page = parseInt(pageStr || "1", 10);
   const data = await getAdminMembers({ periodId, page, pageSize: 8 });
@@ -25,13 +31,15 @@ export default async function AdminMembersPage({
             Daftar pengurus inti, kepala departemen, dan staf fungsionaris UKM PERISAI UMI.
           </p>
         </div>
-        <Link
-          href="/admin/members/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-xs sm:text-sm font-extrabold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/20 hover:brightness-110 transition-all"
-        >
-          <span>+</span>
-          <span>Tambah Pengurus Baru</span>
-        </Link>
+        {canCreate && (
+          <Link
+            href="/admin/members/new"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFB22C] to-[#FFA000] px-4 py-2.5 text-xs sm:text-sm font-extrabold text-[#1b1b1f] shadow-lg shadow-[#FFB22C]/20 hover:brightness-110 transition-all"
+          >
+            <span>+</span>
+            <span>Tambah Pengurus Baru</span>
+          </Link>
+        )}
       </div>
 
       <MemberTable
@@ -43,6 +51,9 @@ export default async function AdminMembersPage({
           department: m.department ? { name: m.department.nama } : null,
           period: m.period ? { name: m.period.name } : null,
         }))}
+        canCreate={canCreate}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
       />
 
       <Pagination

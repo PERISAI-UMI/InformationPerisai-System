@@ -15,6 +15,7 @@ export interface SettingsFormProps {
     isPublic: boolean;
     description?: string | null;
   }>;
+  canUpdate?: boolean;
 }
 
 interface SettingMeta {
@@ -81,7 +82,10 @@ const SETTING_METADATA: Record<string, SettingMeta> = {
   },
 };
 
-export function SettingsForm({ initialSettings }: SettingsFormProps) {
+export function SettingsForm({
+  initialSettings,
+  canUpdate = true,
+}: SettingsFormProps) {
   // Pastikan video_profile_url selalu ada di daftar pengaturan
   const normalizedInitial = [...initialSettings];
   if (!normalizedInitial.some((s) => s.key === "video_profile_url")) {
@@ -388,20 +392,22 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
       )}
 
       {/* Sticky Bottom Action Bar */}
-      <div className="sticky bottom-4 z-10 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border border-white/15 bg-[#1b1b22]/95 backdrop-blur-md shadow-2xl">
-        <p className="text-xs text-zinc-400 text-center sm:text-left">
-          Semua perubahan konfigurasi langsung diterapkan secara instan ke halaman publik.
-        </p>
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          className="w-full sm:w-auto px-6 bg-gradient-to-r from-[#FFB22C] to-[#FFA000] text-[#141417] font-extrabold hover:brightness-110 shadow-lg shadow-[#FFB22C]/20 transition-all shrink-0"
-          isLoading={isLoading}
-        >
-          {isLoading ? "Menyimpan Perubahan..." : "Simpan Semua Pengaturan"}
-        </Button>
-      </div>
+      {canUpdate && (
+        <div className="sticky bottom-4 z-10 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border border-white/15 bg-[#1b1b22]/95 backdrop-blur-md shadow-2xl">
+          <p className="text-xs text-zinc-400 text-center sm:text-left">
+            Semua perubahan konfigurasi langsung diterapkan secara instan ke halaman publik.
+          </p>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full sm:w-auto px-6 bg-gradient-to-r from-[#FFB22C] to-[#FFA000] text-[#141417] font-extrabold hover:brightness-110 shadow-lg shadow-[#FFB22C]/20 transition-all shrink-0"
+            isLoading={isLoading}
+          >
+            {isLoading ? "Menyimpan Perubahan..." : "Simpan Semua Pengaturan"}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

@@ -20,10 +20,19 @@ export interface MemberTableProps {
     department?: { name: string } | null;
     period?: { name: string } | null;
   }>;
+  canCreate?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
 }
 
-export function MemberTable({ members }: MemberTableProps) {
+export function MemberTable({
+  members,
+  canCreate = true,
+  canUpdate = true,
+  canDelete = true,
+}: MemberTableProps) {
   const router = useRouter();
+  const showActionColumn = canUpdate || canDelete;
 
   const handleDelete = async (id: string) => {
     try {
@@ -45,10 +54,14 @@ export function MemberTable({ members }: MemberTableProps) {
         type="empty"
         title="Belum Ada Anggota Pengurus"
         description="Belum ada data struktur pengurus yang dimasukkan ke dalam basis data organisasi."
-        action={{
-          label: "Tambah Pengurus",
-          href: "/admin/members/new",
-        }}
+        action={
+          canCreate
+            ? {
+                label: "Tambah Pengurus",
+                href: "/admin/members/new",
+              }
+            : undefined
+        }
       />
     );
   }
@@ -63,7 +76,9 @@ export function MemberTable({ members }: MemberTableProps) {
           <TableHead>Departemen</TableHead>
           <TableHead>Periode</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
+          {showActionColumn && (
+            <TableHead className="text-right w-36 whitespace-nowrap">Aksi</TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -77,16 +92,20 @@ export function MemberTable({ members }: MemberTableProps) {
             <TableCell>
               {m.isActive ? <Badge variant="success">Aktif</Badge> : <Badge variant="neutral">Nonaktif</Badge>}
             </TableCell>
-            <TableCell className="text-right whitespace-nowrap">
-              <div className="inline-flex items-center justify-end gap-1.5">
-                <EditLink href={`/admin/members/${m.id}`} />
-                <ConfirmDelete
-                  onConfirm={() => handleDelete(m.id)}
-                  title="Hapus Pengurus"
-                  description={`Apakah Anda yakin ingin menghapus "${m.name}"?`}
-                />
-              </div>
-            </TableCell>
+            {showActionColumn && (
+              <TableCell className="text-right whitespace-nowrap">
+                <div className="inline-flex items-center justify-end gap-1.5">
+                  {canUpdate && <EditLink href={`/admin/members/${m.id}`} />}
+                  {canDelete && (
+                    <ConfirmDelete
+                      onConfirm={() => handleDelete(m.id)}
+                      title="Hapus Pengurus"
+                      description={`Apakah Anda yakin ingin menghapus "${m.name}"?`}
+                    />
+                  )}
+                </div>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

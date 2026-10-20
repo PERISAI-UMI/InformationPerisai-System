@@ -1,9 +1,13 @@
 import { getAdminSettings } from "@/features/settings/queries.admin";
 import { SettingsForm } from "@/features/settings/components/SettingsForm";
 import { requirePermission } from "@/lib/permissions.server";
+import { hasPermission } from "@/lib/permissions";
 
 export default async function AdminSettingsPage() {
-  await requirePermission("settings:read");
+  const session = await requirePermission("settings:read");
+  const user = session.user;
+  const canUpdate = hasPermission(user, "settings:update");
+
   const settings = await getAdminSettings();
 
   return (
@@ -32,6 +36,7 @@ export default async function AdminSettingsPage() {
           isPublic: true,
           description: null,
         }))}
+        canUpdate={canUpdate}
       />
     </div>
   );
