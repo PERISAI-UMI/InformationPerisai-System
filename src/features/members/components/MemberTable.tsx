@@ -84,7 +84,7 @@ export function MemberTable({
       <TableBody>
         {members.map((m) => (
           <TableRow key={m.id}>
-            <TableCell className="font-bold text-white">{m.name}</TableCell>
+            <TableCell className="font-bold text-white min-w-[160px]">{m.name}</TableCell>
             <TableCell className="font-mono text-xs text-zinc-400">{m.nim || "-"}</TableCell>
             <TableCell className="text-zinc-200">{m.roleOrTitle}</TableCell>
             <TableCell className="text-zinc-300">{m.department?.name || "Pengurus Inti"}</TableCell>

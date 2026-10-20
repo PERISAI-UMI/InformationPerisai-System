@@ -102,7 +102,7 @@ export function UserTable({
       <TableBody>
         {users.map((u) => (
           <TableRow key={u.id}>
-            <TableCell className="font-semibold text-white">{u.name}</TableCell>
+            <TableCell className="font-semibold text-white min-w-[160px]">{u.name}</TableCell>
             <TableCell className="text-zinc-300">{u.email}</TableCell>
             <TableCell>{getRoleBadge(u.role)}</TableCell>
             <TableCell>

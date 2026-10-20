@@ -90,7 +90,7 @@ export function StatisticTable({
                 </div>
               )}
             </TableCell>
-            <TableCell className="font-semibold text-white">{s.label}</TableCell>
+            <TableCell className="font-semibold text-white min-w-[180px]">{s.label}</TableCell>
             <TableCell className="font-mono font-bold text-[#FFB22C]">
               {s.value} {s.suffix || ""}
             </TableCell>

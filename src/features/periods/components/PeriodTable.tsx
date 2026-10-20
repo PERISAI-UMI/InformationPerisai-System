@@ -84,7 +84,7 @@ export function PeriodTable({
       <TableBody>
         {periods.map((p) => (
           <TableRow key={p.id}>
-            <TableCell className="font-bold text-white">{p.name}</TableCell>
+            <TableCell className="font-bold text-white min-w-[160px]">{p.name}</TableCell>
             <TableCell className="text-zinc-400 font-light">{formatDateIndonesian(p.startDate)}</TableCell>
             <TableCell className="text-zinc-400 font-light">{p.endDate ? formatDateIndonesian(p.endDate) : "Sekarang"}</TableCell>
             <TableCell>
@@ -99,19 +99,23 @@ export function PeriodTable({
             </TableCell>
             {showActionColumn && (
               <TableCell className="text-right whitespace-nowrap">
-                <div className="inline-flex items-center justify-end gap-1.5">
-                  {canManage && !p.isActive && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="px-2.5 py-1.5 text-xs rounded-lg"
-                      onClick={() => handleSetActive(p.id, p.name)}
-                    >
-                      Jadikan Aktif
-                    </Button>
-                  )}
-                  {canUpdate && <EditLink href={`/admin/periods/${p.id}`} />}
-                </div>
+                {(canManage && !p.isActive) || canUpdate ? (
+                  <div className="inline-flex items-center justify-end gap-1.5">
+                    {canManage && !p.isActive && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="px-2.5 py-1.5 text-xs rounded-lg"
+                        onClick={() => handleSetActive(p.id, p.name)}
+                      >
+                        Jadikan Aktif
+                      </Button>
+                    )}
+                    {canUpdate && <EditLink href={`/admin/periods/${p.id}`} />}
+                  </div>
+                ) : (
+                  <span className="text-zinc-600 text-xs">-</span>
+                )}
               </TableCell>
             )}
           </TableRow>

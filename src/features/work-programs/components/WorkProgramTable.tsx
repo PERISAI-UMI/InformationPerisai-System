@@ -94,7 +94,7 @@ export function WorkProgramTable({
       <TableBody>
         {programs.map((p) => (
           <TableRow key={p.id}>
-            <TableCell className="font-bold text-white">{p.name}</TableCell>
+            <TableCell className="font-bold text-white min-w-[180px]">{p.name}</TableCell>
             <TableCell className="text-zinc-300">{p.department?.name || "-"}</TableCell>
             <TableCell className="text-zinc-400 font-light">{p.period?.name || "-"}</TableCell>
             <TableCell>{getBadge(p.status)}</TableCell>

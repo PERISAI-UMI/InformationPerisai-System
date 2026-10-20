@@ -95,7 +95,7 @@ export function PostTable({
       <TableBody>
         {posts.map((post) => (
           <TableRow key={post.id}>
-            <TableCell className="font-bold text-white max-w-xs truncate">
+            <TableCell className="font-bold text-white min-w-[200px] max-w-xs md:max-w-md lg:max-w-xl truncate">
               {post.title}
             </TableCell>
             <TableCell className="text-zinc-300">{post.author?.name || "-"}</TableCell>

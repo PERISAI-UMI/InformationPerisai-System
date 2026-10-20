@@ -206,35 +206,37 @@ export function FinanceManager({
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {canExport && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleExportCSV}
-                className="border-white/10 text-zinc-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5"
-              >
-                <svg className="w-4 h-4 text-[#FFB22C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span>Ekspor CSV</span>
-              </Button>
-            )}
+          {(canExport || canCreate) && (
+            <div className="flex items-center gap-2">
+              {canExport && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportCSV}
+                  className="border-white/10 text-zinc-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5"
+                >
+                  <svg className="w-4 h-4 text-[#FFB22C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Ekspor CSV</span>
+                </Button>
+              )}
 
-            {canCreate && (
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={handleOpenCreateModal}
-                className="bg-gradient-to-r from-[#FFB22C] to-[#FFA000] text-[#1b1b1f] font-extrabold hover:brightness-110 flex items-center gap-1.5"
-              >
-                <span>+</span>
-                <span>Catat Transaksi</span>
-              </Button>
-            )}
-          </div>
+              {canCreate && (
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={handleOpenCreateModal}
+                  className="bg-gradient-to-r from-[#FFB22C] to-[#FFA000] text-[#1b1b1f] font-extrabold hover:brightness-110 flex items-center gap-1.5"
+                >
+                  <span>+</span>
+                  <span>Catat Transaksi</span>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Filter Controls Grid */}
@@ -408,7 +410,7 @@ export function FinanceManager({
                       </td>
 
                       {/* Keterangan */}
-                      <td className="py-3 px-4 text-white font-medium max-w-xs truncate" title={item.keterangan}>
+                      <td className="py-3 px-4 text-white font-medium min-w-[180px] max-w-xs md:max-w-md lg:max-w-xl truncate" title={item.keterangan}>
                         {item.keterangan}
                         {item.periode && (
                           <span className="block text-[10px] text-zinc-500 font-normal">

@@ -83,7 +83,7 @@ export function DepartmentTable({
         {departments.map((dept) => (
           <TableRow key={dept.id}>
             <TableCell className="w-16 font-mono text-xs text-zinc-400">{dept.orderIndex}</TableCell>
-            <TableCell className="font-bold text-white">{dept.name}</TableCell>
+            <TableCell className="font-bold text-white min-w-[180px]">{dept.name}</TableCell>
             <TableCell className="text-zinc-300 font-mono text-xs">{dept.code || "-"}</TableCell>
             <TableCell className="text-zinc-300">{dept._count?.members ?? 0} orang</TableCell>
             <TableCell className="text-zinc-300">{dept._count?.workPrograms ?? 0} program</TableCell>

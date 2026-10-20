@@ -84,7 +84,7 @@ export function InboxTable({
                 <p className="text-xs text-zinc-400 font-normal">{msg.email}</p>
               </div>
             </TableCell>
-            <TableCell className="max-w-xs truncate text-zinc-200">
+            <TableCell className="min-w-[180px] max-w-xs md:max-w-md lg:max-w-xl truncate text-zinc-200">
               <Link href={`/admin/inbox/${msg.id}`} className="hover:text-[#FFB22C] transition-colors">
                 {msg.subject}
               </Link>
