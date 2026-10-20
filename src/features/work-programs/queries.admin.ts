@@ -27,12 +27,14 @@ export async function getAdminWorkPrograms({ page = 1, pageSize = 8 } = {}) {
       coverImageUrl: p.fotoCover || null,
       documentationUrl: p.fotoDokumentasi || null,
       departmentId: String(p.idDepartemen),
-      department: {
-        id: String(p.idDepartemen),
-        nama: p.departemen.namaDepartemen,
-        name: p.departemen.namaDepartemen,
-        code: p.departemen.singkatan,
-      },
+      department: p.departemen
+        ? {
+            id: String(p.idDepartemen),
+            nama: p.departemen.namaDepartemen,
+            name: p.departemen.namaDepartemen,
+            code: p.departemen.singkatan,
+          }
+        : null,
       createdAt: p.createdAt,
     })),
     total,

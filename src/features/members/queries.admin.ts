@@ -31,14 +31,14 @@ export async function getAdminMembers({
 
   const items = members.map((m) => ({
     id: String(m.idKepengurusan),
-    name: m.anggota.namaLengkap,
-    nim: m.anggota.nim,
-    avatarUrl: m.anggota.fotoUrl,
-    roleOrTitle: m.jabatan.namaJabatan,
+    name: m.anggota?.namaLengkap || "Tanpa Nama",
+    nim: m.anggota?.nim || "-",
+    avatarUrl: m.anggota?.fotoUrl || null,
+    roleOrTitle: m.jabatan?.namaJabatan || "Fungsionaris",
     orderIndex: m.urutan,
     isActive: m.status === "aktif",
     department: m.departemen ? { id: String(m.departemen.idDepartemen), name: m.departemen.namaDepartemen, nama: m.departemen.namaDepartemen } : null,
-    period: { id: String(m.periode.idPeriode), name: m.periode.namaPeriode },
+    period: m.periode ? { id: String(m.periode.idPeriode), name: m.periode.namaPeriode } : { id: "-", name: "-" },
   }));
 
   return {
@@ -68,18 +68,18 @@ export async function getAdminMemberById(id: string) {
 
   return {
     id: String(m.idKepengurusan),
-    name: m.anggota.namaLengkap,
-    nim: m.anggota.nim,
-    avatarUrl: m.anggota.fotoUrl,
-    roleOrTitle: m.jabatan.namaJabatan,
+    name: m.anggota?.namaLengkap || "Tanpa Nama",
+    nim: m.anggota?.nim || "-",
+    avatarUrl: m.anggota?.fotoUrl || null,
+    roleOrTitle: m.jabatan?.namaJabatan || "Fungsionaris",
     orderIndex: m.urutan,
     isActive: m.status === "aktif",
     department: m.departemen ? { id: String(m.departemen.idDepartemen), name: m.departemen.namaDepartemen } : null,
-    period: { id: String(m.periode.idPeriode), name: m.periode.namaPeriode },
+    period: m.periode ? { id: String(m.periode.idPeriode), name: m.periode.namaPeriode } : { id: "-", name: "-" },
     departmentId: m.idDepartemen ? String(m.idDepartemen) : null,
     periodId: String(m.idPeriode),
-    position: m.jabatan.namaJabatan,
+    position: m.jabatan?.namaJabatan || "Fungsionaris",
     tier: m.tier,
-    linkedinUrl: m.anggota.linkedin,
+    linkedinUrl: m.anggota?.linkedin || null,
   };
 }
