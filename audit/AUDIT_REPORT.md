@@ -2,7 +2,7 @@
 
 **Investigator**: Antigravity (Senior Software Architect & Security Auditor)  
 **Target Codebase**: `InformationPerisai-System`  
-**Analysis Date**: October 2026  
+**Analysis Date**: October 2026 (Updated: 20 October 2026 — Dynamic RBAC & Keep-Alive Connection Optimization)  
 **Confidence Standard**: All findings are classified as **CONFIRMED**, **HIGH CONFIDENCE**, **LIKELY**, **POSSIBLE**, or **UNKNOWN** based on source code and configuration inspection.
 
 ---
@@ -353,6 +353,10 @@ flowchart TD
   - Tables prefixed with `M_*` represent Master Entities.
   - Tables prefixed with `T_*` represent Transactional / Content Entities.
   - Timestamps are stored as Unix Epoch seconds (`Int`), matching legacy SQLite conventions.
+- **Connection Optimization & Zero-Buffering**:
+  - **TCP Keep-Alive**: The `@prisma/adapter-libsql/web` uses a custom fetch wrapper with `keepalive: true` to reuse TCP/TLS sockets across multiple query executions, eliminating handshake round-trips to Turso Cloud (saving 50–120ms per query).
+  - **Prisma & Adapter Singleton**: `PrismaClient` and `PrismaLibSql` instances are cached at the `globalThis` isolate level.
+  - **Lightweight Type Mapping & Concurrency**: Enforces `intMode: "number"` to bypass BigInt parsing overhead and sets `concurrency: 20` to guard against request queue saturation.
 - **Database Safety Guard**: Schema migrations are strictly handled via raw SQL scripts in `db/migrations/` validated against `db/protected-schema.snapshot.json` by `db/guard.mjs`. Direct destructive commands like `prisma migrate reset` are prohibited by project specifications.
 
 ---
@@ -491,8 +495,24 @@ The system distinguishes four privilege tiers:
 | | **Create User Baru** | ✅ | ❌ **(Prohibited)** | ❌ **(Prohibited)** | ❌ | Server Action (`createUserAction`) |
 | | Edit Role / Password | ✅ | ❌ **(Prohibited)** | ❌ **(Prohibited)** | ❌ | Server Action (`updateUserAction`) |
 | | **Delete User (Hapus Akun)** | ✅ | ❌ **(Prohibited)** | ❌ **(Prohibited)** | ❌ | Server Action (`deleteUserAction`) |
+| **Manajemen Peran RBAC (`roles`)** | View Roles & Permissions | ✅ | ❌ **(Hidden)** | ❌ **(Hidden)** | ❌ | Admin Page Guard (`/admin/roles`) |
+| | Create / Update Role Matrix | ✅ | ❌ **(Prohibited)** | ❌ **(Prohibited)** | ❌ | Server Action (`create/updateRoleAction`) |
+| | **Delete Custom Role** | ✅ | ❌ **(Prohibited)** | ❌ **(Prohibited)** | ❌ | Server Action (`deleteRoleAction`) |
 | **Log Audit Sistem (`audit_log`)** | Read Immutable Log | ✅ | ❌ **(Hidden)** | ❌ **(Hidden)** | ❌ | Admin Page Guard (`/admin/audit-log`) |
 | | Mutate / Delete Logs | ❌ **(Never)** | ❌ **(Never)** | ❌ **(Never)** | ❌ | Immutable DB trigger & no delete endpoint |
+
+---
+
+### 22.2.1. Dynamic Granular RBAC Engine (38 Permission Keys)
+
+The codebase has evolved from static role evaluations into a dynamic, granular authorization engine (`src/types/permissions.ts` and `src/lib/permissions.ts`):
+1. **Dynamic Permissions Storage**: The `M_Role` table stores active permission arrays as JSON text (`permissions`), with an `isSystem` boolean flag protecting critical system roles (such as `SUPER_ADMIN`) from accidental deletion or privilege stripping.
+2. **Session Hydration**: Upon login or session validation (`getSession()`), the user's role permissions are dynamically resolved and embedded into `session.user.permissions`.
+3. **Department Isolation**: Evaluated via `hasPermission(user, key, context)`. For instance, a Department Head (Kadep) is scoped to update only work programs belonging to their own department.
+4. **Silent Permission Hiding**:
+   - **DOM Unmounting**: Buttons, links, and forms for actions the user cannot perform are completely omitted from the rendered DOM (`{condition && <Component />}` / `return null`), rejecting misleading CSS masking tricks (`opacity: 0`, `visibility: hidden`).
+   - **Table Auto-Stretch**: When a user lacks mutation permissions, the entire `<th>Aksi</th>` and corresponding `<td>` action cells are unmounted. Primary data columns (Title, Name, Subject, Description) dynamically expand with responsive breakpoints (`min-w-[...]` and `max-w-xl truncate`) to gracefully occupy 100% of the table width without awkward gaps.
+   - **Empty Wrapper Elimination**: Action wrappers with zero permitted child actions are unmounted, preventing phantom margins or flex spacing voids.
 
 ---
 
@@ -609,6 +629,10 @@ The system distinguishes four privilege tiers:
 - **Storage Driver Factory** (`src/lib/storage/index.ts`):
   - In Edge/Production: Uses `S3StorageDriver` (`@aws-sdk/client-s3`) targeting Cloudflare R2.
   - In Local Dev: Uses `LocalStorageDriver` storing files in `/public/uploads`.
+  - **Connection Optimization**:
+    - **Global S3Client Singleton**: Caches `S3Client` on `globalThis` by credential/endpoint fingerprint. Prevents rebuilding client middleware pipelines and maintains open TCP/TLS connections for subsequent upload/delete operations.
+    - **Adaptive Path-Style**: Direct Cloudflare R2 endpoints automatically enforce `forcePathStyle: true` with a timeout limit (`maxAttempts: 3`).
+    - **Dynamic Proxy Export**: The `storage` export is backed by an ES6 Proxy that resolves lazily to the cached driver without boot-up overhead.
 - **Upload Constraints**: Enforces 5 MB file size limit and strict MIME validation (`image/jpeg`, `image/png`, `image/webp`, `image/gif`, `image/svg+xml`, `application/pdf`).
 - **Filename Sanitization**: Replaces non-alphanumeric characters with underscores, appends timestamp and random salt to prevent collision.
 
@@ -836,14 +860,16 @@ InformationPerisai-System/
 ├── db/                          # Safe SQL migrations and guard scripts
 ├── src/
 │   ├── app/                     # Next.js App Router (Public, Admin, API)
-│   │   └── admin/(panel)/finance/ # Admin Financial Management module
+│   │   ├── admin/(panel)/finance/ # Admin Financial Management module
+│   │   └── admin/(panel)/roles/   # Admin RBAC Role Matrix Management module
 │   ├── components/              # Shared UI design system & layout components
-│   ├── features/                # Domain-sliced modules (posts, opportunities, finance, users, etc.)
-│   │   └── finance/             # Isolated finance schema, actions, queries, components
+│   ├── features/                # Domain-sliced modules (posts, opportunities, finance, roles, users, etc.)
+│   │   ├── finance/             # Isolated finance schema, actions, queries, components
+│   │   └── roles/               # Dynamic RBAC roles schema, actions, queries, components
 │   ├── lib/                     # Auth, DB singleton, storage drivers, security utilities
 │   └── types/                   # Global TypeScript type definitions
 ├── scripts/                     # Connection diagnostics & DB setup scripts (check-infra, setup-secrets)
-├── tests/                       # Automated test suite (17 test cases across 8 test suites)
+├── tests/                       # Automated test suite (17 test cases across 10 test suites)
 ├── next.config.ts               # Next.js configuration
 ├── open-next.config.ts          # OpenNext Cloudflare Workers adapter
 ├── wrangler.jsonc               # Cloudflare deployment manifest

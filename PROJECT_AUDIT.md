@@ -1,7 +1,7 @@
 # PERISAI UMI — Reverse Engineering & Architecture Audit
 
 > **Tanggal Audit Awal**: 14 Oktober 2026  
-> **Pembaruan Terakhir**: 14 Oktober 2026 (Modernisasi Edge & Cloudflare Workers Ready)  
+> **Pembaruan Terakhir**: 20 Oktober 2026 (Dynamic RBAC, Silent Permission Hiding, & Keep-Alive Connection Optimization)  
 > **Auditor**: Antigravity (Principal Software Architect & Lead DevOps Mode)  
 > **Status Proyek**: Aktif — Siap Produksi Edge (Cloudflare Workers + Turso LibSQL + Cloudflare R2)
 
@@ -532,22 +532,24 @@ Response: { id, storageKey, url, path }
 
 #### Panel Admin (Protected SSR Pages)
 
-| Route | Deskripsi | Role Minimum |
+| Route | Deskripsi | Permission Guard Utama |
 |---|---|---|
-| `/admin/login` | Login page | - |
-| `/admin` | Dashboard | EDITOR |
-| `/admin/posts` | CRUD Berita | EDITOR |
-| `/admin/opportunities` | CRUD Kompetisi | EDITOR |
-| `/admin/gallery` | Manajemen galeri | EDITOR |
-| `/admin/departments` | CRUD Departemen | ADMIN |
-| `/admin/members` | Manajemen anggota | ADMIN |
-| `/admin/work-programs` | Program kerja | ADMIN |
-| `/admin/periods` | Periode kepengurusan | ADMIN |
-| `/admin/inbox` | Pesan masuk | ADMIN |
-| `/admin/users` | Akun CMS | SUPER_ADMIN |
-| `/admin/settings` | Pengaturan situs | SUPER_ADMIN |
-| `/admin/statistics` | Statistik | ADMIN |
-| `/admin/audit-log` | Log audit | SUPER_ADMIN |
+| `/admin/login` | Login page | Publik |
+| `/admin` | Dashboard Ikhtisar | `session` (Autentikasi Aktif) |
+| `/admin/posts` | CRUD Berita & Artikel | `posts:read` / `posts:create` / `posts:update` / `posts:delete` |
+| `/admin/opportunities` | CRUD Kompetisi & Peluang | `opportunities:read` / `opportunities:create` / `opportunities:update` / `opportunities:delete` |
+| `/admin/gallery` | Manajemen Berkas & Galeri Media | `gallery:read` / `gallery:upload` / `gallery:delete` |
+| `/admin/finance` | Pembukuan Kas & Transaksi Keuangan | `finance:read` / `finance:create` / `finance:update` / `finance:delete` / `finance:export` |
+| `/admin/departments` | Pengelolaan Departemen & Badan | `departments:read` / `departments:update` / `departments:manage` |
+| `/admin/members` | Direktori Fungsionaris & Pengurus | `members:read` / `members:create` / `members:update` / `members:delete` |
+| `/admin/work-programs` | Manajemen Program Kerja | `work_programs:read` / `work_programs:create` / `work_programs:update` / `work_programs:delete` |
+| `/admin/periods` | Periode & Transisi Kepengurusan | `periods:read` / `periods:update` / `periods:manage` |
+| `/admin/inbox` | Pesan Masuk & Konsultasi Publik | `inbox:read` / `inbox:mark_read` / `inbox:delete` |
+| `/admin/roles` | Manajemen Peran & Matriks Akses | `users:assign_role` (Proteksi Super Admin) |
+| `/admin/users` | Akun Pengurus & Akses CMS | `users:read` / `users:create` / `users:update` / `users:delete` / `users:assign_role` |
+| `/admin/settings` | Pengaturan Situs & Identitas | `settings:read` / `settings:update` |
+| `/admin/statistics` | Indikator Capaian & Prestasi | `settings:read` / `settings:update` |
+| `/admin/audit-log` | Jejak Audit Aktivitas Pengurus | `audit_log:read` |
 
 ### 5.2 Model Autentikasi & Otorisasi
 
@@ -559,27 +561,43 @@ Sistem **tidak** menggunakan NextAuth/Auth.js. Autentikasi dibangun secara kusto
 - **Penyimpanan Sesi**: Disimpan secara persisten di tabel `T_Sesi` (`id_sesi`, `id_akun`, `token`, `ip_address`, `user_agent`, `expires_at`).
 - **Verifikasi password**: Dual-format support:
   1. `scrypt` dengan format `salt:key` (sistem baru)
-  2. `SHA-256 hex` (kompatibel dengan seed data awal)
+  2. `SHA-256 hex` (kompatibel dengan seed data awal, otomatis re-hash saat login)
 - **Cookie properties**: `httpOnly=true`, `secure=true` (production), `sameSite=lax`, `path=/`, `maxAge=7 hari` (604.800 detik).
 - **Session lookup & validation (`getSession`)**:
   1. Membaca `token` dari cookie.
-  2. Query `T_Sesi` dengan eager loading `mAkun`, `mRole`, `mAnggota`, dan `tKepengurusan`.
+  2. Query `T_Sesi` dengan eager loading `mAkun`, `mRole` (termasuk kolom dinamis `permissions`), `mAnggota`, dan `tKepengurusan`.
   3. Memeriksa `expires_at > Math.floor(Date.now() / 1000)`. Jika kedaluwarsa, sesi dihapus otomatis dari database dan mengembalikan `null`.
   4. Memvalidasi status aktif akun (`mAkun.is_active === 1`).
+  5. Menyematkan array izin dinamis `permissions: PermissionKey[]` ke dalam `session.user`.
 
-#### Authorization (RBAC — Custom)
+#### Dynamic RBAC (38 Granular Permission Taxonomy)
 
-Fungsi `can(user, action, resource)` di `src/lib/permissions.ts`:
+Sistem telah dimigrasikan dari pemeriksaan statis peran ke arsitektur **Dynamic Role-Based Access Control (RBAC)** berbasis 38 kunci izin granular (`src/types/permissions.ts` & `src/lib/permissions.ts`):
 
-```
-SUPER_ADMIN → semua aksi & semua resource
-ADMIN       → semua, KECUALI:
-              - users: create, delete, manage
-              - audit_log: selain read
-              - settings: manage
-EDITOR      → posts, gallery, opportunities: create, read, update
-              resource lain: read only
-```
+- **Tabel `M_Role`**: Menyimpan kolom `permissions` (JSON/Array string izin aktif) dan `isSystem` (flag proteksi failsafe peran sistem `SUPER_ADMIN`).
+- **Fungsi Otorisasi Utama**:
+  - `hasPermission(user, permissionKey, context)`: Memeriksa apakah pengguna memiliki kunci izin tertentu dengan dukungan isolasi kepemilikan departemen (misal Kepala Departemen hanya dapat mengelola proker departemennya sendiri).
+  - `requirePermission(permissionKey, context)`: Server Guard untuk halaman Admin SSR dan Server Actions yang melempar redirect/error 403 jika pengguna tidak berwenang.
+- **Daftar Kategori Izin (38 Keys)**:
+  - `posts` (`read`, `create`, `update`, `delete`, `publish`)
+  - `opportunities` (`read`, `create`, `update`, `delete`)
+  - `gallery` (`read`, `upload`, `delete`)
+  - `departments` (`read`, `update`, `manage`)
+  - `members` (`read`, `create`, `update`, `delete`)
+  - `work_programs` (`read`, `create`, `update`, `delete`)
+  - `periods` (`read`, `update`, `manage`)
+  - `finance` (`read`, `create`, `update`, `delete`, `export`)
+  - `inbox` (`read`, `mark_read`, `delete`)
+  - `users` (`read`, `create`, `update`, `delete`, `assign_role`)
+  - `settings` (`read`, `update`)
+  - `audit_log` (`read`)
+
+#### Silent Permission Hiding (Conditional UI Rendering)
+
+Antarmuka panel admin menerapkan prinsip **Silent Permission Hiding**:
+1. **DOM Unmounting Murni**: Elemen aksi (tombol Create, Edit, Delete, Export) yang tidak diizinkan 100% dilepas dari DOM (`{canAction && <Button />}` atau `return null`). Tidak ada CSS penyamaran (`opacity: 0`, `visibility: hidden`).
+2. **Auto-Stretch Tabel Data**: Jika pengguna tidak memiliki izin mutasi pada tabel data, seluruh tag `<th>` dan `<td>` kolom "Aksi" tidak dirender. Kolom teks utama (Judul, Nama, Subjek, Keterangan) otomatis meregang memenuhi lebar tabel (*auto-stretch*).
+3. **Pembersihan Wrapper**: Kontainer flexbox/grid yang seluruh tombol di dalamnya tidak diizinkan tidak akan dirender, mencegah adanya ruang kosong atau jarak canggung pada tata letak.
 
 ### 5.3 Alur End-to-End: Login & Logout Admin
 
@@ -842,6 +860,10 @@ Validitas masa aktif sesi kini diverifikasi langsung pada kolom `T_Sesi.expires_
 | **Edge Cache CDN Invalidation** | `src/app/(public)/*` | ✅ **RESOLVED** | Menggantikan `force-dynamic` dengan `revalidate = 300`, memungkinkan Cloudflare CDN melayani 99% request publik tanpa menyentuh Turso. |
 | **R2 Storage Free Tier Protection** | `src/lib/storage/s3.ts`, `api/media` | ✅ **RESOLVED** | Header `CacheControl: public, max-age=31536000, immutable`, validasi batas ukuran file 5MB, dan 100% read bypass SDK via CDN publik. |
 | **LibSQL Web Driver Isolate** | `src/lib/db.ts` | ✅ **RESOLVED** | Menggunakan `@prisma/adapter-libsql/web` murni berbasis web fetch untuk menghilangkan crash native binding Neon C++/Rust pada Workers. |
+| **Dynamic Granular RBAC (38 Keys)** | `src/types/permissions.ts`, `M_Role` | ✅ **RESOLVED** | Migrasi dari role statis ke 38 kunci izin granular berbasis tabel `M_Role.permissions`, isolasi kepemilikan departemen, dan proteksi failsafe `isSystem`. |
+| **Admin Roles Manager (`/admin/roles`)** | `src/app/admin/(panel)/roles` | ✅ **RESOLVED** | Modul panel admin interaktif untuk mengelola dan menetapkan matriks izin 38 kunci secara dinamis tanpa sentuh kode. |
+| **Silent Permission Hiding** | Seluruh tabel & action bar | ✅ **RESOLVED** | Pembongkaran DOM murni (tanpa CSS penyamaran), auto-stretch kolom tabel data saat tombol aksi tidak diizinkan, dan pembersihan wrapper flex/grid kosong. |
+| **Keep-Alive Connection Pooling** | `src/lib/db.ts`, `storage/s3.ts` | ✅ **RESOLVED** | Custom fetch keepalive untuk koneksi LibSQL Turso, shared S3Client singleton, concurrency limit 20, dan intMode number untuk performa zero-buffering. |
 
 ---
 
@@ -864,16 +886,18 @@ Validitas masa aktif sesi kini diverifikasi langsung pada kolom `T_Sesi.expires_
 - [x] **12. Modularisasi Beranda Monolitik (53 KB)**: Dipecah menjadi sub-komponen modular di `_components/` *(SELESAI - 14 Okt 2026)*
 - [x] **13. Code Splitting Komponen Berat**: RichTextEditor dan visual charts di-load dinamis dengan `next/dynamic` *(SELESAI - 14 Okt 2026)*
 - [x] **14. LibSQL Web Isolate Driver**: Menggunakan `@prisma/adapter-libsql/web` murni web fetch *(SELESAI - 14 Okt 2026)*
+- [x] **15. LibSQL Keep-Alive & S3Client Singleton**: Socket reuse koneksi LibSQL dan shared S3 client untuk zero-buffering *(SELESAI - 20 Okt 2026)*
 
-#### Prioritas 3 — Stabilitas & Fitur Eksternal Lanjutan (1-2 sprint)
-- [ ] **15. Implementasi SMTP** menggunakan Resend API atau Cloudflare Queues
-- [ ] **16. Rate limiting edge terdistribusi** via Cloudflare KV atau native CF Rate Limiting Rules
-- [x] **17. Bersihkan dependencies** tak terpakai (`pg`, `@prisma/adapter-pg`, `emnapi`) *(SELESAI - 14 Okt 2026)*
-- [x] **18. Selaraskan `prisma/seed.ts`** dengan model skema terbaru (`mPeriode`, `tPengaturan`) *(SELESAI - 14 Okt 2026)*
-- [x] **19. Lengkapi unit test coverage**: Status peluang, matriks perizinan, slug, storage driver, sanitasi HTML, dan visibility *(SELESAI - 14 Okt 2026)*
+#### Prioritas 3 — RBAC Dinamis & Tata Letak Bersih (Status: 100% Selesai)
+- [x] **16. Taksonomi 38 Izin Granular**: Skema model `M_Role.permissions`, isolasi Kadep, dan guard server actions *(SELESAI - 19 Okt 2026)*
+- [x] **17. Antarmuka Manajemen Peran (`/admin/roles`)**: Editor matriks izin visual dengan failsafe proteksi `SUPER_ADMIN` *(SELESAI - 19 Okt 2026)*
+- [x] **18. Silent Permission Hiding**: DOM unmounting murni dan auto-stretch kolom tabel data tanpa celah kosong *(SELESAI - 20 Okt 2026)*
+- [x] **19. Bersihkan dependencies** tak terpakai (`pg`, `@prisma/adapter-pg`, `emnapi`) *(SELESAI - 14 Okt 2026)*
+- [x] **20. Selaraskan `prisma/seed.ts`** dengan model skema terbaru (`mPeriode`, `tPengaturan`, default role permissions) *(SELESAI - 19 Okt 2026)*
+- [x] **21. Lengkapi unit test coverage**: Status peluang, matriks perizinan, slug, storage driver, sanitasi HTML, visibility, dan health API (17 test suites) *(SELESAI - 20 Okt 2026)*
 
 ---
 
-*Laporan audit arsitektur ini diperbarui pada 14 Oktober 2026 setelah implementasi Extreme Performance & Zero-Waste Architecture (Edge SWR Caching, Turso Row-Read Guard, R2 Ops Guard, dan Modularisasi Frontend).*
+*Laporan audit arsitektur ini diperbarui pada 20 Oktober 2026 setelah implementasi Dynamic RBAC, Silent Permission Hiding, dan Extreme Database/Storage Keep-Alive Connection Optimization.*
 
 
