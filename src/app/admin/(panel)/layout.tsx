@@ -19,7 +19,7 @@ export default async function AdminPanelLayout({
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#16161a] text-white selection:bg-[#FFB22C] selection:text-[#1b1b1f]">
       {/* Sidebar Nav (Fixed) */}
-      <AdminSidebar userRole={session.user.role} />
+      <AdminSidebar user={session.user} userRole={session.user.role} />
 
       {/* Main Content Viewport */}
       <div className="flex flex-1 flex-col min-w-0 h-screen overflow-hidden">

@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
 import { transactionSchema, type TransactionInput } from "./schema";
 import type { ActionResponse } from "@/types";
@@ -10,8 +10,8 @@ import { revalidatePath } from "next/cache";
 
 export async function createTransactionAction(data: TransactionInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "manage", "finance")) {
-    return { success: false, message: "Akses ditolak. Anda tidak memiliki izin untuk mengelola keuangan." };
+  if (!session || !hasPermission(session.user, "finance:create")) {
+    return { success: false, message: "Akses ditolak. Anda tidak memiliki izin untuk mencatat transaksi keuangan." };
   }
 
   const parsed = transactionSchema.safeParse(data);
@@ -75,8 +75,8 @@ export async function updateTransactionAction(
   data: TransactionInput
 ): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "manage", "finance")) {
-    return { success: false, message: "Akses ditolak. Anda tidak memiliki izin untuk mengelola keuangan." };
+  if (!session || !hasPermission(session.user, "finance:update")) {
+    return { success: false, message: "Akses ditolak. Anda tidak memiliki izin untuk mengubah transaksi keuangan." };
   }
 
   const numId = typeof id === "string" ? parseInt(id, 10) : id;
@@ -139,8 +139,8 @@ export async function updateTransactionAction(
 
 export async function deleteTransactionAction(id: number | string): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "manage", "finance")) {
-    return { success: false, message: "Akses ditolak. Anda tidak memiliki izin untuk menghapus transaksi." };
+  if (!session || !hasPermission(session.user, "finance:delete")) {
+    return { success: false, message: "Akses ditolak. Anda tidak memiliki izin untuk menghapus transaksi keuangan." };
   }
 
   const numId = typeof id === "string" ? parseInt(id, 10) : id;

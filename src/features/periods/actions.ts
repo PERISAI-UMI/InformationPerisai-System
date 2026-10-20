@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
 import { periodSchema, type PeriodInput } from "./schema";
 import type { ActionResponse } from "@/types";
@@ -11,8 +11,8 @@ import { revalidatePath } from "next/cache";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function createPeriodAction(data: PeriodInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "create", "periods")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "departments:manage")) {
+    return { success: false, message: "Akses ditolak: Hanya Super Admin / Pimpinan yang berhak menambah periode kepengurusan." };
   }
 
   const parsed = periodSchema.safeParse(data);
@@ -57,8 +57,8 @@ export async function createPeriodAction(data: PeriodInput): Promise<ActionRespo
 
 export async function updatePeriodAction(id: string, data: PeriodInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "update", "periods")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "departments:manage")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin memperbarui periode." };
   }
 
   const parsed = periodSchema.safeParse(data);
@@ -108,8 +108,8 @@ export async function updatePeriodAction(id: string, data: PeriodInput): Promise
 
 export async function setActivePeriodAction(id: string): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "update", "periods")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "departments:manage")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin mengaktifkan periode." };
   }
 
   const numId = parseInt(id, 10);

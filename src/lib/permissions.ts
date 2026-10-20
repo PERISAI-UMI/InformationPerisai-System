@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
 import type {
   AuthUser,
   PermissionAction,
@@ -254,6 +253,7 @@ export async function requirePermission(
   key: PermissionKey,
   context?: PermissionContext
 ): Promise<Session> {
+  const { getSession } = await import("@/lib/auth");
   const session = await getSession();
 
   if (!session) {

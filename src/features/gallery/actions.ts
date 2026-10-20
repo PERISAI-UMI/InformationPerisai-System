@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { storage } from "@/lib/storage";
 import { writeAuditLog } from "@/lib/audit";
 import type { ActionResponse } from "@/types";
@@ -10,8 +10,8 @@ import { revalidatePath } from "next/cache";
 
 export async function deleteMediaAction(id: string): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "delete", "gallery")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "gallery:delete")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin menghapus berkas galeri." };
   }
 
   try {

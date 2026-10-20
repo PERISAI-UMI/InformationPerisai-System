@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
 import type { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
@@ -12,8 +12,8 @@ export async function updateSettingsAction(
   settings: Array<{ key: string; value: string; isPublic?: boolean }>
 ): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "update", "settings")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "settings:update")) {
+    return { success: false, message: "Akses ditolak: Hanya Super Admin / Pengurus Berwenang yang dapat mengubah pengaturan." };
   }
 
   try {

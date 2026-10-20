@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
 import { memberSchema, type MemberInput } from "./schema";
 import type { ActionResponse } from "@/types";
@@ -10,8 +10,8 @@ import { revalidatePath } from "next/cache";
 
 export async function createMemberAction(data: MemberInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "create", "members")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "members:create")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin menambah anggota/pengurus." };
   }
 
   const parsed = memberSchema.safeParse(data);
@@ -87,8 +87,8 @@ export async function createMemberAction(data: MemberInput): Promise<ActionRespo
 
 export async function updateMemberAction(id: string, data: MemberInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "update", "members")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "members:update")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin mengubah data pengurus." };
   }
 
   const parsed = memberSchema.safeParse(data);
@@ -144,8 +144,8 @@ export async function updateMemberAction(id: string, data: MemberInput): Promise
 
 export async function deleteMemberAction(id: string): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "delete", "members")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "members:delete")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin menghapus pengurus." };
   }
 
   const numId = parseInt(id, 10);

@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { writeAuditLog } from "@/lib/audit";
@@ -57,8 +57,8 @@ export async function sendContactMessageAction(data: ContactInput): Promise<Acti
 
 export async function markAsReadAction(id: string): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "update", "inbox")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "inbox:mark_read")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin membaca/menandai pesan." };
   }
 
   const numId = parseInt(id, 10);
@@ -79,8 +79,8 @@ export async function markAsReadAction(id: string): Promise<ActionResponse> {
 
 export async function deleteMessageAction(id: string): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "delete", "inbox")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "inbox:delete")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin menghapus pesan masuk." };
   }
 
   const numId = parseInt(id, 10);

@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
 import { userSchema, type UserInput } from "./schema";
 import type { ActionResponse } from "@/types";
@@ -10,8 +10,8 @@ import { revalidatePath } from "next/cache";
 
 export async function createUserAction(data: UserInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "create", "users")) {
-    return { success: false, message: "Akses ditolak: Hanya Super Admin yang berhak mengelola akun pengguna." };
+  if (!session || !hasPermission(session.user, "users:create")) {
+    return { success: false, message: "Akses ditolak: Hanya Super Admin yang berhak membuat atau mendaftarkan akun pengguna." };
   }
 
   const parsed = userSchema.safeParse(data);
@@ -57,8 +57,8 @@ export async function createUserAction(data: UserInput): Promise<ActionResponse>
 
 export async function updateUserAction(id: string, data: UserInput): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "update", "users")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "users:update")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin memperbarui akun pengguna." };
   }
 
   const parsed = userSchema.safeParse(data);
@@ -93,8 +93,8 @@ export async function updateUserAction(id: string, data: UserInput): Promise<Act
 
 export async function toggleUserStatusAction(id: string, isActive: boolean): Promise<ActionResponse> {
   const session = await getSession();
-  if (!session || !can(session.user, "manage", "users")) {
-    return { success: false, message: "Akses ditolak." };
+  if (!session || !hasPermission(session.user, "users:update")) {
+    return { success: false, message: "Akses ditolak: Anda tidak memiliki izin mengaktifkan/menonaktifkan pengguna." };
   }
 
   try {
