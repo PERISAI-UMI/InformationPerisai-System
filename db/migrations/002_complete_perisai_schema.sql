@@ -77,6 +77,8 @@ CREATE TABLE IF NOT EXISTS M_Role (
   nama_role TEXT NOT NULL UNIQUE, -- SUPER_ADMIN, ADMIN, KADEP, EDITOR, ANGGOTA
   label TEXT NOT NULL,
   deskripsi TEXT,
+  permissions TEXT DEFAULT '[]',
+  is_system INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );

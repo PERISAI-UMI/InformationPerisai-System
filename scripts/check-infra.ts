@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 config();
+config({ path: ".env.local", override: true });
 
 import { createClient } from "@libsql/client";
 import https from "node:https";

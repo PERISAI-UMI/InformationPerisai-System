@@ -287,19 +287,72 @@ async function main() {
   const periodeId = pRes.rows[0].id_periode;
 
   // 3e. Roles RBAC (SUPER_ADMIN, ADMIN, KADEP, EDITOR, ANGGOTA)
+  const allPermissions = [
+    "posts:read", "posts:create", "posts:update", "posts:publish", "posts:delete",
+    "opportunities:read", "opportunities:create", "opportunities:update", "opportunities:delete",
+    "finance:read", "finance:create", "finance:update", "finance:delete", "finance:export",
+    "programs:read", "programs:create", "programs:update", "programs:delete",
+    "members:read", "members:create", "members:update", "members:delete",
+    "departments:read", "departments:update", "departments:manage",
+    "inbox:read", "inbox:mark_read", "inbox:delete",
+    "gallery:read", "gallery:upload", "gallery:delete",
+    "settings:read", "settings:update",
+    "users:read", "users:create", "users:update", "users:assign_role",
+    "audit:read"
+  ];
+
   const daftarRoles = [
-    { nama: "SUPER_ADMIN", label: "Administrator Teknis / Webmaster", desc: "Akses teknis penuh seluruh sistem CMS" },
-    { nama: "ADMIN", label: "Pengurus Inti & Kepala Departemen", desc: "Pimpinan operasional (Ketua Umum, Sekum, Bendum, Kadep)" },
-    { nama: "KADEP", label: "Kepala Departemen", desc: "Akses program kerja dan anggota divisi departemen" },
-    { nama: "EDITOR", label: "Staf Ahli / Kontributor Konten", desc: "Akses penulisan artikel, berita, dan galeri media" },
-    { nama: "ANGGOTA", label: "Anggota Biasa", desc: "Akses profil pribadi anggota dan forum internal" },
+    {
+      nama: "SUPER_ADMIN",
+      label: "Administrator Teknis / Webmaster",
+      desc: "Akses teknis penuh seluruh sistem CMS",
+      permissions: allPermissions,
+      isSystem: 1
+    },
+    {
+      nama: "ADMIN",
+      label: "Pengurus Inti & Kepala Departemen",
+      desc: "Pimpinan operasional (Ketua Umum, Sekum, Bendum, Kadep)",
+      permissions: allPermissions.filter(k => k !== "users:assign_role"),
+      isSystem: 1
+    },
+    {
+      nama: "KADEP",
+      label: "Kepala Departemen",
+      desc: "Akses program kerja dan anggota divisi departemen",
+      permissions: [
+        "programs:read", "programs:create", "programs:update",
+        "members:read", "departments:read", "gallery:read", "gallery:upload",
+        "posts:read", "opportunities:read"
+      ],
+      isSystem: 1
+    },
+    {
+      nama: "EDITOR",
+      label: "Staf Ahli / Kontributor Konten",
+      desc: "Akses penulisan artikel, berita, dan galeri media",
+      permissions: [
+        "posts:read", "posts:create", "posts:update", "posts:publish",
+        "gallery:read", "gallery:upload", "gallery:delete", "opportunities:read"
+      ],
+      isSystem: 1
+    },
+    {
+      nama: "ANGGOTA",
+      label: "Anggota Biasa",
+      desc: "Akses profil pribadi anggota dan forum internal",
+      permissions: [
+        "posts:read", "opportunities:read", "programs:read", "members:read", "departments:read", "gallery:read"
+      ],
+      isSystem: 1
+    },
   ];
 
   const roleMap = {};
   for (const r of daftarRoles) {
     await client.execute({
-      sql: `INSERT INTO M_Role (nama_role, label, deskripsi, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
-      args: [r.nama, r.label, r.desc, now, now]
+      sql: `INSERT INTO M_Role (nama_role, label, deskripsi, permissions, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [r.nama, r.label, r.desc, JSON.stringify(r.permissions), r.isSystem, now, now]
     });
     const res = await client.execute({ sql: "SELECT id_role FROM M_Role WHERE nama_role = ?", args: [r.nama] });
     if (res.rows[0]) roleMap[r.nama] = res.rows[0].id_role;
