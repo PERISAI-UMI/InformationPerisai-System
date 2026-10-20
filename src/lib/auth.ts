@@ -89,6 +89,7 @@ export async function getSession(): Promise<Session | null> {
         akun: {
           include: {
             role: {
+              // Membaca nama role, permissions JSON dinamis, dan flag isSystem
               select: { namaRole: true, permissions: true, isSystem: true },
             },
             anggota: {
