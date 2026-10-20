@@ -63,7 +63,7 @@ export function StatisticForm({ initialData }: StatisticFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
+    <form onSubmit={handleSubmit} className="space-y-6 w-full">
       {errorMessage && (
         <div className="animate-shake">
           <Alert variant="error" title="Gagal Menyimpan" onClose={() => setErrorMessage("")}>
