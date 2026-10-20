@@ -1,4 +1,4 @@
-import { DatabaseSync } from "node:sqlite";
+import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -822,7 +822,7 @@ function normalizePhone(raw: string | number | null) {
 async function main() {
   const dbPath = path.resolve(process.cwd(), "psdm-db.db");
   console.log(`🔌 Opening SQLite Database: ${dbPath}`);
-  const db = new DatabaseSync(dbPath);
+  const db = new Database(dbPath);
 
   // 1. Eksekusi DDL Migration 002
   console.log("🚀 Executing DDL 002_complete_perisai_schema.sql...");
