@@ -96,14 +96,16 @@ model MPeriode {
 }
 
 model MRole {
-  idRole    Int      @id @default(autoincrement()) @map("id_role")
-  namaRole  String   @unique @map("nama_role")
-  label     String
-  deskripsi String?
-  createdAt Int      @default(dbgenerated("(unixepoch())")) @map("created_at")
-  updatedAt Int      @default(dbgenerated("(unixepoch())")) @map("updated_at")
+  idRole      Int      @id @default(autoincrement()) @map("id_role")
+  namaRole    String   @unique @map("nama_role")
+  label       String
+  deskripsi   String?
+  permissions String?  @default("[]")
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   Int      @default(dbgenerated("(unixepoch())")) @map("created_at")
+  updatedAt   Int      @default(dbgenerated("(unixepoch())")) @map("updated_at")
 
-  akun      MAkun[]
+  akun        MAkun[]
 
   @@map("M_Role")
 }

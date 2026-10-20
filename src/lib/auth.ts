@@ -11,7 +11,7 @@
  */
 
 import { cookies } from "next/headers";
-import type { AuthUser, Session } from "@/types";
+import type { AuthUser, Session, PermissionKey } from "@/types";
 import prisma from "./db";
 
 export const SESSION_COOKIE_NAME = "perisai_session_id";
@@ -89,7 +89,7 @@ export async function getSession(): Promise<Session | null> {
         akun: {
           include: {
             role: {
-              select: { namaRole: true },
+              select: { namaRole: true, permissions: true, isSystem: true },
             },
             anggota: {
               select: {
@@ -145,9 +145,25 @@ export async function getSession(): Promise<Session | null> {
     const posTitle = kep?.jabatan?.namaJabatan || undefined;
     const tier = kep?.tier || undefined;
 
-    // Impor dinamis atau komputasi permissions untuk cache sesi
+    // Baca permissions dinamis dari tabel M_Role
+    let dynamicPermissions: PermissionKey[] = [];
+    if (role.permissions) {
+      try {
+        const parsed = JSON.parse(role.permissions);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          dynamicPermissions = parsed as PermissionKey[];
+        }
+      } catch {
+        // Abaikan jika parsing gagal
+      }
+    }
+
+    // Jika permissions dinamis dari basis data ada, prioritaskan; fallback ke komputasi default jabatan
     const { computeDefaultPermissions } = await import("./permissions");
-    const permissions = computeDefaultPermissions(cmsRole, posTitle, deptSlug);
+    const permissions =
+      dynamicPermissions.length > 0
+        ? dynamicPermissions
+        : computeDefaultPermissions(cmsRole, posTitle, deptSlug);
 
     return {
       user: {
