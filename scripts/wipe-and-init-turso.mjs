@@ -290,7 +290,6 @@ async function main() {
   const allPermissions = [
     "posts:read", "posts:create", "posts:update", "posts:publish", "posts:delete",
     "opportunities:read", "opportunities:create", "opportunities:update", "opportunities:delete",
-    "finance:read", "finance:create", "finance:update", "finance:delete", "finance:export",
     "programs:read", "programs:create", "programs:update", "programs:delete",
     "members:read", "members:create", "members:update", "members:delete",
     "departments:read", "departments:update", "departments:manage",

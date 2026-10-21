@@ -60,11 +60,6 @@ export function computeDefaultPermissions(
     // 2c. Pimpinan Keuangan: Bendahara Umum
     if (title === "bendahara umum" || title.includes("bendahara umum")) {
       return [
-        "finance:read",
-        "finance:create",
-        "finance:update",
-        "finance:delete",
-        "finance:export",
         "programs:read",
         "departments:read",
         "members:read",
@@ -150,11 +145,6 @@ export function computeDefaultPermissions(
       "opportunities:create",
       "opportunities:update",
       "opportunities:delete",
-      "finance:read",
-      "finance:create",
-      "finance:update",
-      "finance:delete",
-      "finance:export",
       "programs:read",
       "programs:create",
       "programs:update",
@@ -278,9 +268,6 @@ export function can(
 
   // 3. EDITOR: Staf Ahli Konten
   if (user.role === "EDITOR") {
-    if (resource === "finance") {
-      return false;
-    }
     const editorAllowedResources: PermissionResource[] = ["posts", "gallery", "opportunities"];
     if (editorAllowedResources.includes(resource)) {
       return ["create", "read", "update"].includes(action);
