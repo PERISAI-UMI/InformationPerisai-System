@@ -65,9 +65,9 @@ export async function getRoles(): Promise<RoleListItem[]> {
       }
     }
 
-    const users = role.akun
-      .map((a) => a.anggota)
-      .filter((m): m is NonNullable<typeof m> => Boolean(m));
+    const users = (role.akun || [])
+      .map((a: { anggota: RoleListItem["users"][number] | null }) => a.anggota)
+      .filter((m): m is RoleListItem["users"][number] => Boolean(m));
 
     return {
       id: role.idRole,
@@ -121,9 +121,9 @@ export async function getRoleById(id: number): Promise<RoleListItem | null> {
     }
   }
 
-  const users = role.akun
-    .map((a) => a.anggota)
-    .filter((m): m is NonNullable<typeof m> => Boolean(m));
+  const users = (role.akun || [])
+    .map((a: { anggota: RoleListItem["users"][number] | null }) => a.anggota)
+    .filter((m): m is RoleListItem["users"][number] => Boolean(m));
 
   return {
     id: role.idRole,
