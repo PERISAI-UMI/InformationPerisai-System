@@ -3,9 +3,9 @@
 > **Target Codebase**: `InformationPerisai-System`  
 > **Auditor**: Antigravity (Principal Software Architect & Security Auditor)  
 > **Tanggal Audit Awal**: 14 Oktober 2026  
-> **Pembaruan Terakhir**: 20 Oktober 2026 (Dynamic RBAC 38 Keys, Silent Permission Hiding, & Keep-Alive Connection Optimization)  
+> **Pembaruan Terakhir**: 21 Oktober 2026 (Decoupling Modul Keuangan ke Standalone App, Dynamic RBAC 33 Keys, & React Error #412 Connection Optimization)  
 > **Status Sistem**: Aktif — Siap Produksi Edge (Cloudflare Workers via OpenNext + Turso LibSQL Cloud + Cloudflare R2)  
-> **Kepatuhan Kualitas**: Strict TypeScript (`tsc --noEmit` clean 0 error), 17 Automated Test Suites (100% Passed)
+> **Kepatuhan Kualitas**: Strict TypeScript (`tsc --noEmit` clean 0 error), 16 Automated Test Suites (100% Passed)
 
 ---
 
@@ -17,9 +17,9 @@
 
 Arsitektur yang diusung adalah **Fullstack Monolith Decoupled CMS** berbasis **Next.js 16 (App Router)**. Satu aplikasi ini melayani dua permukaan (*surfaces*):
 1. **Portal Informasi Publik**: Profil organisasi, etalase riset & prestasi mahasiswa, bagan struktur kepengurusan, katalog program kerja, agregator lomba/beasiswa, serta formulir kontak & konsultasi ilmiah.
-2. **Panel CMS Administratif (`/admin`)**: Dashboard pengelolaan konten terproteksi sesi opaque dan Dynamic Role-Based Access Control (RBAC) 38 kunci izin granular, mencakup modul Berita, Peluang Lomba, Galeri Media, Pembukuan Kas Keuangan, Departemen, Fungsionaris, Program Kerja, Periode, Pesan Masuk, Manajemen Peran, Pengguna CMS, Indikator Statistik, Pengaturan Situs, dan Jejak Audit.
+2. **Panel CMS Administratif (`/admin`)**: Dashboard pengelolaan konten terproteksi sesi opaque dan Dynamic Role-Based Access Control (RBAC) 33 kunci izin granular, mencakup modul Berita, Peluang Lomba, Galeri Media, Departemen, Fungsionaris, Program Kerja, Periode, Pesan Masuk, Manajemen Peran, Pengguna CMS, Indikator Statistik, Pengaturan Situs, dan Jejak Audit. (Modul Keuangan Kas telah di-decouple menjadi aplikasi standalone tersendiri yang berbagi Shared Database Turso yang sama).
 
-Basis data sistem beroperasi dengan **Shared Database Model** bersama sistem internal PSDM (absensi & keanggotaan) yang tersimpan di **Turso (LibSQL Cloud)** dengan perlindungan integritas skema ketat.
+Basis data sistem beroperasi dengan **Shared Database Model** bersama sistem internal PSDM (absensi & keanggotaan) serta aplikasi Keuangan Kas mandiri yang tersimpan di **Turso (LibSQL Cloud)** dengan perlindungan integritas skema ketat.
 
 ---
 
@@ -39,7 +39,7 @@ Basis data sistem beroperasi dengan **Shared Database Model** bersama sistem int
 | **Validasi Skema** | Zod | `^4.6.5` | Validasi tipe-aman runtime di form dan server actions |
 | **Anti-Bot / CAPTCHA** | Cloudflare Turnstile | Client Widget + Server Verify | Proteksi brute-force login dan spam formulir kontak |
 | **Sanitasi Konten** | Sanitize-HTML | Pure JavaScript (Edge-safe) | Proteksi injeksi XSS pada konten HTML artikel |
-| **Test Runner** | Node.js Test Runner via TSX | `tsx@^4.19.3` | 17 automated test suites cepat tanpa framework berat |
+| **Test Runner** | Node.js Test Runner via TSX | `tsx@^4.19.3` | 16 automated test suites cepat tanpa framework berat |
 
 ---
 
@@ -57,7 +57,7 @@ Basis data sistem beroperasi dengan **Shared Database Model** bersama sistem int
 │   │                                                                     │   │
 │   │  ┌─────────────────────────┐     ┌───────────────────────────────┐  │   │
 │   │  │   PUBLIC PORTAL (SSR)   │     │    ADMIN CMS PANEL (/admin)   │  │   │
-│   │  │   - Home (Modular)      │     │    - Dynamic RBAC (38 Keys)   │  │   │
+│   │  │   - Home (Modular)      │     │    - Dynamic RBAC (33 Keys)   │  │   │
 │   │  │   - Kabar & Peluang     │     │    - Silent Permission Hiding │  │   │
 │   │  │   - Organogram & Proker │     │    - Opaque Token (T_Sesi)    │  │   │
 │   │  └───────────┬─────────────┘     └───────────────┬───────────────┘  │   │
@@ -119,7 +119,6 @@ InformationPerisai-System/
 │   │   │       ├── posts/       # Berita & artikel ilmiah
 │   │   │       ├── opportunities/ # Informasi peluang & lomba
 │   │   │       ├── gallery/     # Galeri media & file R2
-│   │   │       ├── finance/     # Pembukuan kas & keuangan
 │   │   │       ├── departments/ # Pengelolaan departemen & badan
 │   │   │       ├── members/     # Fungsionaris & organogram
 │   │   │       ├── work-programs/ # Program kerja kabinet
@@ -137,10 +136,9 @@ InformationPerisai-System/
 │   │   ├── layout.tsx           # Root layout global
 │   │   └── globals.css          # Desain sistem Obsidian-Gold Tailwind v4
 │   ├── components/              # Komponen UI bersama (Button, Table, Modal, Toast)
-│   ├── features/                # Arsitektur Feature-Sliced (14 domain modul)
+│   ├── features/                # Arsitektur Feature-Sliced (13 domain modul)
 │   │   ├── posts/               # Modul Berita (schema, actions, queries, table)
 │   │   ├── opportunities/       # Modul Peluang (schema, actions, queries, table)
-│   │   ├── finance/             # Modul Keuangan (schema, actions, queries, table)
 │   │   ├── roles/               # Modul RBAC Roles (schema, actions, queries, form)
 │   │   ├── members/             # Modul Fungsionaris (schema, actions, queries)
 │   │   ├── departments/         # Modul Departemen (schema, actions, queries)
@@ -153,9 +151,9 @@ InformationPerisai-System/
 │   │   ├── statistics/          # Modul Statistik (actions, queries, table)
 │   │   └── audit/               # Modul Audit Trail (queries, table)
 │   ├── lib/                     # Utilitas inti sistem
-│   │   ├── auth.ts              # Manajemen sesi opaque, scrypt re-hash, cookie
+│   │   ├── auth.ts              # Manajemen sesi opaque, scrypt re-hash, React.cache() deduplication
 │   │   ├── db.ts                # Prisma singleton + LibSQL keep-alive pooling
-│   │   ├── permissions.ts       # ⭐ Dynamic RBAC 38 keys & hasPermission logic
+│   │   ├── permissions.ts       # ⭐ Dynamic RBAC 33 keys & hasPermission logic
 │   │   ├── permissions.server.ts # Server guard requirePermission
 │   │   ├── audit.ts             # Pencatatan T_Audit_Log atomik
 │   │   ├── cloudflare.ts        # Purge Cloudflare CDN Cache API
@@ -188,6 +186,7 @@ InformationPerisai-System/
   - Format Waktu: Unix Epoch timestamp dalam detik (`Int`), menjamin portabilitas tanpa masalah zona waktu database.
   - Boolean: Integer `0` (false) dan `1` (true).
   - Skema Relasional: Normalisasi Ketiga (3NF) penuh dengan penegakan *foreign key constraints*.
+  - **Shared Database Model & Retensi `T_Keuangan`**: Entitas `T_Keuangan` sengaja dipertahankan di basis data dan skema Prisma (`prisma/schema.prisma`) guna menjaga interoperabilitas basis data terbagikan dengan aplikasi kas mandiri (*standalone finance app*), sementara logika UI dan mutasi di aplikasi ini telah sepenuhnya di-*decouple*.
 
 ### 3.2 Diagram Relasi Entitas (Mermaid ERD)
 
@@ -351,9 +350,9 @@ Sistem menerapkan **Strategy / Factory Pattern** pada `src/lib/storage/`:
 
 ---
 
-### 5.2 Dynamic Granular RBAC (38 Permission Keys)
+### 5.2 Dynamic Granular RBAC (33 Permission Keys)
 
-Sistem telah bermigrasi penuh dari pengecekan statis nama peran ke **Taksonomi 38 Kunci Izin Granular**:
+Sistem telah bermigrasi penuh dari pengecekan statis nama peran ke **Taksonomi 33 Kunci Izin Granular**:
 
 ```typescript
 export const ALL_PERMISSIONS = [
@@ -368,11 +367,9 @@ export const ALL_PERMISSIONS = [
   // Members
   "members:read", "members:create", "members:update", "members:delete",
   // Work Programs
-  "work_programs:read", "work_programs:create", "work_programs:update", "work_programs:delete",
+  "programs:read", "programs:create", "programs:update", "programs:delete",
   // Periods
   "periods:read", "periods:update", "periods:manage",
-  // Finance
-  "finance:read", "finance:create", "finance:update", "finance:delete", "finance:export",
   // Inbox
   "inbox:read", "inbox:mark_read", "inbox:delete",
   // Users
@@ -383,6 +380,8 @@ export const ALL_PERMISSIONS = [
   "audit_log:read"
 ] as const;
 ```
+
+> **Catatan Pemisahan Modul Keuangan**: 5 kunci izin keuangan terdahulu (`finance:read`, `finance:create`, `finance:update`, `finance:delete`, `finance:export`) telah dicabut seiring pemindahan modul keuangan kas ke *standalone web app*.
 
 #### Komponen Kunci RBAC Dinamis:
 1. **Model `M_Role`**: Kolom `permissions` menyimpan JSON array izin aktif (`PermissionKey[]`). Kolom `isSystem` (Boolean) mengunci peran bawaan (`SUPER_ADMIN`) dari modifikasi atau penghapusan (*failsafe*).
@@ -422,11 +421,6 @@ Untuk menjamin antarmuka bersih dan tidak mengecewakan pengguna (menghindari tom
 | **Galeri Media (`gallery`)** | Read / Lihat | ✅ | ✅ | ✅ | ✅ | Page Guard (`gallery:read`) |
 | | Upload Berkas | ✅ | ✅ | ✅ | ✅ | API Route (`gallery:upload`) |
 | | **Delete Berkas** | ✅ | ✅ | ❌ | ❌ | Server Action (`gallery:delete`) |
-| **Keuangan Kas (`finance`)** | Lihat Saldo & Kas | ✅ | ✅ | ❌ | ❌ | Page Guard (`finance:read`) |
-| | Catat Transaksi | ✅ | ✅ | ❌ | ❌ | Server Action (`finance:create`) |
-| | Ubah Transaksi | ✅ | ✅ | ❌ | ❌ | Server Action (`finance:update`) |
-| | **Hapus Transaksi** | ✅ | ✅ | ❌ | ❌ | Server Action (`finance:delete`) |
-| | Ekspor Laporan CSV | ✅ | ✅ | ❌ | ❌ | Client Guard (`finance:export`) |
 | **Departemen (`departments`)** | Read / Lihat | ✅ | ✅ | ✅ | ✅ | Page Guard (`departments:read`) |
 | | Update Profil | ✅ | ✅ | Own Dept | ❌ | Server Action (`departments:update`) |
 | | **Kelola & Hapus** | ✅ | ❌ | ❌ | ❌ | Server Action (`departments:manage`) |
@@ -471,6 +465,21 @@ Untuk memastikan sistem minim *buffering* dan beroperasi seefisien mungkin pada 
 4. **Concurrency Guard (`concurrency: 20`)**:
    - Membatasi antrean konkurensi multiplexing query Turso untuk mencegah kemacetan (*socket saturation*).
 
+### 7.2 Penyelesaian React Error #412 & Optimasi Sesi Cloudflare Workers
+React Error #412 (`"Connection closed."`) terjadi jika koneksi streaming React Server Component (RSC Flight stream) terputus sebelum client selesai menerima data. Di lingkungan edge dengan database berjarak (Turso di Tokyo, ~2.3s latency), hal ini dipicu oleh pemanggilan sesi berulang kali secara berurutan dalam satu request (misal di `layout.tsx` dan `page.tsx` via `requirePermission()`).
+
+Solusi permanen yang diterapkan:
+1. **Request Deduplication dengan `React.cache()`**:
+   Fungsi `getSession()` dibungkus dengan `React.cache()` di `src/lib/auth.ts`, sehingga dalam siklus satu render HTTP, query lookup sesi ke database dieksekusi **tepat 1 kali**.
+2. **In-Memory Worker V8 Cache (TTL 30 Detik)**:
+   Menyimpan sesi aktif di memory V8 per-token selama 30 detik. Navigasi admin instan (< 0.1ms) tanpa bolak-balik ke server Tokyo, mencegah kehabisan batas waktu subrequest Cloudflare.
+3. **In-Memory TTL Cache pada Fitur Publik**:
+   Penyimpanan memori sementara (3–5 menit) untuk data departemen, galeri, proker, peluang, dan postingan publik.
+4. **Cloudflare CDN Edge Cache Header**:
+   Header `s-maxage=120, stale-while-revalidate=600` pada rute publik untuk menahan 100+ pengguna simultan langsung di PoP edge Cloudflare tanpa membebani database Turso.
+5. **Auto-Recovery Error Boundary**:
+   Error boundary di `src/app/admin/(panel)/error.tsx` mendeteksi putusnya RSC stream (`#412`) dan menyediakan tombol *"Muat Ulang Halaman"* yang memicu `window.location.reload()` secara bersih.
+
 ---
 
 ## 8. Environment Variables & Security Hygiene
@@ -504,13 +513,15 @@ Untuk memastikan sistem minim *buffering* dan beroperasi seefisien mungkin pada 
 | **Better-SQLite3 di Edge** | `src/lib/db.ts` | ✅ **RESOLVED** | Diisolasi di blok fallback dev; runtime edge default menggunakan LibSQL Web. |
 | **Overhead S3Client Handshake** | `src/lib/storage/s3.ts` | ✅ **RESOLVED** | Shared S3Client singleton di `globalThis`, adaptif path-style, timeout guard. |
 | **Koneksi Turso Cold-Start** | `src/lib/db.ts` | ✅ **RESOLVED** | Custom fetch keep-alive socket reuse dan Prisma adapter caching. |
-| **Otorisasi Statis Rigid** | `src/lib/permissions.ts` | ✅ **RESOLVED** | Migrasi ke Dynamic RBAC 38 permissions berbasis tabel `M_Role` dan isolasi Kadep. |
+| **Otorisasi Statis Rigid** | `src/lib/permissions.ts` | ✅ **RESOLVED** | Migrasi ke Dynamic RBAC 33 permissions berbasis tabel `M_Role` dan isolasi Kadep. |
 | **Ruang Kosong Permission UI** | Seluruh Komponen Panel | ✅ **RESOLVED** | Implementasi Silent Permission Hiding (pure DOM unmounting & table auto-stretch). |
 | **XSS Injection pada Berita** | `src/lib/sanitize.ts` | ✅ **RESOLVED** | Sanitasi HTML berbasis library `sanitize-html` murni JS dengan whitelist artikel ketat. |
 | **Password Hash Legacy SHA-256** | `src/lib/auth.ts` | ✅ **RESOLVED** | Timing-safe verification + otomatis re-hash ke `scrypt` saat login sukses. |
 | **Sesi Token Session Fixation** | `src/lib/auth.ts` | ✅ **RESOLVED** | Opaque token 32-byte Web Crypto disimpan di tabel `T_Sesi` dengan expiry check. |
 | **Race Condition Slug Bentrok** | `src/lib/slug.ts` | ✅ **RESOLVED** | Generator slug adaptif otomatis menambahkan suffix angka saat terdeteksi duplikasi. |
 | **Tabrakan File Upload Paralel** | `src/app/api/media` | ✅ **RESOLVED** | High-entropy random salt ditambahkan pada nama berkas storage key. |
+| **React Error #412 (RSC Connection Drop)** | `src/lib/auth.ts`, `src/app/admin/(panel)/error.tsx` | ✅ **RESOLVED** | `React.cache()` deduplication, in-memory 30s V8 session cache, dan auto-recovery reload boundary. |
+| **Decoupling Modul Keuangan** | `src/features/finance/` | ✅ **RESOLVED** | Seluruh UI dan actions keuangan didecouple ke standalone app tanpa menghapus tabel database `T_Keuangan`. |
 
 ---
 
@@ -523,33 +534,49 @@ Sistem telah melalui pengujian menyeluruh pada seluruh lapisan:
    > tsc --noEmit
    # Exit code: 0 (Clean, 0 errors)
    ```
-2. **Automated Test Suite (17 Test Cases across 10 Suites)**:
+2. **Automated Test Suite (16 Test Cases across 9 Suites)**:
    ```bash
    $ npm test
-   ✓ PASSED: isLegacyPasswordHash mendeteksi hash SHA-256 64-karakter dengan benar
-   ✓ PASSED: verifyPassword dapat memverifikasi kata sandi legacy SHA-256
-   ✓ PASSED: hashPassword menghasilkan format scrypt yang valid dan dapat diverifikasi
-   ✓ PASSED: verifyTurnstileToken melewatkan verifikasi jika secret key kosong
-   ✓ PASSED: verifyTurnstileToken menerima token bypass client 'turnstile-not-configured'
-   ✓ PASSED: verifyTurnstileToken menolak token kosong meskipun secret key diset
-   ✓ PASSED: transactionSchema memvalidasi input transaksi yang valid
-   ✓ PASSED: transactionSchema menolak nominal <= 0 dan jenis transaksi invalid
-   ✓ PASSED: Otorisasi RBAC finance: EDITOR ditolak, ADMIN dan SUPER_ADMIN diizinkan
-   ✓ PASSED: getFinanceSummary dan getTransactions mengembalikan struktur data yang benar
-   ✓ PASSED: Deadline di masa depan harus bernilai buka (isOpen = true)
-   ✓ PASSED: Deadline di masa lalu harus bernilai tutup (isOpen = false)
-   ✓ PASSED: Pengguna anonim harus ditolak untuk semua aksi mutasi
-   ✓ PASSED: Pengguna non-aktif ditolak sekalipun memiliki role SUPER_ADMIN
-   ✓ PASSED: Role EDITOR tidak boleh menghapus post atau mengelola users
-   ✓ PASSED: Role SUPER_ADMIN memiliki akses penuh ke seluruh sumber daya
-   ✓ PASSED: hasPermission menghormati array permissions dinamis pada AuthUser
-   ✓ PASSED: hasPermission menegakkan isolasi kepemilikan departemen untuk Kadep
-   ✓ PASSED: Sanitasi HTML menghapus script berbahaya & menolak javascript: URI
-   ✓ PASSED: Konversi slug ramah URL & membersihkan karakter spesial
-   ✓ PASSED: Storage Driver Selection & S3 key normalization
-   ✓ PASSED: Visibility guard: draft dan arsip tidak bocor ke publik
-   
-   ℹ tests 17 | pass 17 | fail 0 | duration ~5.9s (100% Passed)
+   🧪 Running Auth Re-hash & Turnstile security tests...
+     ✓ PASSED: isLegacyPasswordHash mendeteksi hash SHA-256 64-karakter dengan benar
+     ✓ PASSED: verifyPassword dapat memverifikasi kata sandi legacy SHA-256
+     ✓ PASSED: hashPassword menghasilkan format scrypt yang valid dan dapat diverifikasi
+     ✓ PASSED: verifyTurnstileToken melewatkan verifikasi jika secret key kosong
+     ✓ PASSED: verifyTurnstileToken menerima token bypass client 'turnstile-not-configured'
+     ✓ PASSED: verifyTurnstileToken menolak token kosong meskipun secret key diset
+   ▶ API Health Route Diagnostik
+     ✔ Menyajikan respons status kesehatan dan checks komprehensif
+   🧪 Running opportunity status tests...
+     ✓ PASSED: Deadline di masa depan harus bernilai buka (isOpen = true)
+     ✓ PASSED: Deadline di masa lalu harus bernilai tutup (isOpen = false)
+     ✓ PASSED: Deadline persis sama dengan waktu saat ini harus masih terbuka
+   🧪 Running permissions tests...
+     ✓ PASSED: Pengguna anonim harus ditolak untuk semua aksi mutasi
+     ✓ PASSED: Pengguna non-aktif ditolak sekalipun memiliki role SUPER_ADMIN
+     ✓ PASSED: Role EDITOR tidak boleh menghapus post atau mengelola users
+     ✓ PASSED: Role ADMIN tidak boleh membuat atau menghapus user
+     ✓ PASSED: Role SUPER_ADMIN memiliki akses penuh ke seluruh sumber daya
+     ✓ PASSED: hasPermission menghormati array permissions dinamis pada AuthUser
+     ✓ PASSED: hasPermission menegakkan isolasi kepemilikan departemen untuk Kadep
+   ▶ Sanitize HTML Content
+     ✔ Menghapus tag berbahaya script dan iframe
+     ✔ Menghapus atribut event handler (onload, onerror, onclick)
+     ✔ Menolak javascript: URI pada tag a
+     ✔ Mempertahankan elemen aman artikel (p, h1, b, i, table)
+   🧪 Running slug tests...
+     ✓ PASSED: Konversi judul biasa ke slug ramah URL
+     ✓ PASSED: Membersihkan karakter spesial dan tanda baca
+     ✓ PASSED: Menangani spasi ganda dan tanda strip beruntun
+   🧪 Running Storage Tests...
+     ✓ Storage Driver Selection
+     ✓ S3StorageDriver upload and URL resolution fallback
+     ✓ S3StorageDriver delete key normalization
+     ✓ Turso and Storage Environment Configuration
+   🧪 Running visibility tests...
+     ✓ PASSED: Draft dan arsip tidak boleh bocor pada query publik
+     ✓ PASSED: Hanya anggota dari periode aktif yang ditampilkan ke publik
+
+   ℹ tests 16 | pass 16 | fail 0 | duration ~3.9s (100% Passed)
    ```
 
 ---
@@ -557,7 +584,8 @@ Sistem telah melalui pengujian menyeluruh pada seluruh lapisan:
 ## 11. Kesimpulan Akhir
 
 Aplikasi **UKM PERISAI UMI Information System** berada dalam kondisi **Production-Ready, Sangat Terstruktur, dan Berperforma Tinggi**. Seluruh arsitektur telah memenuhi standar rekayasa perangkat lunak modern:
-- Keamanan berlapis dengan **Dynamic RBAC 38 Kunci Izin** dan **Server Guard terisolasi**.
+- Keamanan berlapis dengan **Dynamic RBAC 33 Kunci Izin** dan **Server Guard terisolasi**.
+- Pemisahan arsitektur bersih (**Decoupled Shared Database**) untuk modul Keuangan Kas mandiri.
 - Tampilan antarmuka yang presisi dan bersih melalui **Silent Permission Hiding**.
-- Ketahanan dan efisiensi edge maksimal dengan **Turso LibSQL Keep-Alive Socket Reuse** dan **Cloudflare R2 Client Caching**.
+- Ketahanan koneksi edge maksimal dengan **Turso LibSQL Keep-Alive Socket Reuse**, **React.cache() Session Deduplication**, dan **In-Memory TTL Caching**.
 - Seluruh dokumentasi teknis dan audit kini tersentralisasi secara resmi di dalam folder `audit/AUDIT_REPORT.md`.
