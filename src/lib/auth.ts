@@ -10,12 +10,17 @@
  * murni dengan Cloudflare Workers Isolate dan Node.js 20+.
  */
 
+import { cache } from "react";
 import { cookies } from "next/headers";
 import type { AuthUser, Session, PermissionKey } from "@/types";
 import prisma from "./db";
 
 export const SESSION_COOKIE_NAME = "perisai_session_id";
 export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 hari
+
+// In-memory cache per-token untuk mencegah round-trip berulang ke Turso DB saat navigasi admin
+const sessionMemoryCache = new Map<string, { session: Session; expiry: number }>();
+const SESSION_CACHE_TTL_MS = 30 * 1000; // 30 detik
 
 /**
  * Buat sesi baru di tabel T_Sesi dan kembalikan token unik ber-entropi tinggi.
@@ -57,6 +62,7 @@ export async function createSessionRecord({
  */
 export async function destroySessionRecord(token: string): Promise<void> {
   if (!token) return;
+  sessionMemoryCache.delete(token);
   try {
     await prisma.tSesi.deleteMany({
       where: { token },
@@ -71,7 +77,7 @@ export async function destroySessionRecord(token: string): Promise<void> {
  * Memvalidasi token terhadap tabel `T_Sesi` di database dan memeriksa masa kedaluwarsa.
  * Mengembalikan null jika token tidak ada, kedaluwarsa, atau akun tidak aktif.
  */
-export async function getSession(): Promise<Session | null> {
+export const getSession = cache(async function getSession(): Promise<Session | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
@@ -80,7 +86,13 @@ export async function getSession(): Promise<Session | null> {
       return null;
     }
 
-    const now = Math.floor(Date.now() / 1000);
+    const nowMs = Date.now();
+    const cached = sessionMemoryCache.get(token);
+    if (cached && cached.expiry > nowMs) {
+      return cached.session;
+    }
+
+    const now = Math.floor(nowMs / 1000);
 
     // Lookup record sesi di T_Sesi dengan eager loading akun & relasinya
     const sessionRecord = await prisma.tSesi.findUnique({
@@ -165,7 +177,7 @@ export async function getSession(): Promise<Session | null> {
         ? dynamicPermissions
         : computeDefaultPermissions(cmsRole, posTitle, deptSlug);
 
-    return {
+    const sessionObj: Session = {
       user: {
         id: anggota.idPerisai,
         name: anggota.namaLengkap,
@@ -180,11 +192,18 @@ export async function getSession(): Promise<Session | null> {
       },
       expires: new Date(sessionRecord.expiresAt * 1000).toISOString(),
     };
+
+    sessionMemoryCache.set(token, {
+      session: sessionObj,
+      expiry: nowMs + SESSION_CACHE_TTL_MS,
+    });
+
+    return sessionObj;
   } catch (err) {
     console.error("[auth] Error retrieving session:", err);
     return null;
   }
-}
+});
 
 /**
  * Map nama role dari database PSDM ke role CMS internal.

@@ -65,7 +65,11 @@ export default function AdminError({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30">
-                {isNetworkOrDb ? "Kendala Koneksi / Basis Data" : "Galat Panel Admin"}
+                {isRscStreamAbort
+                  ? "Koneksi Terputus (Error #412)"
+                  : isNetworkOrDb
+                  ? "Kendala Koneksi / Basis Data"
+                  : "Galat Panel Admin"}
               </span>
               {error.digest && (
                 <span className="text-[10px] text-zinc-500 font-mono">
@@ -74,11 +78,15 @@ export default function AdminError({
               )}
             </div>
             <h2 className="text-xl font-black text-white tracking-tight">
-              Gagal Memuat Modul Administrasi
+              {isRscStreamAbort
+                ? "Koneksi Data Terputus Saat Memuat"
+                : "Gagal Memuat Modul Administrasi"}
             </h2>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              {isNetworkOrDb
-                ? "Terjadi gangguan saat menghubungkan sistem ke basis data atau server lokal. Pastikan koneksi server aktif lalu coba muat ulang."
+              {isRscStreamAbort
+                ? "Aliran data komponen (React Server Component stream) terputus sebelum browser selesai menerima seluruh data. Klik 'Muat Ulang Halaman' untuk menyambungkan ulang."
+                : isNetworkOrDb
+                ? "Terjadi gangguan saat menghubungkan sistem ke basis data atau server. Pastikan koneksi aktif lalu coba muat ulang."
                 : "Terjadi kesalahan internal saat merender komponen panel ini. Anda dapat mencoba memuat ulang atau kembali ke dasbor."}
             </p>
           </div>
@@ -118,7 +126,7 @@ export default function AdminError({
               <svg className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Coba Muat Ulang
+              {isRscStreamAbort ? "Muat Ulang Halaman" : "Coba Muat Ulang"}
             </Button>
             <Link
               href="/admin"
