@@ -86,12 +86,12 @@ runTest("hasPermission menghormati array permissions dinamis pada AuthUser", () 
     email: "custom@perisai.org",
     role: "ADMIN",
     isActive: true,
-    permissions: ["finance:read", "finance:create", "programs:read"],
+    permissions: ["opportunities:read", "opportunities:create", "programs:read"],
   };
 
-  assert(hasPermission(customUser, "finance:read") === true, "User kustom harus diizinkan finance:read");
-  assert(hasPermission(customUser, "finance:create") === true, "User kustom harus diizinkan finance:create");
-  assert(hasPermission(customUser, "finance:delete") === false, "User kustom ditolak finance:delete");
+  assert(hasPermission(customUser, "opportunities:read") === true, "User kustom harus diizinkan opportunities:read");
+  assert(hasPermission(customUser, "opportunities:create") === true, "User kustom harus diizinkan opportunities:create");
+  assert(hasPermission(customUser, "opportunities:delete") === false, "User kustom ditolak opportunities:delete");
   assert(hasPermission(customUser, "posts:create") === false, "User kustom ditolak posts:create");
 });
 

@@ -1,5 +1,6 @@
 import { cache } from "react";
 import prisma from "@/lib/db";
+import { parseDate } from "@/lib/dates";
 
 export interface GetPublishedPostsParams {
   page?: number;
@@ -9,15 +10,48 @@ export interface GetPublishedPostsParams {
   isFeatured?: boolean;
 }
 
+export interface PublishedPostsResult {
+  items: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    category: string;
+    excerpt: string | null;
+    content: string | null;
+    coverImageUrl: string;
+    status: string;
+    publishedAt: string | null;
+    isFeatured: boolean;
+    department: { id: string; name: string } | null;
+    author: { name: string };
+    readTime: number;
+  }>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  categories: Array<{ name: string; count: number }>;
+}
+
+const postsCache = new Map<string, { data: PublishedPostsResult; expiry: number }>();
+const POSTS_TTL_MS = 3 * 60 * 1000; // 3 menit cache
+
 export const getPublishedPosts = cache(async function getPublishedPosts({
   page = 1,
   pageSize = 9,
   category,
   search,
   isFeatured,
-}: GetPublishedPostsParams = {}) {
-  const skip = (page - 1) * pageSize;
+}: GetPublishedPostsParams = {}): Promise<PublishedPostsResult> {
+  const cacheKey = `${page}:${pageSize}:${category || ""}:${search || ""}:${isFeatured}`;
   const now = Math.floor(Date.now() / 1000);
+  const cached = postsCache.get(cacheKey);
+
+  if (cached && cached.expiry > Date.now()) {
+    return cached.data;
+  }
+
+  const skip = (page - 1) * pageSize;
 
   const where: Record<string, unknown> = {
     status: "published",
@@ -96,14 +130,14 @@ export const getPublishedPosts = cache(async function getPublishedPosts({
       content: p.ringkasan, // Menggunakan ringkasan untuk listing untuk menghemat transfer data
       coverImageUrl: p.fotoCover || "/og-default.webp",
       status: p.status,
-      publishedAt: p.tanggalPublish ? new Date(p.tanggalPublish * 1000).toISOString() : null,
+      publishedAt: parseDate(p.tanggalPublish)?.toISOString() || null,
       isFeatured: Boolean(p.isFeatured),
       department: p.departemen ? { id: String(p.departemen.idDepartemen), name: p.departemen.namaDepartemen } : null,
       author: { name: p.departemen?.namaDepartemen || "Pengurus PERISAI UMI" },
       readTime: Math.max(2, Math.ceil((p.ringkasan ? p.ringkasan.split(/\s+/).length : 60) / 40)),
     }));
 
-    return {
+    const result: PublishedPostsResult = {
       items,
       total,
       page,
@@ -111,8 +145,12 @@ export const getPublishedPosts = cache(async function getPublishedPosts({
       totalPages: Math.max(1, Math.ceil(total / pageSize)),
       categories: Object.entries(categoryCounts).map(([name, count]) => ({ name, count })),
     };
+
+    postsCache.set(cacheKey, { data: result, expiry: Date.now() + POSTS_TTL_MS });
+    return result;
   } catch (err) {
     console.warn("Notice: failed to load T_Berita:", err);
+    if (cached) return cached.data;
     return {
       items: [],
       total: 0,
@@ -171,7 +209,7 @@ export const getPublishedPostBySlug = cache(async function getPublishedPostBySlu
       category: rp.kategori || "Berita",
       excerpt: rp.ringkasan,
       coverImageUrl: rp.fotoCover || "/og-default.jpg",
-      publishedAt: rp.tanggalPublish ? new Date(rp.tanggalPublish * 1000).toISOString() : null,
+      publishedAt: parseDate(rp.tanggalPublish)?.toISOString() || null,
       department: rp.departemen ? { id: String(rp.departemen.idDepartemen), name: rp.departemen.namaDepartemen } : null,
       author: { name: rp.departemen?.namaDepartemen || "Pengurus PERISAI UMI" },
       readTime: Math.max(2, Math.ceil((rp.ringkasan ? rp.ringkasan.split(/\s+/).length : 60) / 40)),
@@ -186,7 +224,7 @@ export const getPublishedPostBySlug = cache(async function getPublishedPostBySlu
       content: p.konten,
       coverImageUrl: p.fotoCover || "/og-default.webp",
       status: p.status,
-      publishedAt: p.tanggalPublish ? new Date(p.tanggalPublish * 1000).toISOString() : null,
+      publishedAt: parseDate(p.tanggalPublish)?.toISOString() || null,
       isFeatured: Boolean(p.isFeatured),
       department: p.departemen ? { id: String(p.departemen.idDepartemen), name: p.departemen.namaDepartemen } : null,
       author: { name: p.departemen?.namaDepartemen || "Pengurus PERISAI UMI" },

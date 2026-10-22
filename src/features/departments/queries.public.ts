@@ -1,7 +1,31 @@
 import { cache } from "react";
 import prisma from "@/lib/db";
 
-export const getPublicDepartments = cache(async function getPublicDepartments() {
+export interface PublicDepartmentItem {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription: string;
+  description: string;
+  vision: string;
+  mission: string;
+  isActive: boolean;
+  orderIndex: number;
+  _count: {
+    members: number;
+    workPrograms: number;
+  };
+}
+
+let cachedDepartments: { data: PublicDepartmentItem[]; expiry: number } | null = null;
+const DEPT_TTL_MS = 5 * 60 * 1000; // 5 menit
+
+export const getPublicDepartments = cache(async function getPublicDepartments(): Promise<PublicDepartmentItem[]> {
+  const now = Date.now();
+  if (cachedDepartments && cachedDepartments.expiry > now) {
+    return cachedDepartments.data;
+  }
+
   try {
     const depts = await prisma.mDepartemen.findMany({
       where: { isActive: 1 },
@@ -27,7 +51,7 @@ export const getPublicDepartments = cache(async function getPublicDepartments() 
       },
     });
 
-    return depts.map((d) => ({
+    const result = depts.map((d) => ({
       id: String(d.idDepartemen),
       name: d.namaDepartemen,
       slug: d.slug,
@@ -42,9 +66,12 @@ export const getPublicDepartments = cache(async function getPublicDepartments() 
         workPrograms: d.proker.length,
       },
     }));
+
+    cachedDepartments = { data: result, expiry: now + DEPT_TTL_MS };
+    return result;
   } catch (err) {
     console.warn("Notice: failed to load departments:", err);
-    return [];
+    return cachedDepartments ? cachedDepartments.data : [];
   }
 });
 
@@ -103,14 +130,16 @@ export const getPublicDepartmentBySlug = cache(async function getPublicDepartmen
       description: dept.tupoksiUtama,
       vision: dept.visi,
       mission: dept.misi,
-      members: dept.kepengurusan.map((k) => ({
-        id: k.anggota.idPerisai,
-        name: k.anggota.namaLengkap,
-        position: k.jabatan.namaJabatan,
-        linkedinUrl: k.anggota.linkedin,
-        instagramUsername: k.anggota.instagram,
-        photoUrl: k.anggota.fotoUrl,
-      })),
+      members: dept.kepengurusan
+        .filter((k) => Boolean(k.anggota))
+        .map((k) => ({
+          id: k.anggota?.idPerisai || "",
+          name: k.anggota?.namaLengkap || "Anggota",
+          position: k.jabatan?.namaJabatan || "Pengurus",
+          linkedinUrl: k.anggota?.linkedin || null,
+          instagramUsername: k.anggota?.instagram || null,
+          photoUrl: k.anggota?.fotoUrl || null,
+        })),
       workPrograms: dept.proker.map((p) => ({
         id: String(p.idProker),
         title: p.namaProker,

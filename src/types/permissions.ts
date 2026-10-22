@@ -19,14 +19,7 @@ export const PERMISSION_KEYS = [
   "opportunities:update",
   "opportunities:delete",
 
-  // 3. Finance (Keuangan & Kas Bendahara)
-  "finance:read",
-  "finance:create",
-  "finance:update",
-  "finance:delete",
-  "finance:export",
-
-  // 4. Work Programs (Program Kerja Departemen)
+  // 3. Work Programs (Program Kerja Departemen)
   "programs:read",
   "programs:create",
   "programs:update",

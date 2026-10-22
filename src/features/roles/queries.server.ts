@@ -28,11 +28,27 @@ export interface EligibleUser {
   idRole: number;
 }
 
+interface RawRoleRecord {
+  idRole: number;
+  namaRole: string;
+  label: string;
+  deskripsi: string | null;
+  permissions?: string | null;
+  isSystem?: boolean | number;
+  createdAt: number;
+  updatedAt: number;
+  akun?: Array<{
+    idPerisai: string;
+    anggota: RoleListItem["users"][number] | null;
+  }>;
+}
+
 /**
  * Mengambil daftar seluruh peran di basis data dengan jumlah akun yang terikat
  */
 export async function getRoles(): Promise<RoleListItem[]> {
-  const roles = await prisma.mRole.findMany({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const roles = (await (prisma.mRole.findMany as any)({
     orderBy: [{ isSystem: "desc" }, { idRole: "asc" }],
     include: {
       akun: {
@@ -50,7 +66,7 @@ export async function getRoles(): Promise<RoleListItem[]> {
         },
       },
     },
-  });
+  })) as RawRoleRecord[];
 
   return roles.map((role) => {
     let permissions: PermissionKey[] = [];
@@ -65,9 +81,9 @@ export async function getRoles(): Promise<RoleListItem[]> {
       }
     }
 
-    const users = role.akun
+    const users = (role.akun || [])
       .map((a) => a.anggota)
-      .filter((m): m is NonNullable<typeof m> => Boolean(m));
+      .filter((m): m is RoleListItem["users"][number] => Boolean(m));
 
     return {
       id: role.idRole,
@@ -76,7 +92,7 @@ export async function getRoles(): Promise<RoleListItem[]> {
       description: role.deskripsi,
       permissions,
       isSystem: Boolean(role.isSystem),
-      userCount: role.akun.length,
+      userCount: role.akun?.length || 0,
       users,
       createdAt: role.createdAt,
       updatedAt: role.updatedAt,
@@ -88,7 +104,8 @@ export async function getRoles(): Promise<RoleListItem[]> {
  * Mengambil detail peran berdasarkan ID beserta daftar akun yang saat ini terikat
  */
 export async function getRoleById(id: number): Promise<RoleListItem | null> {
-  const role = await prisma.mRole.findUnique({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawRole = (await (prisma.mRole.findUnique as any)({
     where: { idRole: id },
     include: {
       akun: {
@@ -105,14 +122,14 @@ export async function getRoleById(id: number): Promise<RoleListItem | null> {
         },
       },
     },
-  });
+  })) as RawRoleRecord | null;
 
-  if (!role) return null;
+  if (!rawRole) return null;
 
   let permissions: PermissionKey[] = [];
-  if (role.permissions) {
+  if (rawRole.permissions) {
     try {
-      const parsed = JSON.parse(role.permissions);
+      const parsed = JSON.parse(rawRole.permissions);
       if (Array.isArray(parsed)) {
         permissions = parsed as PermissionKey[];
       }
@@ -121,21 +138,21 @@ export async function getRoleById(id: number): Promise<RoleListItem | null> {
     }
   }
 
-  const users = role.akun
+  const users = (rawRole.akun || [])
     .map((a) => a.anggota)
-    .filter((m): m is NonNullable<typeof m> => Boolean(m));
+    .filter((m): m is RoleListItem["users"][number] => Boolean(m));
 
   return {
-    id: role.idRole,
-    name: role.namaRole,
-    label: role.label,
-    description: role.deskripsi,
+    id: rawRole.idRole,
+    name: rawRole.namaRole,
+    label: rawRole.label,
+    description: rawRole.deskripsi,
     permissions,
-    isSystem: Boolean(role.isSystem),
-    userCount: role.akun.length,
+    isSystem: Boolean(rawRole.isSystem),
+    userCount: rawRole.akun?.length || 0,
     users,
-    createdAt: role.createdAt,
-    updatedAt: role.updatedAt,
+    createdAt: rawRole.createdAt,
+    updatedAt: rawRole.updatedAt,
   };
 }
 
@@ -166,10 +183,10 @@ export async function getEligibleUsers(): Promise<EligibleUser[]> {
 
   return akuns.map((a) => ({
     idPerisai: a.idPerisai,
-    namaLengkap: a.anggota.namaLengkap,
-    email: a.anggota.email,
-    fotoUrl: a.anggota.fotoUrl,
-    currentRole: a.role.namaRole,
-    idRole: a.role.idRole,
+    namaLengkap: a.anggota?.namaLengkap || "Tanpa Nama",
+    email: a.anggota?.email || a.idPerisai,
+    fotoUrl: a.anggota?.fotoUrl || null,
+    currentRole: a.role?.namaRole || "Anggota",
+    idRole: a.role?.idRole || a.idRole || 0,
   }));
 }

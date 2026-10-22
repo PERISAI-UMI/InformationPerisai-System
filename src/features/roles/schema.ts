@@ -63,18 +63,6 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
-    domain: "finance",
-    label: "Keuangan & Kas",
-    description: "Pencatatan kas masuk, keluar, dan laporan transparansi keuangan",
-    permissions: [
-      { key: "finance:read", label: "Melihat Kas", description: "Melihat ringkasan saldo dan riwayat transaksi" },
-      { key: "finance:create", label: "Mencatat Transaksi", description: "Menambah pemasukan atau pengeluaran kas" },
-      { key: "finance:update", label: "Mengedit Transaksi", description: "Memperbaiki catatan atau bukti nota transaksi" },
-      { key: "finance:delete", label: "Menghapus Transaksi", description: "Menghapus pencatatan kas dari sistem" },
-      { key: "finance:export", label: "Ekspor Laporan Kas", description: "Mengunduh rekapitulasi data kas Excel/PDF" },
-    ],
-  },
-  {
     domain: "programs",
     label: "Program Kerja (Proker)",
     description: "Perencanaan dan pemantauan program kerja departemen",

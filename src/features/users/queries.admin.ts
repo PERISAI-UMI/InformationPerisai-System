@@ -1,4 +1,5 @@
 import prisma from "@/lib/db";
+import { parseDate } from "@/lib/dates";
 
 export async function getAdminUsers({ page = 1, pageSize = 8 }: { page?: number; pageSize?: number } = {}) {
   const skip = (page - 1) * pageSize;
@@ -17,11 +18,11 @@ export async function getAdminUsers({ page = 1, pageSize = 8 }: { page?: number;
 
   const items = akuns.map((u) => ({
     id: u.idPerisai,
-    name: u.anggota.namaLengkap,
-    email: u.anggota.email,
-    role: u.role.namaRole,
+    name: u.anggota?.namaLengkap || "Tanpa Nama",
+    email: u.anggota?.email || "-",
+    role: u.role?.namaRole || "GUEST",
     isActive: Boolean(u.isActive),
-    createdAt: new Date(u.createdAt * 1000).toISOString(),
+    createdAt: parseDate(u.createdAt)?.toISOString() || new Date().toISOString(),
     _count: { posts: 0, uploadedMedia: 0 },
   }));
 
@@ -47,11 +48,11 @@ export async function getAdminUserById(id: string) {
 
   return {
     id: u.idPerisai,
-    name: u.anggota.namaLengkap,
-    email: u.anggota.email,
-    role: u.role.namaRole,
+    name: u.anggota?.namaLengkap || "Tanpa Nama",
+    email: u.anggota?.email || "-",
+    role: u.role?.namaRole || "GUEST",
     isActive: Boolean(u.isActive),
-    createdAt: new Date(u.createdAt * 1000).toISOString(),
+    createdAt: parseDate(u.createdAt)?.toISOString() || new Date().toISOString(),
     _count: { posts: 0, uploadedMedia: 0 },
   };
 }

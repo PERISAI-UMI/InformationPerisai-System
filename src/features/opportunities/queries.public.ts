@@ -1,5 +1,6 @@
 import { cache } from "react";
 import prisma from "@/lib/db";
+import { parseDate } from "@/lib/dates";
 
 export interface GetPublicOpportunitiesParams {
   type?: string;
@@ -8,13 +9,44 @@ export interface GetPublicOpportunitiesParams {
   onlyOpen?: boolean;
 }
 
+export interface PublicOpportunityResult {
+  items: Array<{
+    id: string;
+    type: string;
+    title: string;
+    slug: string;
+    category: string;
+    organizer: string;
+    description: string;
+    deadlineAt: string | null;
+    registrationUrl: string | null;
+    coverImageUrl: string;
+    status: string;
+    isOpen: boolean;
+    daysLeft: number | null;
+    isUrgent: boolean;
+  }>;
+  typeCounts: Record<string, number>;
+  total: number;
+}
+
+const oppCache = new Map<string, { data: PublicOpportunityResult; expiry: number }>();
+const OPP_TTL_MS = 3 * 60 * 1000; // 3 menit cache
+
 export const getPublicOpportunities = cache(async function getPublicOpportunities({
   type,
   category,
   search,
   onlyOpen = false,
-}: GetPublicOpportunitiesParams = {}) {
+}: GetPublicOpportunitiesParams = {}): Promise<PublicOpportunityResult> {
+  const cacheKey = `${type || ""}:${category || ""}:${search || ""}:${onlyOpen}`;
   const now = Math.floor(Date.now() / 1000);
+  const cached = oppCache.get(cacheKey);
+
+  if (cached && cached.expiry > Date.now()) {
+    return cached.data;
+  }
+
   const where: Record<string, unknown> = {
     status: "published",
   };
@@ -84,7 +116,7 @@ export const getPublicOpportunities = cache(async function getPublicOpportunitie
       typeCounts[t] = (typeCounts[t] || 0) + 1;
     }
 
-    return {
+    const result: PublicOpportunityResult = {
       items: items.map((op) => {
         const deadlineSec = op.deadlinePendaftaran;
         const isOpen = deadlineSec === null || deadlineSec >= now;
@@ -100,7 +132,7 @@ export const getPublicOpportunities = cache(async function getPublicOpportunitie
           category: op.kategori || "KOMPETISI",
           organizer: op.penyelenggara || "PERISAI UMI",
           description: op.deskripsi || "",
-          deadlineAt: deadlineSec ? new Date(deadlineSec * 1000).toISOString() : null,
+          deadlineAt: parseDate(deadlineSec)?.toISOString() || null,
           registrationUrl: op.linkPendaftaran || null,
           coverImageUrl: op.linkPoster || "/og-default.webp",
           status: op.status,
@@ -112,8 +144,12 @@ export const getPublicOpportunities = cache(async function getPublicOpportunitie
       typeCounts,
       total: items.length,
     };
+
+    oppCache.set(cacheKey, { data: result, expiry: Date.now() + OPP_TTL_MS });
+    return result;
   } catch (err) {
     console.warn("Notice: failed to load T_Kompetisi:", err);
+    if (cached) return cached.data;
     return {
       items: [],
       typeCounts: { Semua: 0, lomba: 0, beasiswa: 0, hibah: 0, seminar: 0 },
@@ -184,7 +220,7 @@ export const getPublicOpportunityBySlug = cache(async function getPublicOpportun
         slug: ro.slug,
         category: ro.kategori || "KOMPETISI",
         organizer: ro.penyelenggara || "PERISAI UMI",
-        deadlineAt: rDeadline ? new Date(rDeadline * 1000).toISOString() : null,
+        deadlineAt: parseDate(rDeadline)?.toISOString() || null,
         coverImageUrl: ro.linkPoster || "/og-default.jpg",
         isOpen: rIsOpen,
         daysLeft: rDaysLeft,
@@ -199,7 +235,7 @@ export const getPublicOpportunityBySlug = cache(async function getPublicOpportun
       category: op.kategori || "KOMPETISI",
       organizer: op.penyelenggara || "PERISAI UMI",
       description: op.deskripsi || "",
-      deadlineAt: deadlineSec ? new Date(deadlineSec * 1000).toISOString() : null,
+      deadlineAt: parseDate(deadlineSec)?.toISOString() || null,
       registrationUrl: op.linkPendaftaran || null,
       coverImageUrl: op.linkPoster || "/og-default.webp",
       status: op.status,

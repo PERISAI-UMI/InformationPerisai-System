@@ -30,9 +30,9 @@ async function verifyDynamicRoleSession() {
   const initialPerms = JSON.parse(editorRole.permissions || "[]") as PermissionKey[];
   console.log("   Initial permissions EDITOR:", initialPerms);
 
-  // Simulasikan Super Admin menambahkan 'finance:read' ke peran EDITOR
-  console.log("🧪 [2/3] Mensimulasikan Super Admin mengubah izin peran EDITOR (menambahkan 'finance:read')...");
-  const updatedPerms: PermissionKey[] = Array.from(new Set([...initialPerms, "finance:read" as PermissionKey]));
+  // Simulasikan Super Admin menambahkan 'programs:create' ke peran EDITOR
+  console.log("🧪 [2/3] Mensimulasikan Super Admin mengubah izin peran EDITOR (menambahkan 'programs:create')...");
+  const updatedPerms: PermissionKey[] = Array.from(new Set([...initialPerms, "programs:create" as PermissionKey]));
   await (prisma.mRole as any).update({
     where: { idRole: editorRole.idRole },
     data: { permissions: JSON.stringify(updatedPerms) },
@@ -59,10 +59,10 @@ async function verifyDynamicRoleSession() {
   };
 
   console.log("🧪 [3/3] Menguji evaluasi hasPermission pada akun...");
-  const canReadFinanceNow = hasPermission(simulatedUser, "finance:read");
-  console.log("   Apakah akun EDITOR sekarang memiliki izin 'finance:read'? ->", canReadFinanceNow ? "✅ YA (BERHASIL)" : "❌ TIDAK");
+  const canCreateProgramNow = hasPermission(simulatedUser, "programs:create");
+  console.log("   Apakah akun EDITOR sekarang memiliki izin 'programs:create'? ->", canCreateProgramNow ? "✅ YA (BERHASIL)" : "❌ TIDAK");
 
-  if (!canReadFinanceNow) {
+  if (!canCreateProgramNow) {
     throw new Error("Evaluasi hak akses dinamis gagal!");
   }
 
